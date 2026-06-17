@@ -40,20 +40,23 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     hero
+                    // CURRENT STATUS card sits directly under the hero, above the
+                    // greeting/action card, when a status/sesh is live.
+                    if social.me.activity != .idle {
+                        CurrentStatusCard()
+                            .padding(.horizontal, 18)
+                            .offset(y: -28)
+                            .padding(.bottom, -16)
+                    }
                     actionCard
                         .padding(.horizontal, 18)
-                        .offset(y: -28)
-                        // pull following layout up so the -28 offset doesn't leave a gap
-                        .padding(.bottom, -28)
+                        .offset(y: social.me.activity != .idle ? 0 : -28)
+                        // pull following layout up so the offset doesn't leave a gap
+                        .padding(.bottom, social.me.activity != .idle ? 12 : -28)
 
                     // ── Social: presence, broadcast, feed ──
                     VStack(spacing: 18) {
                         PresenceRow(onTapFriend: { friendPeek = $0 })
-                        // Big color-coded CURRENT STATUS card when a status/sesh
-                        // is live; otherwise the compact vibe-setting strip.
-                        if social.me.activity != .idle {
-                            CurrentStatusCard()
-                        }
                         BroadcastStrip()
 
                         // Stash — your current supply + purchase log
