@@ -58,6 +58,17 @@ enum SeshActivity: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// Custom asset-catalog icon for activities that have one; nil falls back to
+    /// the emoji. (Only the three sesh activities have illustrated icons.)
+    var iconName: String? {
+        switch self {
+        case .smoking:     return "sesh_smoking"
+        case .hittingBong: return "sesh_bong"
+        case .rollingUp:   return "sesh_rolling"
+        default:           return nil
+        }
+    }
+
     /// Active states show a colored presence ring.
     var isActive: Bool { self != .idle && self != .available && self != .busy }
 

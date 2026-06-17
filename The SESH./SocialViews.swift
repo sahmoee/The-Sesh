@@ -69,7 +69,7 @@ struct PresenceRow: View {
                                 VStack(spacing: 5) {
                                     PresenceAvatar(user: f, size: 54)
                                     Text(f.displayName).font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.text).lineLimit(1)
-                                    Text("\(f.activity.emoji)").font(.system(size: 11))
+                                    ActivityGlyph(activity: f.activity, size: 13)
                                 }
                                 .frame(width: 64)
                             }
@@ -100,7 +100,7 @@ struct ActivityFeedCard: View {
                 }
                 ForEach(social.feed.prefix(6)) { e in
                     HStack(spacing: 10) {
-                        Text(e.activity.emoji).font(.system(size: 16)).frame(width: 24)
+                        ActivityGlyph(activity: e.activity, size: 18).frame(width: 24)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(e.line).font(.system(size: 14)).foregroundStyle(Palette.text)
                             if let d = e.detail, !d.isEmpty {
@@ -140,7 +140,7 @@ struct BroadcastStrip: View {
                 HStack(spacing: 10) {
                     ZStack {
                         Circle().fill(act.tint.opacity(0.2)).frame(width: 38, height: 38)
-                        Text(act.emoji).font(.system(size: 18))
+                        ActivityGlyph(activity: act, size: 20)
                     }
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Your status").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.textTertiary)
@@ -166,7 +166,8 @@ struct BroadcastStrip: View {
                         let isCurrent = social.me.activity == act
                         EmojiChip(emoji: act.emoji,
                                   title: act.phrase.replacingOccurrences(of: "is ", with: "").capitalized,
-                                  isSelected: isCurrent, fillWidth: false) {
+                                  isSelected: isCurrent, fillWidth: false,
+                                  iconName: act.iconName) {
                             social.setMyActivity(act); Haptics.selection()
                         }
                     }
@@ -737,7 +738,7 @@ struct FriendSheet: View {
                     Text(user.handle).font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
                 }
                 HStack(spacing: 8) {
-                    Text(user.activity.emoji)
+                    ActivityGlyph(activity: user.activity, size: 22)
                     Text(user.displayName + " " + user.activity.phrase).font(.system(size: 15, weight: .medium)).foregroundStyle(user.activity.tint)
                 }
                 .padding(.horizontal, 16).padding(.vertical, 10)
@@ -929,7 +930,7 @@ struct FriendsView: View {
                             if f.activity.isActive {
                                 // Emoji + sentence-case status, e.g. "🌿 Rolling up"
                                 HStack(spacing: 5) {
-                                    Text(f.activity.emoji).font(.system(size: 12))
+                                    ActivityGlyph(activity: f.activity, size: 14)
                                     Text(f.activity.phrase.replacingOccurrences(of: "is ", with: "").capitalized)
                                         .font(.system(size: 13, weight: .medium)).foregroundStyle(f.activity.tint)
                                 }
@@ -1084,7 +1085,7 @@ struct FriendActivityView: View {
                                 HStack(spacing: 12) {
                                     ZStack {
                                         Circle().fill(e.activity.tint.opacity(0.15)).frame(width: 42, height: 42)
-                                        Text(e.activity.emoji).font(.system(size: 18))
+                                        ActivityGlyph(activity: e.activity, size: 20)
                                     }
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(e.line).font(.system(size: 15, weight: .medium)).foregroundStyle(Palette.text)

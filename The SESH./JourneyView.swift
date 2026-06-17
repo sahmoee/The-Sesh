@@ -80,7 +80,7 @@ struct JourneyView: View {
                                             VStack(spacing: 5) {
                                                 PresenceAvatar(user: f, size: 50)
                                                 Text(f.displayName).font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.onCream).lineLimit(1)
-                                                Text(f.activity.emoji).font(.system(size: 11))
+                                                ActivityGlyph(activity: f.activity, size: 13)
                                             }.frame(width: 60)
                                         }.buttonStyle(.plain)
                                     }

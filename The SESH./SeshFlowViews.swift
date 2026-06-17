@@ -200,7 +200,7 @@ struct CurrentStatusCard: View {
                 }
                 Spacer(minLength: 0)
                 VStack(alignment: .trailing, spacing: 6) {
-                    Text(act.emoji).font(.system(size: 26))
+                    ActivityGlyph(activity: act, size: 30)
                     Text(elapsed(social.activityStartedAt))
                         .font(.system(size: 17, weight: .bold))
                         .monospacedDigit()

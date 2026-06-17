@@ -239,17 +239,39 @@ struct RatingSlider: View {
 /// A selectable emoji + label chip. Consolidates the hand-rolled chip pattern
 /// (Session Tags, Effects, Champions, Smoke Again, broadcast vibes) into one
 /// component so they look and behave identically and restyle in one place (#4).
+/// Renders an activity's glyph: the custom illustrated icon when one exists
+/// (smoking / bong / rolling), otherwise the activity emoji. One source of truth
+/// so every surface shows the same thing.
+struct ActivityGlyph: View {
+    let activity: SeshActivity
+    var size: CGFloat = 18
+
+    var body: some View {
+        if let name = activity.iconName {
+            Image(name).resizable().scaledToFit().frame(width: size, height: size)
+        } else {
+            Text(activity.emoji).font(.system(size: size * 0.9))
+        }
+    }
+}
+
 struct EmojiChip: View {
     let emoji: String
     let title: String
     let isSelected: Bool
     var fillWidth: Bool = true
+    /// Optional custom icon; when set, shown instead of the emoji.
+    var iconName: String? = nil
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Text(emoji).font(.system(size: 15))
+                if let iconName {
+                    Image(iconName).resizable().scaledToFit().frame(width: 17, height: 17)
+                } else {
+                    Text(emoji).font(.system(size: 15))
+                }
                 Text(title).font(.system(size: 12, weight: .medium)).lineLimit(1)
                 if fillWidth { Spacer(minLength: 0) }
             }
