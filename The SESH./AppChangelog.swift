@@ -43,13 +43,13 @@ enum AppChangelog {
             entries: [
                 ChangelogEntry(icon: "smoke.fill", tint: Palette.greenBright,
                                title: "Pick your vibe to start",
-                               detail: "Tap Start sesh and choose what you're doing \u2014 Smoking, Hitting the bong, or Rolling up \u2014 and we'll track it from there."),
+                               detail: "Tap Start sesh and choose what you're doing — Smoking, Hitting the bong, or Rolling up — and we'll track it from there."),
                 ChangelogEntry(icon: "rectangle.fill.badge.checkmark", tint: Palette.gold,
                                title: "A clearer live status",
                                detail: "A bold, color-coded Current Status card on Home shows what you're up to, when you started, and a live timer."),
                 ChangelogEntry(icon: "party.popper.fill", tint: Palette.gold,
                                title: "Roll celebrations",
-                               detail: "Finish a roll and get a celebration with your time \u2014 and a callout when you beat your record."),
+                               detail: "Finish a roll and get a celebration with your time — and a callout when you beat your record."),
             ]),
         ChangelogVersion(
             version: "22.0.0",
