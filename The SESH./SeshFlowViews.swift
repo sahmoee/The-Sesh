@@ -19,6 +19,7 @@ import SwiftUI
 enum SeshDeepLink {
     case startSesh(StartActivity)   // sesh://start/<activity>
     case openChooser                // sesh://start
+    case endSesh                    // sesh://end  (ends live sesh, opens save)
     case logSesh                    // sesh://log
     case quickThought               // sesh://thought
 
@@ -26,13 +27,14 @@ enum SeshDeepLink {
 
     init?(url: URL) {
         guard url.scheme == SeshDeepLink.scheme else { return nil }
-        // host is the verb (start/log/thought); first path component is the arg
+        // host is the verb (start/end/log/thought); first path component is the arg
         let host = url.host ?? ""
         let arg = url.pathComponents.first(where: { $0 != "/" })
         switch host {
         case "start":
             if let arg, let act = StartActivity(rawValue: arg) { self = .startSesh(act) }
             else { self = .openChooser }
+        case "end":     self = .endSesh
         case "log":     self = .logSesh
         case "thought": self = .quickThought
         default:        return nil
@@ -44,6 +46,7 @@ enum SeshDeepLink {
         switch self {
         case .startSesh(let a): return URL(string: "\(SeshDeepLink.scheme)://start/\(a.rawValue)")!
         case .openChooser:      return URL(string: "\(SeshDeepLink.scheme)://start")!
+        case .endSesh:          return URL(string: "\(SeshDeepLink.scheme)://end")!
         case .logSesh:          return URL(string: "\(SeshDeepLink.scheme)://log")!
         case .quickThought:     return URL(string: "\(SeshDeepLink.scheme)://thought")!
         }
@@ -94,8 +97,9 @@ enum StartActivity: String, CaseIterable, Identifiable {
     /// Which live-sesh stage to open in.
     var stage: SeshStage {
         switch self {
-        case .rollingUp: return .rollingUp
-        default:         return .smoking
+        case .rollingUp:   return .pickingStrain  // start at strain selection
+        case .smoking:     return .sparkedUp      // jump to sparked up (timer running)
+        case .hittingBong: return .sparkedUp
         }
     }
     var tint: Color {

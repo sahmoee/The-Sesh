@@ -22,9 +22,12 @@ func seshDuration(_ interval: TimeInterval) -> String {
 }
 
 struct StartSeshView: View {
-    /// When set (from the "What are you doing?" chooser), the sesh starts live
-    /// immediately in this activity instead of showing the setup phase.
+    /// When set (from the "What are you doing?" chooser or a widget), the sesh
+    /// starts live immediately in this activity instead of showing setup.
     var initialActivity: StartActivity? = nil
+    /// When true (from the widget's Cigar/end button), end the live sesh on
+    /// appear and go straight to the save screen.
+    var endImmediately: Bool = false
     @Environment(SocialStore.self) private var social
     @Environment(StrainStore.self) private var strains
     @Environment(AppSession.self) private var session
@@ -101,9 +104,21 @@ struct StartSeshView: View {
 
     /// If a sesh was left running, drop straight back into it.
     private func restoreIfNeeded() {
-        // If launched from the "What are you doing?" chooser, start live now in
-        // the chosen activity (skip setup), unless a sesh is already resuming.
-        if phase == .setup, session.liveSesh == nil, let a = initialActivity {
+        // Widget "end" action: restore the live sesh (if any) and jump to save.
+        if phase == .setup, endImmediately {
+            if let s = session.liveSesh {
+                startedAt = s.startedAt; stage = s.stage; sessionType = s.sessionType
+                strainName = s.strainName; attachedThought = s.attachedThought
+                rollFinalSeconds = s.rollFinalSeconds; rollMethod = s.rollMethod
+                invited = Set(s.invited); elapsed = s.elapsed
+            }
+            phase = .save
+            return
+        }
+        // If launched from the chooser/widget with an activity, start live now in
+        // the chosen activity (skip setup). initialActivity wins over a stale
+        // live sesh because RootView already cleared liveSesh for fresh starts.
+        if phase == .setup, let a = initialActivity {
             startedAt = Date(); elapsed = 0
             stage = a.stage
             phase = .live

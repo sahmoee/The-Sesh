@@ -283,8 +283,8 @@ struct SeshQuickActionsView: View {
                         url: URL(string: "sesh://start/rollingUp")!, tint: W.green),
             QuickAction(title: "Smoke", icon: "sesh_smoking", symbol: "smoke.fill",
                         url: URL(string: "sesh://start/smoking")!, tint: W.green),
-            QuickAction(title: "Bong", icon: "sesh_bong", symbol: "drop.fill",
-                        url: URL(string: "sesh://start/hittingBong")!, tint: W.green),
+            QuickAction(title: "End", icon: "sesh_cigar", symbol: "stop.circle.fill",
+                        url: URL(string: "sesh://end")!, tint: W.gold),
         ]
     }
 

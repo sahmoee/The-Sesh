@@ -51,6 +51,7 @@ struct RootView: View {
     @State private var showStartSesh = false
     @State private var showActivityChooser = false
     @State private var chosenActivity: StartActivity? = nil
+    @State private var endSeshFromWidget = false
     @State private var showCompare = false
     @State private var logPrefill: StrainProfile?
     @State private var toastMessage: String?
@@ -63,12 +64,17 @@ struct RootView: View {
         guard let link = SeshDeepLink(url: url) else { return }
         switch link {
         case .startSesh(let act):
-            // Reuse the chooser's launch path: set the activity and present the
-            // live sesh directly (skips showing the chooser sheet).
+            // Start fresh at the activity's stage. Clear any stale live sesh so
+            // the requested stage is honored instead of restoring an old one.
+            session.liveSesh = nil
             chosenActivity = act
             showStartSesh = true
         case .openChooser:
             showActivityChooser = true
+        case .endSesh:
+            // End the live sesh and open the (skippable) save screen.
+            endSeshFromWidget = true
+            showStartSesh = true
         case .logSesh:
             selection = .log
         case .quickThought:
@@ -124,8 +130,8 @@ struct RootView: View {
             ComposeThoughtView().environment(session).presentationDetents([.medium, .large])
                 .onAppear { thoughtCountBefore = session.thoughts.count }
         }
-        .fullScreenCover(isPresented: $showStartSesh, onDismiss: { chosenActivity = nil }) {
-            StartSeshView(initialActivity: chosenActivity)
+        .fullScreenCover(isPresented: $showStartSesh, onDismiss: { chosenActivity = nil; endSeshFromWidget = false }) {
+            StartSeshView(initialActivity: chosenActivity, endImmediately: endSeshFromWidget)
                 .environment(session).environment(strains).environment(social)
                 .onDisappear {
                     if session.entries.count > entryCountBefore { toastMessage = "Sesh saved to Journal" }
