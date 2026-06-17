@@ -37,6 +37,14 @@ enum StartActivity: String, CaseIterable, Identifiable {
         case .rollingUp:   return "🌿"
         }
     }
+    /// Custom asset-catalog icon for the chooser.
+    var iconName: String {
+        switch self {
+        case .smoking:     return "sesh_smoking"
+        case .hittingBong: return "sesh_bong"
+        case .rollingUp:   return "sesh_rolling"
+        }
+    }
     /// Maps to the presence activity broadcast to friends.
     var activity: SeshActivity {
         switch self {
@@ -89,8 +97,10 @@ struct StartSeshChooser: View {
                                 dismiss()
                             } label: {
                                 HStack(spacing: 14) {
-                                    Text(act.emoji).font(.system(size: 26))
-                                        .frame(width: 30)
+                                    Image(act.iconName)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 38, height: 38)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(act.title)
                                             .font(.system(size: 17, weight: .semibold))
