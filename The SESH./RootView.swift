@@ -58,6 +58,24 @@ struct RootView: View {
     @State private var thoughtCountBefore = 0
     @State private var showWhatsNew = false
 
+    /// Routes a sesh:// deep link (from the Home Screen widget) to the right action.
+    private func handleDeepLink(_ url: URL) {
+        guard let link = SeshDeepLink(url: url) else { return }
+        switch link {
+        case .startSesh(let act):
+            // Reuse the chooser's launch path: set the activity and present the
+            // live sesh directly (skips showing the chooser sheet).
+            chosenActivity = act
+            showStartSesh = true
+        case .openChooser:
+            showActivityChooser = true
+        case .logSesh:
+            selection = .log
+        case .quickThought:
+            showQuickThought = true
+        }
+    }
+
     var body: some View {
         Group {
             switch selection {
@@ -125,6 +143,9 @@ struct RootView: View {
             .environment(social)
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
+        }
+        .onOpenURL { url in
+            handleDeepLink(url)
         }
         .sheet(isPresented: $showCompare) {
             CompareStrainsView().environment(session).environment(strains)

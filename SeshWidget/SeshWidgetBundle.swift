@@ -249,12 +249,93 @@ struct SeshStatusWidget: Widget {
     }
 }
 
+// MARK: - Quick Actions widget (tappable deep links into the app)
+
+/// A widget whose buttons open the app straight into an action. Each button is a
+/// Link to a sesh:// URL that RootView.onOpenURL routes. URLs are built inline
+/// here (the app owns parsing) so the widget needs no app-target types.
+struct SeshQuickActionsEntry: TimelineEntry { let date: Date }
+
+struct SeshQuickActionsProvider: TimelineProvider {
+    func placeholder(in context: Context) -> SeshQuickActionsEntry { .init(date: Date()) }
+    func getSnapshot(in context: Context, completion: @escaping (SeshQuickActionsEntry) -> Void) {
+        completion(.init(date: Date()))
+    }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<SeshQuickActionsEntry>) -> Void) {
+        completion(Timeline(entries: [.init(date: Date())], policy: .never))
+    }
+}
+
+private struct QuickAction {
+    let title: String
+    let icon: String      // asset name in the widget's catalog (or SF Symbol fallback)
+    let symbol: String    // SF Symbol fallback
+    let url: URL
+    let tint: Color
+}
+
+struct SeshQuickActionsView: View {
+    var entry: SeshQuickActionsEntry
+
+    private var actions: [QuickAction] {
+        [
+            QuickAction(title: "Roll up", icon: "sesh_rolling", symbol: "leaf.fill",
+                        url: URL(string: "sesh://start/rollingUp")!, tint: W.green),
+            QuickAction(title: "Smoke", icon: "sesh_smoking", symbol: "smoke.fill",
+                        url: URL(string: "sesh://start/smoking")!, tint: W.green),
+            QuickAction(title: "Bong", icon: "sesh_bong", symbol: "drop.fill",
+                        url: URL(string: "sesh://start/hittingBong")!, tint: W.green),
+        ]
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Start a sesh")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(W.subtle)
+            HStack(spacing: 8) {
+                ForEach(actions.indices, id: \.self) { i in
+                    let a = actions[i]
+                    Link(destination: a.url) {
+                        VStack(spacing: 6) {
+                            Image(a.icon).resizable().scaledToFit().frame(height: 26)
+                            Text(a.title)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(W.text).lineLimit(1)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(W.card))
+                    }
+                }
+            }
+        }
+        .padding(14)
+    }
+}
+
+struct SeshQuickActionsWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "SeshQuickActionsWidget", provider: SeshQuickActionsProvider()) { entry in
+            if #available(iOS 17.0, *) {
+                SeshQuickActionsView(entry: entry).containerBackground(W.bg, for: .widget)
+            } else {
+                SeshQuickActionsView(entry: entry)
+            }
+        }
+        .configurationDisplayName("Quick Start")
+        .description("Tap to jump straight into rolling up, smoking, or a bong rip.")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
 // MARK: - Bundle
 
 @main
 struct SeshWidgetBundle: WidgetBundle {
     var body: some Widget {
         SeshStatusWidget()
+        SeshQuickActionsWidget()
         SeshLiveActivity()
     }
 }

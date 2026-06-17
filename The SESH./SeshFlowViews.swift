@@ -12,6 +12,44 @@ import SwiftUI
 // MARK: - Activity chooser ("What are you doing?")
 
 /// The three sesh-start activities offered on the chooser sheet.
+/// Deep links opened from the Home Screen widget (and anywhere else). The widget
+/// uses sesh:// URLs; RootView parses them in onOpenURL and routes accordingly.
+/// No custom URL scheme registration is required for a widget to open its own
+/// app — onOpenURL receives these directly.
+enum SeshDeepLink {
+    case startSesh(StartActivity)   // sesh://start/<activity>
+    case openChooser                // sesh://start
+    case logSesh                    // sesh://log
+    case quickThought               // sesh://thought
+
+    static let scheme = "sesh"
+
+    init?(url: URL) {
+        guard url.scheme == SeshDeepLink.scheme else { return nil }
+        // host is the verb (start/log/thought); first path component is the arg
+        let host = url.host ?? ""
+        let arg = url.pathComponents.first(where: { $0 != "/" })
+        switch host {
+        case "start":
+            if let arg, let act = StartActivity(rawValue: arg) { self = .startSesh(act) }
+            else { self = .openChooser }
+        case "log":     self = .logSesh
+        case "thought": self = .quickThought
+        default:        return nil
+        }
+    }
+
+    /// Build the URL for a given link (used by the widget).
+    var url: URL {
+        switch self {
+        case .startSesh(let a): return URL(string: "\(SeshDeepLink.scheme)://start/\(a.rawValue)")!
+        case .openChooser:      return URL(string: "\(SeshDeepLink.scheme)://start")!
+        case .logSesh:          return URL(string: "\(SeshDeepLink.scheme)://log")!
+        case .quickThought:     return URL(string: "\(SeshDeepLink.scheme)://thought")!
+        }
+    }
+}
+
 enum StartActivity: String, CaseIterable, Identifiable {
     case smoking, hittingBong, rollingUp
     var id: String { rawValue }
