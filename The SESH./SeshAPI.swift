@@ -141,6 +141,12 @@ struct SeshAPI {
         await post("/api/activity", identity: identity, ["activity": activity.rawValue, "detail": detail ?? ""])
     }
 
+    /// Broadcast a one-off milestone (e.g. a new roll record) so friends get a
+    /// push. `kind` lets the Worker pick the right wording/emoji.
+    func postMilestone(kind: String, detail: String?, identity: SeshIdentity?) async {
+        await post("/api/milestone", identity: identity, ["kind": kind, "detail": detail ?? ""])
+    }
+
     func heartbeat(identity: SeshIdentity?) async {
         await post("/api/heartbeat", identity: identity, [:])
     }

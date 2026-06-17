@@ -140,7 +140,11 @@ struct StartSeshView: View {
             rollMethod: rollMethod,
             invited: Array(invited)))
         // Keep the Live Activity (Dynamic Island / lock screen) in sync.
-        LiveSeshActivityController.update(stageRaw: stage.rawValue, startedAt: startedAt, rollSeconds: rollFinalSeconds)
+        // Keep the Live Activity (Dynamic Island / lock screen) in sync, with
+        // strain, companions, and thought count.
+        LiveSeshActivityController.update(
+            stageRaw: stage.rawValue, startedAt: startedAt, rollSeconds: rollFinalSeconds,
+            strainName: strainName, companionCount: invited.count, thoughtCount: capturedThoughts.count)
         // Reflect the in-progress sesh on the Home Screen widget.
         SeshWidgetBridge.update(streak: session.currentStreak,
                                 lastStrain: session.entries.first?.strain ?? "—",
@@ -544,7 +548,13 @@ struct StartSeshView: View {
         let isRecord = session.submitRollTime(seconds: secs, method: rollMethod)
         rollWasRecord = isRecord
         showRollComplete = true
-        if isRecord { Haptics.success() } else { Haptics.tap() }
+        if isRecord {
+            Haptics.success()
+            // Tell friends about the new record (push + feed).
+            let t = String(format: "%d:%02d", secs / 60, secs % 60)
+            social.broadcastMilestone(kind: "roll_record",
+                                      detail: "\(rollMethod) rolled in \(t)")
+        } else { Haptics.tap() }
         persistLive()
     }
 

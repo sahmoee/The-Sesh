@@ -25,15 +25,20 @@ enum LiveSeshActivityController {
     }
 
     /// Start (or restart) the Live Activity for an in-progress sesh.
-    static func start(strain: String, stageRaw: String, startedAt: Date) {
+    static func start(strain: String, stageRaw: String, startedAt: Date,
+                      companionCount: Int = 0, thoughtCount: Int = 0) {
         guard isAvailable else { return }
         // If one is already running, just update it instead of stacking.
         if current != nil {
-            update(stageRaw: stageRaw, startedAt: startedAt)
+            update(stageRaw: stageRaw, startedAt: startedAt, strainName: strain,
+                   companionCount: companionCount, thoughtCount: thoughtCount)
             return
         }
         let attributes = SeshActivityAttributes(strainName: strain.isEmpty ? "Sesh" : strain)
-        let state = SeshActivityAttributes.ContentState(stageRaw: stageRaw, startedAt: startedAt, rollSeconds: nil)
+        let state = SeshActivityAttributes.ContentState(
+            stageRaw: stageRaw, startedAt: startedAt, rollSeconds: nil,
+            strainName: strain.isEmpty ? nil : strain,
+            companionCount: companionCount, thoughtCount: thoughtCount)
         do {
             current = try Activity.request(
                 attributes: attributes,
@@ -43,10 +48,14 @@ enum LiveSeshActivityController {
         }
     }
 
-    /// Update the running activity's stage / roll result.
-    static func update(stageRaw: String, startedAt: Date, rollSeconds: Int? = nil) {
+    /// Update the running activity's stage / roll result / richer fields.
+    static func update(stageRaw: String, startedAt: Date, rollSeconds: Int? = nil,
+                       strainName: String? = nil, companionCount: Int = 0, thoughtCount: Int = 0) {
         guard let activity = current else { return }
-        let state = SeshActivityAttributes.ContentState(stageRaw: stageRaw, startedAt: startedAt, rollSeconds: rollSeconds)
+        let state = SeshActivityAttributes.ContentState(
+            stageRaw: stageRaw, startedAt: startedAt, rollSeconds: rollSeconds,
+            strainName: (strainName?.isEmpty ?? true) ? nil : strainName,
+            companionCount: companionCount, thoughtCount: thoughtCount)
         Task { await activity.update(.init(state: state, staleDate: nil)) }
     }
 

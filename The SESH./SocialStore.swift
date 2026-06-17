@@ -240,6 +240,16 @@ final class SocialStore {
         Task { await api.postActivity(activity, detail: detail, identity: identity) }
     }
 
+    /// Broadcast a milestone (new roll record, etc.) so friends get a push.
+    /// Also drops a local feed event so it shows in the activity list.
+    func broadcastMilestone(kind: String, detail: String? = nil) {
+        let event = ActivityEvent(id: UUID().uuidString, userHandle: me.handle,
+                                  userName: me.displayName, activity: me.activity,
+                                  detail: detail, at: Date())
+        feed.insert(event, at: 0)
+        Task { await api.postMilestone(kind: kind, detail: detail, identity: identity) }
+    }
+
     /// Friends currently doing something (for the presence row).
     var activeFriends: [SeshUser] {
         friends.filter { $0.activity.isActive }

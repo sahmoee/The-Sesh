@@ -25,8 +25,16 @@ struct SeshActivityAttributes: ActivityAttributes {
         var startedAt: Date
         /// Optional roll result (seconds) once the roll timer has been stopped.
         var rollSeconds: Int?
+        /// The strain being smoked, if chosen (can change mid-sesh, so it lives
+        /// here in the live state rather than only in the static attributes).
+        var strainName: String?
+        /// Number of companions in the sesh (0 = solo).
+        var companionCount: Int?
+        /// Count of thoughts captured so far this sesh.
+        var thoughtCount: Int?
 
         var stageLabel: String { stageRaw }
+        var hasStrain: Bool { !(strainName ?? "").isEmpty }
     }
 
     /// Unchanging for the life of the activity.

@@ -70,7 +70,7 @@ struct SeshLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(spacing: 1) {
-                        Text(context.attributes.strainName)
+                        Text(context.state.strainName ?? context.attributes.strainName)
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(W.text).lineLimit(1)
                         Text(context.state.stageLabel)
@@ -80,6 +80,21 @@ struct SeshLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.bottom) {
                     if let r = context.state.rollSeconds {
                         Text("Rolled in \(r)s").font(.system(size: 11)).foregroundStyle(W.green)
+                    } else {
+                        let companions = context.state.companionCount ?? 0
+                        let thoughts = context.state.thoughtCount ?? 0
+                        if companions > 0 || thoughts > 0 {
+                            HStack(spacing: 12) {
+                                if companions > 0 {
+                                    Label("\(companions) with you", systemImage: "person.2.fill")
+                                        .font(.system(size: 11)).foregroundStyle(W.green)
+                                }
+                                if thoughts > 0 {
+                                    Label("\(thoughts) thought\(thoughts == 1 ? "" : "s")", systemImage: "quote.bubble.fill")
+                                        .font(.system(size: 11)).foregroundStyle(W.gold)
+                                }
+                            }
+                        }
                     }
                 }
             } compactLeading: {
@@ -98,13 +113,30 @@ struct SeshLiveActivity: Widget {
     }
 
     private func lockScreen(_ context: ActivityViewContext<SeshActivityAttributes>) -> some View {
-        HStack(spacing: 14) {
+        // Prefer the live strain (can change mid-sesh); fall back to the static one.
+        let strain = context.state.strainName ?? context.attributes.strainName
+        let companions = context.state.companionCount ?? 0
+        let thoughts = context.state.thoughtCount ?? 0
+        return HStack(spacing: 14) {
             Text(W.stageEmoji(context.state.stageRaw)).font(.system(size: 30))
             VStack(alignment: .leading, spacing: 2) {
-                Text(context.attributes.strainName)
+                Text(strain)
                     .font(.system(size: 16, weight: .bold)).foregroundStyle(W.text).lineLimit(1)
                 Text(context.state.stageLabel)
                     .font(.system(size: 12)).foregroundStyle(W.subtle)
+                // Extra context line: companions and/or thoughts when present.
+                if companions > 0 || thoughts > 0 {
+                    HStack(spacing: 8) {
+                        if companions > 0 {
+                            Label("\(companions)", systemImage: "person.2.fill")
+                                .font(.system(size: 10)).foregroundStyle(W.green)
+                        }
+                        if thoughts > 0 {
+                            Label("\(thoughts)", systemImage: "quote.bubble.fill")
+                                .font(.system(size: 10)).foregroundStyle(W.gold)
+                        }
+                    }
+                }
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
