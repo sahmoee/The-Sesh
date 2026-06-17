@@ -49,6 +49,11 @@ struct HomeView: View {
                     // ── Social: presence, broadcast, feed ──
                     VStack(spacing: 18) {
                         PresenceRow(onTapFriend: { friendPeek = $0 })
+                        // Big color-coded CURRENT STATUS card when a status/sesh
+                        // is live; otherwise the compact vibe-setting strip.
+                        if social.me.activity != .idle {
+                            CurrentStatusCard()
+                        }
                         BroadcastStrip()
 
                         // Stash — your current supply + purchase log

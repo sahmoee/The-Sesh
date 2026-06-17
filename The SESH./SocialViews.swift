@@ -924,10 +924,30 @@ struct FriendsView: View {
                 ForEach(friends) { f in
                     HStack(spacing: 12) {
                         PresenceAvatar(user: f, size: 44)
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(f.displayName).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
-                            Text(f.activity.isActive ? f.activity.phrase : "Last seen \(seshAgo(f.lastSeen))")
-                                .font(.system(size: 12)).foregroundStyle(f.activity.isActive ? f.activity.tint : Palette.textSecondary)
+                            if f.activity.isActive {
+                                // Emoji + sentence-case status, e.g. "🌿 Rolling up"
+                                HStack(spacing: 5) {
+                                    Text(f.activity.emoji).font(.system(size: 12))
+                                    Text(f.activity.phrase.replacingOccurrences(of: "is ", with: "").capitalized)
+                                        .font(.system(size: 13, weight: .medium)).foregroundStyle(f.activity.tint)
+                                }
+                                // Live indicator / elapsed
+                                HStack(spacing: 5) {
+                                    if f.activity == .live {
+                                        Circle().fill(Palette.moodAngry).frame(width: 6, height: 6)
+                                        Text("Live now").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+                                    } else {
+                                        Text("\(seshAgo(f.lastSeen)) elapsed").font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
+                                    }
+                                }
+                            } else {
+                                HStack(spacing: 5) {
+                                    Circle().fill(Palette.textTertiary.opacity(0.5)).frame(width: 6, height: 6)
+                                    Text("Offline · \(seshAgo(f.lastSeen))").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+                                }
+                            }
                         }
                         Spacer()
                         if f.streak > 0 {

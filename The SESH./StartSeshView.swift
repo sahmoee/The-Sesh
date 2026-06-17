@@ -22,6 +22,9 @@ func seshDuration(_ interval: TimeInterval) -> String {
 }
 
 struct StartSeshView: View {
+    /// When set (from the "What are you doing?" chooser), the sesh starts live
+    /// immediately in this activity instead of showing the setup phase.
+    var initialActivity: StartActivity? = nil
     @Environment(SocialStore.self) private var social
     @Environment(StrainStore.self) private var strains
     @Environment(AppSession.self) private var session
@@ -49,6 +52,8 @@ struct StartSeshView: View {
     @State private var rollStartedAt: Date? = nil
     @State private var rollElapsed: TimeInterval = 0
     @State private var rollFinalSeconds: Int? = nil
+    @State private var showRollComplete = false
+    @State private var rollWasRecord = false
     @State private var rollMethod = "Joint"   // Joint or Blunt — which record to set
 
     var body: some View {
@@ -76,10 +81,37 @@ struct StartSeshView: View {
             }
         }
         .onAppear(perform: restoreIfNeeded)
+        .fullScreenCover(isPresented: $showRollComplete) {
+            RollCompleteView(
+                seconds: rollFinalSeconds ?? 0,
+                isRecord: rollWasRecord,
+                onStartSmoking: {
+                    showRollComplete = false
+                    stage = .smoking
+                    social.setMyActivity(.smoking)
+                    persistLive()
+                },
+                onLogSession: {
+                    showRollComplete = false
+                    phase = .save
+                })
+            .environment(session).environment(strains).environment(social)
+        }
     }
 
     /// If a sesh was left running, drop straight back into it.
     private func restoreIfNeeded() {
+        // If launched from the "What are you doing?" chooser, start live now in
+        // the chosen activity (skip setup), unless a sesh is already resuming.
+        if phase == .setup, session.liveSesh == nil, let a = initialActivity {
+            startedAt = Date(); elapsed = 0
+            stage = a.stage
+            phase = .live
+            social.setMyActivity(a.activity)
+            LiveSeshActivityController.start(strain: strainName, stageRaw: stage.rawValue, startedAt: startedAt)
+            persistLive()
+            return
+        }
         guard phase == .setup, let s = session.liveSesh else { return }
         startedAt = s.startedAt
         stage = s.stage
@@ -510,6 +542,8 @@ struct StartSeshView: View {
         rollFinalSeconds = secs
         rollStartedAt = nil
         let isRecord = session.submitRollTime(seconds: secs, method: rollMethod)
+        rollWasRecord = isRecord
+        showRollComplete = true
         if isRecord { Haptics.success() } else { Haptics.tap() }
         persistLive()
     }

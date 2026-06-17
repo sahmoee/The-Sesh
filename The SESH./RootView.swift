@@ -49,6 +49,8 @@ struct RootView: View {
     @State private var showLog = false
     @State private var showQuickThought = false
     @State private var showStartSesh = false
+    @State private var showActivityChooser = false
+    @State private var chosenActivity: StartActivity? = nil
     @State private var showCompare = false
     @State private var logPrefill: StrainProfile?
     @State private var toastMessage: String?
@@ -63,7 +65,7 @@ struct RootView: View {
                 HomeView(
                     onLog: { logPrefill = nil; showLog = true },
                     onQuickThought: { showQuickThought = true },
-                    onStartSesh: { showStartSesh = true },
+                    onStartSesh: { showActivityChooser = true },
                     onCompare: { showCompare = true }
                 )
             case .log:  JournalView()
@@ -104,13 +106,25 @@ struct RootView: View {
             ComposeThoughtView().environment(session).presentationDetents([.medium, .large])
                 .onAppear { thoughtCountBefore = session.thoughts.count }
         }
-        .fullScreenCover(isPresented: $showStartSesh) {
-            StartSeshView()
+        .fullScreenCover(isPresented: $showStartSesh, onDismiss: { chosenActivity = nil }) {
+            StartSeshView(initialActivity: chosenActivity)
                 .environment(session).environment(strains).environment(social)
                 .onDisappear {
                     if session.entries.count > entryCountBefore { toastMessage = "Sesh saved to Journal" }
                 }
                 .onAppear { entryCountBefore = session.entries.count }
+        }
+        .sheet(isPresented: $showActivityChooser, onDismiss: {
+            // If the user picked an activity, launch the live sesh now that the
+            // chooser has dismissed. (No-op if they cancelled.)
+            if chosenActivity != nil { showStartSesh = true }
+        }) {
+            StartSeshChooser(onPick: { act in
+                chosenActivity = act
+            })
+            .environment(social)
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showCompare) {
             CompareStrainsView().environment(session).environment(strains)
