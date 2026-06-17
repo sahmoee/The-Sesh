@@ -163,7 +163,6 @@ struct LiveStream: Codable, Identifiable, Hashable {
 enum SeshStage: String, Codable, CaseIterable, Identifiable {
     case pickingStrain = "Picking Strain"
     case rollingUp     = "Rolling Up"
-    case sparkedUp     = "Sparked Up"
     case smoking       = "Smoking"
     case finished      = "Finished"
 
@@ -172,7 +171,6 @@ enum SeshStage: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .pickingStrain: return "🌿"
         case .rollingUp:     return "🧻"
-        case .sparkedUp:     return "🔥"
         case .smoking:       return "💨"
         case .finished:      return "✅"
         }
@@ -183,8 +181,7 @@ enum SeshStage: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .pickingStrain: return "Pick what you're smoking. Type a strain name and we'll match it from your library."
         case .rollingUp:     return "Grinding, packing, and rolling. Time your roll to set a personal record, then stop when you spark up."
-        case .sparkedUp:     return "Light it up. Take your first hit whenever you're ready."
-        case .smoking:       return "Enjoy the sesh. Attach a thought if something comes to mind."
+        case .smoking:       return "Spark up and enjoy. Attach a thought if something comes to mind."
         case .finished:      return "Wrap it up and save this sesh to your journal."
         }
     }
@@ -194,7 +191,6 @@ enum SeshStage: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .pickingStrain: return .idle
         case .rollingUp:     return .rollingUp
-        case .sparkedUp:     return .lighting
         case .smoking:       return .smoking
         case .finished:      return .idle
         }

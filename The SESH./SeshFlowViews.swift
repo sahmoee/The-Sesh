@@ -98,8 +98,8 @@ enum StartActivity: String, CaseIterable, Identifiable {
     var stage: SeshStage {
         switch self {
         case .rollingUp:   return .pickingStrain  // start at strain selection
-        case .smoking:     return .sparkedUp      // jump to sparked up (timer running)
-        case .hittingBong: return .sparkedUp
+        case .smoking:     return .smoking         // jump straight to smoking (merged sparked-up)
+        case .hittingBong: return .smoking
         }
     }
     var tint: Color {

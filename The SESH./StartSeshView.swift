@@ -104,7 +104,8 @@ struct StartSeshView: View {
 
     /// If a sesh was left running, drop straight back into it.
     private func restoreIfNeeded() {
-        // Widget "end" action: restore the live sesh (if any) and jump to save.
+        // Widget "end" action: end the live sesh (stop timer + Live Activity),
+        // then jump to the skippable save screen.
         if phase == .setup, endImmediately {
             if let s = session.liveSesh {
                 startedAt = s.startedAt; stage = s.stage; sessionType = s.sessionType
@@ -112,6 +113,11 @@ struct StartSeshView: View {
                 rollFinalSeconds = s.rollFinalSeconds; rollMethod = s.rollMethod
                 invited = Set(s.invited); elapsed = s.elapsed
             }
+            // Actually END it: clear the resumable live state, stop the Live
+            // Activity, and drop the broadcast status so Home no longer shows it.
+            session.clearLiveSesh()
+            LiveSeshActivityController.end()
+            social.setMyActivity(.idle)
             phase = .save
             return
         }

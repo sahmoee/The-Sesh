@@ -36,10 +36,26 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
+            version: "24.0.0",
+            buildLabel: "June 2026",
+            headline: "Smarter sesh controls.",
+            isLatest: true,
+            entries: [
+                ChangelogEntry(icon: "square.grid.2x2.fill", tint: Palette.green,
+                               title: "Start a sesh from your Home Screen",
+                               detail: "Tap Roll up to pick a strain, Smoke to jump straight into it, or End to wrap up — right from the widget."),
+                ChangelogEntry(icon: "exclamationmark.triangle.fill", tint: Palette.gold,
+                               title: "No more lost seshes",
+                               detail: "Starting a new sesh while one is running now asks whether to save or discard the one in progress."),
+                ChangelogEntry(icon: "flame.fill", tint: Palette.greenBright,
+                               title: "Simpler flow",
+                               detail: "Sparked Up and Smoking are now a single step."),
+            ]),
+        ChangelogVersion(
             version: "23.0.0",
             buildLabel: "June 2026",
             headline: "A bolder sesh flow.",
-            isLatest: true,
+            isLatest: false,
             entries: [
                 ChangelogEntry(icon: "smoke.fill", tint: Palette.greenBright,
                                title: "Pick your vibe to start",
