@@ -168,6 +168,15 @@ struct CompareStrainsView: View {
                     let effs = profile(p)?.effects.prefix(2).map(\.name).joined(separator: ", ")
                     return (effs?.isEmpty ?? true) ? "—" : (effs ?? "—")
                 })
+                // Profile & feel (derived from each strain's type + effects)
+                sectionLabel("PROFILE & FEEL")
+                gridDataRow("Genetics", picks.map { profile($0).map(StrainInsights.genetics) ?? "—" })
+                gridDataRow("Typical Feel", picks.map { profile($0).map(StrainInsights.typicalFeel) ?? "—" })
+                gridDataRow("Best Time", picks.map { profile($0).map(StrainInsights.bestTime) ?? "—" })
+                gridDataRow("Flavor", picks.map { profile($0).map(StrainInsights.flavor) ?? "—" })
+                gridLevelRow("Couch Lock", picks.map { profile($0).map(StrainInsights.couchLock) })
+                gridLevelRow("Socializing", picks.map { profile($0).map(StrainInsights.socializing) })
+                gridLevelRow("Sleep Aid", picks.map { profile($0).map(StrainInsights.sleepAid) })
                 // Your personal history
                 sectionLabel("YOUR HISTORY")
                 gridDataRow("Your Rating", stats.map { $0.hasHistory ? String(format: "%.1f", $0.averageRating) : "—" })
@@ -212,6 +221,28 @@ struct CompareStrainsView: View {
             }
         }
         .padding(.vertical, 10)
+        .overlay(Rectangle().fill(Palette.stroke).frame(height: 0.5), alignment: .bottom)
+    }
+
+    /// A row of derived 1–5 levels (Couch Lock, Socializing, Sleep Aid) shown as
+    /// a label plus a small proportional bar.
+    private func gridLevelRow(_ label: String, _ levels: [InsightLevel?]) -> some View {
+        HStack(spacing: 0) {
+            Text(label).font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+                .frame(width: 96, alignment: .leading)
+            ForEach(Array(levels.enumerated()), id: \.offset) { _, lvl in
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(lvl?.label ?? "—")
+                        .font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.text)
+                    if let lvl {
+                        GeometryFreeBar(fraction: lvl.fraction)
+                            .frame(width: 70, height: 4)
+                    }
+                }
+                .frame(width: 92, alignment: .leading)
+            }
+        }
+        .padding(.vertical, 9)
         .overlay(Rectangle().fill(Palette.stroke).frame(height: 0.5), alignment: .bottom)
     }
 
