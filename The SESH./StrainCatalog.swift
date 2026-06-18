@@ -11,6 +11,12 @@
 
 import SwiftUI
 
+// Portions of the strain catalog are imported from the Kushy open cannabis
+// dataset (https://github.com/kushyapp/cannabis-dataset), which is MIT licensed.
+// Only structured factual fields (name, type, effects, flavor, lineage, THC/CBD)
+// are used; original prose descriptions are not reproduced. Imported entries are
+// attributed via sources: ["Kushy (MIT)"].
+
 // MARK: - Model
 
 enum StrainType: String, Codable, CaseIterable, Identifiable {
@@ -262,6 +268,1659 @@ final class StrainStore {
 /// license-clean placeholder values. Extend freely.
 enum BundledStrains {
     static let all: [StrainProfile] = [
+        // --- Imported from Kushy open dataset (MIT licensed) ---
+        StrainProfile(
+            id: "100og", name: "100 OG", type: .hybrid, cbd: 16.0, effects: [.init(name: "Focused")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Old School Breeder's Association"),
+        StrainProfile(
+            id: "a10", name: "A-10", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Sleepy")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "afghanibullrider", name: "Afghani Bullrider", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "afghanbigbud", name: "Afghan Big Bud", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Lemon"), .init(name: "Lavender")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "afghani", name: "Afghani", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "afghooey", name: "Afghooey", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "afgooey", name: "Afgooey", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "aloha", name: "Aloha", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "anesthesia", name: "Anesthesia", type: .indica, effects: [.init(name: "Hungry"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "arabiangold", name: "Arabian Gold", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Sleepy"), .init(name: "Creative")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bcsweettooth", name: "BC Sweet Tooth", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Honey")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "BC Bud Depot"),
+        StrainProfile(
+            id: "berkeley", name: "Berkeley", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Focused")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bigwreck", name: "Big Wreck", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Tingly"), .init(name: "Happy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blacklabelkush", name: "Black Label Kush", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackberryhashplant", name: "Blackberry Hashplant", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bluebayou", name: "Blue Bayou", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bluemystic", name: "Blue Mystic", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Sleepy")], flavors: [.init(name: "Blueberry"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bluesatellite", name: "Blue Satellite", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Spice of Life Seeds"),
+        StrainProfile(
+            id: "brainstormhaze", name: "Brainstorm Haze", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Energetic")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Delta-9 Labs"),
+        StrainProfile(
+            id: "bubbaog", name: "Bubba OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dr. Greenthumb Seeds"),
+        StrainProfile(
+            id: "butterscotch", name: "Butterscotch", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Creative"), .init(name: "Relaxed"), .init(name: "Energetic")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "c13haze", name: "C13 Haze", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "cannalopehaze", name: "Cannalope Haze", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "churchog", name: "Church OG", type: .hybrid, cbd: 20.0, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "crackerjack", name: "Cracker Jack", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Creative")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "darthvaderog", name: "Darth Vader OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Grape"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "diablo", name: "Diablo", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Next Generation Seeds"),
+        StrainProfile(
+            id: "domino", name: "Domino", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "doublediesel", name: "Double Diesel", type: .hybrid, effects: [.init(name: "Creative"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Lime"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Lowlife Seeds"),
+        StrainProfile(
+            id: "firehaze", name: "Fire Haze", type: .sativa, effects: [.init(name: "Focused"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "frostbite", name: "Frostbite", type: .sativa, effects: [.init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Skunk"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "godberry", name: "Godberry", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Berry"), .init(name: "Blueberry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "goo", name: "Goo", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "goldwing", name: "Goldwing", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "grandhindu", name: "Grand Hindu", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Creative")], flavors: [.init(name: "Grape"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "grapecrush", name: "Grape Crush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Grape"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "grapeskunk", name: "Grape Skunk", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Relaxed")], flavors: [.init(name: "Skunk"), .init(name: "Earthy"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Next Generation Seeds"),
+        StrainProfile(
+            id: "grapefruithaze", name: "Grapefruit Haze", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [.init(name: "Lemon"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Next Generation Seeds"),
+        StrainProfile(
+            id: "gravity", name: "Gravity", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Rose")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "T.H.Seeds"),
+        StrainProfile(
+            id: "greencandy", name: "Green Candy", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "greencrackextreme", name: "Green Crack Extreme", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "greenkush", name: "Green Kush", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Energetic"), .init(name: "Sleepy"), .init(name: "Relaxed")], flavors: [.init(name: "Citrus"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hashberry", name: "Hashberry", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Tingly")], flavors: [.init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Mandala Seeds"),
+        StrainProfile(
+            id: "hashplanthaze", name: "Hashplant Haze", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Blueberry"), .init(name: "Sweet"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hawaiiandelight", name: "Hawaiian Delight", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hawaiiansativa", name: "Hawaiian Sativa", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hempstar", name: "Hempstar", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Focused"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dutch Passion"),
+        StrainProfile(
+            id: "hinduskunk", name: "Hindu Skunk", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Skunk"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Oaksterdam Seed Company"),
+        StrainProfile(
+            id: "j27", name: "J-27", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jacktheripper", name: "Jack the Ripper", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Lemon"), .init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA Seeds"),
+        StrainProfile(
+            id: "jamaicanpearl", name: "Jamaican Pearl", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "kaboom", name: "Kaboom", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA Seeds"),
+        StrainProfile(
+            id: "kahuna", name: "Kahuna", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Soma Seeds"),
+        StrainProfile(
+            id: "kushberry", name: "Kushberry", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lemong", name: "Lemon G", type: .hybrid, effects: [.init(name: "Focused"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Lemon"), .init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Alien Genetics"),
+        StrainProfile(
+            id: "lemonsativa", name: "Lemon Sativa", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Lemon"), .init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lionsgate", name: "Lions Gate", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Creative")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "liquidbutter", name: "Liquid Butter", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "m39", name: "M-39", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "SSSC"),
+        StrainProfile(
+            id: "madagascar", name: "Madagascar", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "makohaze", name: "Mako Haze", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Hungry")], flavors: [.init(name: "Citrus"), .init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Kiwiseeds"),
+        StrainProfile(
+            id: "mangodream", name: "Mango Dream", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Mango"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "masterbubba", name: "Master Bubba", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mazarisharif", name: "Mazar I Sharif", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Creative")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mercuryog", name: "Mercury OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mexican", name: "Mexican", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mistykush", name: "Misty Kush", type: .indica, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Mango"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mkultra", name: "MK Ultra", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "T.H.Seeds"),
+        StrainProfile(
+            id: "neptunekush", name: "Neptune Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Citrus"), .init(name: "Pine"), .init(name: "Honey")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "neptuneog", name: "Neptune OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "nuggetryog", name: "Nuggetry OG", type: .indica, effects: [.init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Happy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "orangekush", name: "Orange Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Orange"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Green Devil Genetics"),
+        StrainProfile(
+            id: "pineapplethai", name: "Pineapple Thai", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Uplifted")], flavors: [.init(name: "Pineapple"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pitbull", name: "Pitbull", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "platinumbubbakush", name: "Platinum Bubba Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Holistic Healing Collective"),
+        StrainProfile(
+            id: "platinumkush", name: "Platinum Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "platinumpurplekush", name: "Platinum Purple Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "poisonhaze", name: "Poison Haze", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "powerkush", name: "Power Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Skunk"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dinafem Seeds"),
+        StrainProfile(
+            id: "powerplant", name: "Power Plant", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Energetic")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dutch Passion Seed Company"),
+        StrainProfile(
+            id: "pureafghan", name: "Pure Afghan", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Creative")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "purekush", name: "Pure Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Uprising Seed Co."),
+        StrainProfile(
+            id: "pureog", name: "Pure OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Jade Lotus Collective"),
+        StrainProfile(
+            id: "purpleafghani", name: "Purple Afghani", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "BC Bud Depot"),
+        StrainProfile(
+            id: "purplebuddha", name: "Purple Buddha", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "BC Bud Depot"),
+        StrainProfile(
+            id: "purplecream", name: "Purple Cream", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Pine"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purpledragon", name: "Purple Dragon", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Grape"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Purple Dragon Farms"),
+        StrainProfile(
+            id: "purplegoo", name: "Purple Goo", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Lavender"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplemrnice", name: "Purple Mr. Nice", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Grape"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplenepal", name: "Purple Nepal", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Grape"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Bald Man Lala"),
+        StrainProfile(
+            id: "purplepassion", name: "Purple Passion", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purpletonic", name: "Purple Tonic", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Purple Caper Seeds"),
+        StrainProfile(
+            id: "purplewreck", name: "Purple Wreck", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Grape"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Reserva Privada"),
+        StrainProfile(
+            id: "pvcog", name: "PVC OG", type: .indica, effects: [.init(name: "Tingly"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "raspberrykush", name: "Raspberry Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "recon", name: "ReCON", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "reddwarf", name: "Red Dwarf", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Skunk"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Buddha Seeds"),
+        StrainProfile(
+            id: "redhaze", name: "Red Haze", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Hungry"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "rocklock", name: "Rocklock", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "rootbeerkush", name: "Root Beer Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Vanilla")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "seattleblue", name: "Seattle Blue", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "shishkaberry", name: "Shishkaberry", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "silverbackgorilla", name: "Silverback Gorilla", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Pine"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "skydog", name: "Skydog", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourchocolate", name: "Sour Chocolate", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Sleepy"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourflower", name: "Sour Flower", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Joe Clone"),
+        StrainProfile(
+            id: "supercatpiss", name: "Super Cat Piss", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Coffee"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "supergreencrack", name: "Super Green Crack", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "supermanog", name: "Superman OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "talibanpoison", name: "Taliban Poison", type: .indica, effects: [.init(name: "Hungry"), .init(name: "Sleepy"), .init(name: "Happy")], flavors: [.init(name: "Skunk"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "tangerinekush", name: "Tangerine Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus"), .init(name: "Orange"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "thaitanic", name: "Thai-Tanic", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dutch Passion Seed Company"),
+        StrainProfile(
+            id: "triplediesel", name: "Triple Diesel", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Creative")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "trueog", name: "True OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Caveman"),
+        StrainProfile(
+            id: "ultimatetrainwreck", name: "Ultimate Trainwreck", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "veniceog", name: "Venice OG", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Relaxed"), .init(name: "Tingly")], flavors: [.init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "veryberryhaze", name: "Very Berry Haze", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Apothecary Seed Company"),
+        StrainProfile(
+            id: "voodoo", name: "Voodoo", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dutch Passion Seed Company"),
+        StrainProfile(
+            id: "whiteberry", name: "White Berry", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Paradise Seeds"),
+        StrainProfile(
+            id: "yodaog", name: "Yoda OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "yumboldt", name: "Yumboldt", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sagarmatha Seeds"),
+        StrainProfile(
+            id: "burkle", name: "Burkle", type: .hybrid, cbd: 16.0, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bubblecheese", name: "Bubble Cheese", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Creative"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Big Buddha Seeds"),
+        StrainProfile(
+            id: "astroboy", name: "Astroboy", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA"),
+        StrainProfile(
+            id: "auroraindica", name: "Aurora Indica", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Pine"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Nirvana"),
+        StrainProfile(
+            id: "b52", name: "B-52", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Homegrown Fantaseeds"),
+        StrainProfile(
+            id: "bigbang", name: "Big Bang", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Green House Seed Co."),
+        StrainProfile(
+            id: "bigmac", name: "Big Mac", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackice", name: "Black Ice", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackmamba", name: "Black Mamba", type: .indica, cbd: 5.0, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Blue Grass"),
+        StrainProfile(
+            id: "blackrussian", name: "Black Russian", type: .hybrid, cbd: 6.0, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Citrus"), .init(name: "Earthy"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Nebu"),
+        StrainProfile(
+            id: "bluedynamite", name: "Blue Dynamite", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Citrus"), .init(name: "Lemon"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "THC Seeds"),
+        StrainProfile(
+            id: "bluegod", name: "Blue God", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Blueberry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Jordan of the Islands"),
+        StrainProfile(
+            id: "blueberryblast", name: "Blueberry Blast", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Blueberry"), .init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "brainsdamage", name: "Brains Damage", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Creative"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "KC Brains"),
+        StrainProfile(
+            id: "bronzewhaler", name: "Bronze Whaler", type: .hybrid, effects: [.init(name: "Hungry"), .init(name: "Relaxed")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"], breeder: "MJOZ Seeds"),
+        StrainProfile(
+            id: "californiagrapefruit", name: "California Grapefruit", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "chocolatechunk", name: "Chocolate Chunk", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "T.H.Seeds"),
+        StrainProfile(
+            id: "colombiangold", name: "Colombian Gold", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Brazilian Seed Company"),
+        StrainProfile(
+            id: "crystalberry", name: "Crystalberry", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Tingly")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Cannabis Pros"),
+        StrainProfile(
+            id: "deepchunk", name: "Deep Chunk", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Ammonia")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Tom Hill"),
+        StrainProfile(
+            id: "destroyer", name: "Destroyer", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Lavender"), .init(name: "Ammonia"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Canna BioGen"),
+        StrainProfile(
+            id: "thedoctor", name: "The Doctor", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Green House Seed Co."),
+        StrainProfile(
+            id: "doublepurpledoja", name: "Double Purple Doja", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Subcool"),
+        StrainProfile(
+            id: "dutchdragon", name: "Dutch Dragon", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Paradise Seeds"),
+        StrainProfile(
+            id: "euforia", name: "Euforia", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dutch Passion Seed Company"),
+        StrainProfile(
+            id: "hazemist", name: "Haze Mist", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Flying Dutchmen Seed Company"),
+        StrainProfile(
+            id: "herijuana", name: "Herijuana", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "thehog", name: "The HOG", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "T.H.Seeds"),
+        StrainProfile(
+            id: "jamaican", name: "Jamaican", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Federation Seed Company"),
+        StrainProfile(
+            id: "keralakrush", name: "Kerala Krush", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Focused"), .init(name: "Relaxed")], flavors: [.init(name: "Mango"), .init(name: "Sweet"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Flying Dutchmen Seed Company"),
+        StrainProfile(
+            id: "ledauno", name: "Leda Uno", type: .hybrid, effects: [.init(name: "Tingly"), .init(name: "Focused"), .init(name: "Hungry")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"], breeder: "K.C. Brains"),
+        StrainProfile(
+            id: "lovepotion1", name: "Love Potion #1", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Citrus"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Reeferman Seeds"),
+        StrainProfile(
+            id: "mexicansativa", name: "Mexican Sativa", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sensi Seeds"),
+        StrainProfile(
+            id: "mrnice", name: "Mr. Nice", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sensi Seeds"),
+        StrainProfile(
+            id: "northernberry", name: "Northern Berry", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Peak Seeds"),
+        StrainProfile(
+            id: "panamapunch", name: "Panama Punch", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Focused")], flavors: [.init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Cannabis Pros"),
+        StrainProfile(
+            id: "phantomog", name: "Phantom OG", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "N.E."),
+        StrainProfile(
+            id: "nightnurse", name: "Night Nurse", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Reeferman Seeds"),
+        StrainProfile(
+            id: "chronicthunder", name: "Chronic Thunder", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "5 Star Cannabis"),
+        StrainProfile(
+            id: "wetdream", name: "Wet Dream", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dispensaries Data"),
+        StrainProfile(
+            id: "firewalkerog", name: "Firewalker OG", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "OMG PMO Collective"),
+        StrainProfile(
+            id: "9poundhammer", name: "9 Pound Hammer", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA Seeds"),
+        StrainProfile(
+            id: "chocolatefondue", name: "Chocolate Fondue", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "fruitychronicjuice", name: "Fruity Chronic Juice", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Creative")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Delicious Seeds"),
+        StrainProfile(
+            id: "candyland", name: "Candyland", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Green Relief"),
+        StrainProfile(
+            id: "trainingday", name: "Training Day", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "deepsleep", name: "Deep Sleep", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "PAPA GANJA"),
+        StrainProfile(
+            id: "bluebuddha", name: "Blue Buddha", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"], breeder: "PAPA GANJA"),
+        StrainProfile(
+            id: "watermelon", name: "Watermelon", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Green Relief"),
+        StrainProfile(
+            id: "zombieog", name: "Zombie OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "aceofspades", name: "Ace of Spades", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA Seeds"),
+        StrainProfile(
+            id: "bluedot", name: "Blue Dot", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Holistic Healing Collective"),
+        StrainProfile(
+            id: "sonomacoma", name: "Sonoma Coma", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Energetic")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "masterog", name: "Master OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Citrus"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Cabin Fever Seed Breeders"),
+        StrainProfile(
+            id: "legendarylemon", name: "Legendary Lemon", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Sleepy")], flavors: [.init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Mr. Lemon"),
+        StrainProfile(
+            id: "baydream", name: "Bay Dream", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Uplifted"), .init(name: "Focused")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Grand Daddy Purp"),
+        StrainProfile(
+            id: "blueberrydream", name: "Blueberry Dream", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Creative")], flavors: [.init(name: "Blueberry"), .init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bluemagic", name: "Blue Magic", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Focused")], flavors: [.init(name: "Blueberry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "All Green Collective"),
+        StrainProfile(
+            id: "1024", name: "1024", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Creative")], flavors: [.init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Medical Seeds Co."),
+        StrainProfile(
+            id: "3dcbd", name: "3D CBD", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Sleepy"), .init(name: "Tingly")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "aceh", name: "Aceh", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Happy")], flavors: [.init(name: "Earthy"), .init(name: "Mango"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "afghancow", name: "Afghan Cow", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Energetic")], flavors: [.init(name: "Sweet"), .init(name: "Vanilla")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dr. Krippling"),
+        StrainProfile(
+            id: "african", name: "African", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "alaska", name: "Alaska", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Pepper")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Tikun Olam"),
+        StrainProfile(
+            id: "alaskanice", name: "Alaskan Ice", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Green House Seed Co."),
+        StrainProfile(
+            id: "aliceinwonderland", name: "Alice in Wonderland", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Creative")], flavors: [.init(name: "Pine"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "aliendutchess", name: "Alien Dutchess", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "alienstardawg", name: "Alien Stardawg", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Tingly")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Green Beanz Seeds"),
+        StrainProfile(
+            id: "alphablue", name: "Alpha Blue", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Blueberry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "alphaexpress", name: "Alpha Express", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "amnesia", name: "Amnesia", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "appalachianpower", name: "Appalachian Power", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Focused"), .init(name: "Uplifted")], flavors: [.init(name: "Grape"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "asianfantasy", name: "Asian Fantasy", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "atomicalhaze", name: "Atomical Haze", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bangihaze", name: "Bangi Haze", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "ACE Seeds"),
+        StrainProfile(
+            id: "bediol", name: "Bediol", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Citrus"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bertberrycheesecake", name: "Bertberry Cheesecake", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Blueberry"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bigsurholybud", name: "Big Sur Holy Bud", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Bodhi Seeds"),
+        StrainProfile(
+            id: "birdseye", name: "Birds Eye", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackberrydiesel", name: "Blackberry Diesel", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Relaxed"), .init(name: "Euphoric")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackberryhaze", name: "Blackberry Haze", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Hungry"), .init(name: "Tingly")], flavors: [.init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "ABC Seeds"),
+        StrainProfile(
+            id: "blackberrylimehaze", name: "Blackberry Lime Haze", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blaze", name: "Blaze", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Creative")], flavors: [.init(name: "Blueberry"), .init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "BC Seed Company"),
+        StrainProfile(
+            id: "blucifer", name: "Blucifer", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Creative")], flavors: [.init(name: "Blueberry"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Terraform Genetics"),
+        StrainProfile(
+            id: "bluemountainfire", name: "Blue Mountain Fire", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bobsaget", name: "Bob Saget", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Relaxed")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "brazilamazonia", name: "Brazil Amazonia", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "buffalobill", name: "Buffalo Bill", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Tingly"), .init(name: "Happy")], flavors: [.init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "cambodianhaze", name: "Cambodian Haze", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "cambodian", name: "Cambodian", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "caramelo", name: "Caramelo", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Lavender")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Delicious Seeds"),
+        StrainProfile(
+            id: "carnival", name: "Carnival", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Ministry of Cannabis"),
+        StrainProfile(
+            id: "cbdmangohaze", name: "CBD Mango Haze", type: .hybrid, effects: [.init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Relaxed"), .init(name: "Happy")], flavors: [.init(name: "Pepper"), .init(name: "Mango")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "CBD Crew"),
+        StrainProfile(
+            id: "centralamerican", name: "Central American", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "cerebrohaze", name: "Cerebro Haze", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Pepper"), .init(name: "Citrus"), .init(name: "Vanilla")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "chocolatediesel", name: "Chocolate Diesel", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Creative"), .init(name: "Uplifted")], flavors: [.init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "B.O.G. Seeds"),
+        StrainProfile(
+            id: "chocolatethai", name: "Chocolate Thai", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Coffee")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DJ Short"),
+        StrainProfile(
+            id: "chocolatethunder", name: "Chocolate Thunder", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Focused")], flavors: [.init(name: "Honey")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "cinex", name: "Cinex", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Cannaman Farms"),
+        StrainProfile(
+            id: "cirrus", name: "Cirrus", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "citruspunch", name: "Citrus Punch", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Relaxed")], flavors: [.init(name: "Citrus"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "clementine", name: "Clementine", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus"), .init(name: "Orange"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "colombianmojito", name: "Colombian Mojito", type: .sativa, effects: [.init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "congo", name: "Congo", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Ammonia"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "cosmiccollision", name: "Cosmic Collision", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "MTG Seeds"),
+        StrainProfile(
+            id: "criticalkalimist", name: "Critical Kali Mist", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Pine"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "crystalcoma", name: "Crystal Coma", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "damnsour", name: "Damn Sour", type: .sativa, effects: [.init(name: "Hungry"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Ammonia")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "danceworld", name: "Dance World", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Royal Queen"),
+        StrainProfile(
+            id: "djandywilliams", name: "DJ Andy Williams", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Energetic")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "django", name: "Django", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "doctordoctor", name: "Doctor Doctor", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Sweet"), .init(name: "Strawberry"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "doox", name: "Doox", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Tingly")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "drgrinspoon", name: "Dr. Grinspoon", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Creative")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "dreambeaver", name: "Dream Beaver", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Pineapple"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Bodhi Seeds"),
+        StrainProfile(
+            id: "drizella", name: "Drizella", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dynasty Seeds"),
+        StrainProfile(
+            id: "dutchhawaiian", name: "Dutch Hawaiian", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "dutchhaze", name: "Dutch Haze", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Creative"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dutch Passion Seed Company"),
+        StrainProfile(
+            id: "eastcoastalien", name: "East Coast Alien", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Creative")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "electriclemong", name: "Electric Lemon G", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Energetic"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Lemon"), .init(name: "Citrus"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "T.H.Seeds"),
+        StrainProfile(
+            id: "elephant", name: "Elephant", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Creative"), .init(name: "Focused"), .init(name: "Relaxed"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "elphinstone", name: "Elphinstone", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Focused"), .init(name: "Relaxed")], flavors: [.init(name: "Citrus"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Bodhi Seeds"),
+        StrainProfile(
+            id: "flolimone", name: "Flo Limone", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Focused"), .init(name: "Relaxed"), .init(name: "Creative")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "fullmoon", name: "Full Moon", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Ammonia")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sativa Seedbank"),
+        StrainProfile(
+            id: "goldentangie", name: "Golden Tangie", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Focused"), .init(name: "Happy")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "gorkle", name: "Gorkle", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "greenhaze", name: "Green Haze", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "greenlantern", name: "Green Lantern", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Citrus"), .init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "harleystorm", name: "Harley Storm", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hawaii78", name: "Hawaiâ€™i â€˜78", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Pineapple")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hawaiiandiesel", name: "Hawaiian Diesel", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hawaiiandream", name: "Hawaiian Dream", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Euphoric"), .init(name: "Energetic")], flavors: [.init(name: "Sweet"), .init(name: "Pineapple")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hawaiianhaze", name: "Hawaiian Haze", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hawaiianmayangold", name: "Hawaiian Mayan Gold", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hawaiianpunch", name: "Hawaiian Punch", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sagarmatha Seeds"),
+        StrainProfile(
+            id: "hazeberry", name: "Haze Berry", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Royal Queen"),
+        StrainProfile(
+            id: "hazewreck", name: "Haze Wreck", type: .sativa, effects: [.init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "heisenbergkush", name: "Heisenberg Kush", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "higherpower", name: "Higher Power", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hippiechicken", name: "Hippie Chicken", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Sweet"), .init(name: "Pepper")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hoodwreck", name: "Hoodwreck", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Focused")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hurricane", name: "Hurricane", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "inthepines", name: "In The Pines", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Pine"), .init(name: "Pineapple"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Aficionado Seeds"),
+        StrainProfile(
+            id: "incrediblehulk", name: "Incredible Hulk", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "islandhaze", name: "Island Haze", type: .hybrid, effects: [.init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "islandmauihaze", name: "Island Maui Haze", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Creative"), .init(name: "Uplifted")], flavors: [.init(name: "Mango"), .init(name: "Ammonia")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jackdiesel", name: "Jack Diesel", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Creative"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Positronics Seeds"),
+        StrainProfile(
+            id: "jacksmack", name: "Jack Smack", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Creative")], flavors: [.init(name: "Blueberry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jackwreck", name: "Jack Wreck", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Citrus"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jackalope", name: "Jackalope", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jackywhite", name: "Jacky White", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Paradise Seeds"),
+        StrainProfile(
+            id: "jahwaiian", name: "Jahwaiian", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jamaicandream", name: "Jamaican Dream", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Eva Female Seeds"),
+        StrainProfile(
+            id: "jamaicanlion", name: "Jamaican Lion", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Shadrock"),
+        StrainProfile(
+            id: "jenni", name: "Jenni", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jockhorror", name: "Jock Horror", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Hungry"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "johnnystonic", name: "Johnnyâ€™s Tonic", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [.init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "kali47", name: "Kali 47", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Vanilla")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "kauaielectric", name: "Kauaâ€™i Electric", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Energetic"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "limehaze", name: "Lime Haze", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Lime"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "kilimanjaro", name: "Kilimanjaro", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "killingfields", name: "Killing Fields", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Lemon"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "konagold", name: "Kona Gold", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Honey")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lania", name: "La NiÃ±a", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lavenderhaze", name: "Lavender Haze", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Focused"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Lavender"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lemonbubble", name: "Lemon Bubble", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Lemon"), .init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lemonjack", name: "Lemon Jack", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric")], flavors: [.init(name: "Lemon"), .init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lemonmeringue", name: "Lemon Meringue", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Lemon"), .init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Exotic Genetix"),
+        StrainProfile(
+            id: "lemonpie", name: "Lemon Pie", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Citrus"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lemonthai", name: "Lemon Thai", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Lemon"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dutch Flowers"),
+        StrainProfile(
+            id: "leonidas", name: "Leonidas", type: .sativa, effects: [.init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Grape"), .init(name: "Lavender")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lightofjah", name: "Light of Jah", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "limon", name: "Limon", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Focused")], flavors: [.init(name: "Lemon"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "madcow", name: "Madcow", type: .sativa, effects: [.init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Ammonia")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "magnumpi", name: "Magnum PI", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Citrus"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "malakoff", name: "Malakoff", type: .sativa, effects: [.init(name: "Focused"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "malawi", name: "Malawi", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Happy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mauicitruspunch", name: "Maui Citrus Punch", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "medihaze", name: "MediHaze", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Energetic")], flavors: [.init(name: "Pine"), .init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "megalodon", name: "Megalodon", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Skunk"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "memoryloss", name: "Memory Loss", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Archive Seed Bank"),
+        StrainProfile(
+            id: "middleforkxpineappleexpress", name: "Middlefork x Pineapple Express", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Grape"), .init(name: "Sweet"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "moonshinehaze", name: "Moonshine Haze", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mooseandlobsta", name: "Moose and Lobsta", type: .hybrid, effects: [.init(name: "Creative"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dynasty Seeds"),
+        StrainProfile(
+            id: "mothertongue", name: "Mother Tongue", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mothersfinest", name: "Motherâ€™s Finest", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Lemon"), .init(name: "Sweet"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "narnia", name: "Narnia", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "nepalese", name: "Nepalese", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "nightfireog", name: "NightFire OG", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sin City Seeds"),
+        StrainProfile(
+            id: "ninalimone", name: "Nina Limone", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Focused"), .init(name: "Relaxed"), .init(name: "Happy")], flavors: [.init(name: "Lemon"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "nl5hazemist", name: "NL5 Haze Mist", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Hungry"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Green House Seed Co."),
+        StrainProfile(
+            id: "northamericansativa", name: "North American Sativa", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Ammonia"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "northernlights5xhaze", name: "Northern Lights #5 x Haze", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Soma Seeds"),
+        StrainProfile(
+            id: "nursejackie", name: "Nurse Jackie", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Hungry")], flavors: [.init(name: "Lemon"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA Seeds"),
+        StrainProfile(
+            id: "nypd", name: "NYPD", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "ocd", name: "OCD", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "orangedurban", name: "Orange Durban", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Creative")], flavors: [.init(name: "Orange"), .init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "orangewreck", name: "Orange Wreck", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [.init(name: "Orange"), .init(name: "Pine"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "oregonpinotnoir", name: "Oregon Pinot Noir", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Grape"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Stoney Girl Gardens"),
+        StrainProfile(
+            id: "outlaw", name: "Outlaw", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dutch Passion Seed Company"),
+        StrainProfile(
+            id: "pagoda", name: "Pagoda", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Pineapple"), .init(name: "Mango")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Bodhi Seeds"),
+        StrainProfile(
+            id: "pineapplefields", name: "Pineapple Fields", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Pineapple"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dynasty Seeds"),
+        StrainProfile(
+            id: "pineapplehaze", name: "Pineapple Haze", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Focused")], flavors: [.init(name: "Pineapple"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pineapplejack", name: "Pineapple Jack", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Pineapple"), .init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pineappleog", name: "Pineapple OG", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Uplifted")], flavors: [.init(name: "Pineapple"), .init(name: "Lemon"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pineapplepunch", name: "Pineapple Punch", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Pineapple")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Flying Dutchmen Seed Company"),
+        StrainProfile(
+            id: "pineapplepurps", name: "Pineapple Purps", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Pineapple"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pineapplesupersilverhaze", name: "Pineapple Super Silver Haze", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Pineapple"), .init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pinotgreen", name: "Pinot Green", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "poochielove", name: "Poochie Love", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Creative"), .init(name: "Happy"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Archive Seed Bank"),
+        StrainProfile(
+            id: "purplechampagne", name: "Purple Champagne", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Grape"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Grand Daddy Purp"),
+        StrainProfile(
+            id: "purplecow", name: "Purple Cow", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Mango")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplepower", name: "Purple Power", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Homegrown Fantaseeds"),
+        StrainProfile(
+            id: "purpletangie", name: "Purple Tangie", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus"), .init(name: "Sweet"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplethai", name: "Purple Thai", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DJ Short"),
+        StrainProfile(
+            id: "q3", name: "Q3", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Citrus"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "raspberrycough", name: "Raspberry Cough", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Nirvana"),
+        StrainProfile(
+            id: "rebelgodsmoke", name: "Rebel God Smoke", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Happy")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Helping Hands Herbals"),
+        StrainProfile(
+            id: "redheadedstranger", name: "Red Headed Stranger", type: .sativa, effects: [.init(name: "Focused"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "robertplant", name: "Robert Plant", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Blueberry"), .init(name: "Honey")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "royalhaze", name: "Royal Haze", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Skunk"), .init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dinafem Seeds"),
+        StrainProfile(
+            id: "santamaria", name: "Santa Maria", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "santasativa", name: "Santa Sativa", type: .sativa, effects: [.init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Pepper"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "seattlecough", name: "Seattle Cough", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Relaxed")], flavors: [.init(name: "Pine"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sequoiastrawberry", name: "Sequoia Strawberry", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Energetic")], flavors: [.init(name: "Strawberry"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sin City Seeds"),
+        StrainProfile(
+            id: "serious6", name: "Serious 6", type: .hybrid, effects: [.init(name: "Creative"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Citrus"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Serious Seeds"),
+        StrainProfile(
+            id: "silverkush", name: "Silver Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Reserva Privada"),
+        StrainProfile(
+            id: "silvertrain", name: "Silver Train", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Pine"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "silverhawksog", name: "Silverhawks OG", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Lime"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "GREENLIFE Seeds"),
+        StrainProfile(
+            id: "sinai", name: "Sinai", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Happy")], flavors: [.init(name: "Pepper")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "skunkdawg", name: "Skunk Dawg", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Relaxed"), .init(name: "Energetic")], flavors: [.init(name: "Skunk"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "slazerbeam", name: "Slazerbeam", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sleeskunk", name: "SleeSkunk", type: .hybrid, effects: [.init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Skunk"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "sleestack", name: "SleeStack", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Reserva Privada"),
+        StrainProfile(
+            id: "sojayhaze", name: "Sojay Haze", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sonicscrewdriver", name: "Sonic Screwdriver", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA Seeds"),
+        StrainProfile(
+            id: "souramnesia", name: "Sour Amnesia", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "HortiLab Seeds"),
+        StrainProfile(
+            id: "sourbreath", name: "Sour Breath", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Energetic")], flavors: [.init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourhaze", name: "Sour Haze", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Energetic")], flavors: [.init(name: "Citrus"), .init(name: "Skunk"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourjack", name: "Sour Jack", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Karma Genetics"),
+        StrainProfile(
+            id: "sourmaui", name: "Sour Maui", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Happy")], flavors: [.init(name: "Citrus"), .init(name: "Earthy"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourpebbles", name: "Sour Pebbles", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourpoison", name: "Sour Poison", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Citrus"), .init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourwillie", name: "Sour Willie", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourlope", name: "Sourlope", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Creative")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "southamerican", name: "South American", type: .sativa, effects: [.init(name: "Hungry"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy"), .init(name: "Pine"), .init(name: "Mango")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "southindiansativa", name: "South Indian Sativa", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "southernlights", name: "Southern Lights", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "spacejill", name: "Space Jill", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Focused"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "spaceneedle", name: "Space Needle", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Relaxed")], flavors: [.init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "spliffsstrawberry", name: "Spliffâ€™s Strawberry", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Strawberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sputnik", name: "Sputnik", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "stardawgguava", name: "Stardawg Guava", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "stellablue", name: "Stella Blue", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "strawberryamnesia", name: "Strawberry Amnesia", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Focused")], flavors: [.init(name: "Strawberry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "strawberryblue", name: "Strawberry Blue", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Strawberry"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "World Of Seeds Bank"),
+        StrainProfile(
+            id: "strawberrydurbandiesel", name: "Strawberry Durban Diesel", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Strawberry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Loud Seeds"),
+        StrainProfile(
+            id: "strawberryice", name: "Strawberry Ice", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Energetic"), .init(name: "Happy")], flavors: [.init(name: "Strawberry"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "strawberrymangohaze", name: "Strawberry Mango Haze", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Focused")], flavors: [.init(name: "Mango"), .init(name: "Strawberry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "strawberrysatori", name: "Strawberry Satori", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Strawberry"), .init(name: "Sweet"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sublime", name: "Sublime", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Euphoric")], flavors: [.init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sugarplum", name: "Sugar Plum", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Stoney Girl Gardens"),
+        StrainProfile(
+            id: "summertimesqueeze", name: "Summertime Squeeze", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sumogrande", name: "Sumo Grande", type: .sativa, effects: [.init(name: "Focused"), .init(name: "Hungry"), .init(name: "Creative")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sunra", name: "Sun Ra", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Tingly")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Helping Hands Herbals"),
+        StrainProfile(
+            id: "sunburn", name: "Sunburn", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Helping Hands Herbals"),
+        StrainProfile(
+            id: "sunshine", name: "Sunshine", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "supadon", name: "Supa Don", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "superg", name: "Super G", type: .hybrid, effects: [.init(name: "Creative"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Happy")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Bacchus"),
+        StrainProfile(
+            id: "supersnowdog", name: "Super Snow Dog", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Energetic"), .init(name: "Focused"), .init(name: "Euphoric")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "supernatural", name: "Supernatural", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Energetic")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Exotic Genetix"),
+        StrainProfile(
+            id: "swazigold", name: "Swazi Gold", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sweetjane", name: "Sweet Jane", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Focused"), .init(name: "Sleepy"), .init(name: "Tingly")], flavors: [.init(name: "Rose"), .init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "swissgold", name: "Swiss Gold", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Uplifted"), .init(name: "Hungry")], flavors: [.init(name: "Citrus"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "swisstsunami", name: "Swiss Tsunami", type: .sativa, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Sleepy")], flavors: [.init(name: "Citrus"), .init(name: "Orange"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "tangerineman", name: "Tangerine Man", type: .sativa, effects: [.init(name: "Euphoric"), .init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Citrus"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "tangerinesunrise", name: "Tangerine Sunrise", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Energetic")], flavors: [.init(name: "Citrus"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "tangerinetrainwreckhaze", name: "Tangerine Trainwreck Haze", type: .sativa, effects: [.init(name: "Euphoric")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "tangieghosttrain", name: "Tangie Ghost Train", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "tangilope", name: "Tangilope", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "tardis", name: "Tardis", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Homegrown Natural Wonders"),
+        StrainProfile(
+            id: "teslatower", name: "Tesla Tower", type: .sativa, effects: [.init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Pepper"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "thaihaze", name: "Thai Haze", type: .hybrid, effects: [.init(name: "Creative"), .init(name: "Energetic"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Pine"), .init(name: "Pepper"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "theblood", name: "The Blood", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "thecough", name: "The Cough", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Euphoric")], flavors: [.init(name: "Pine"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "thunderbirdrose", name: "Thunderbird Rose", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Rose"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "thunderstruck", name: "Thunderstruck", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "trix", name: "Trix", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Juan Moore"),
+        StrainProfile(
+            id: "tutankhamon", name: "Tutankhamon", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "twista", name: "Twista", type: .sativa, effects: [.init(name: "Creative"), .init(name: "Energetic"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "twistedcitrus", name: "Twisted Citrus", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Citrus"), .init(name: "Orange"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "velvetbud", name: "Velvet Bud", type: .sativa, effects: [.init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "viper", name: "Viper", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Reeferman Seeds"),
+        StrainProfile(
+            id: "webster", name: "Webster", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitebuffalo", name: "White Buffalo", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Energetic")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitedurban", name: "White Durban", type: .sativa, effects: [.init(name: "Energetic"), .init(name: "Focused"), .init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitehaze", name: "White Haze", type: .hybrid, effects: [.init(name: "Focused"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Lemon"), .init(name: "Pine"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "White Label Co."),
+        StrainProfile(
+            id: "whitenightmare", name: "White Nightmare", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sin City Seeds"),
+        StrainProfile(
+            id: "wildthailand", name: "Wild Thailand", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "World Of Seeds Bank"),
+        StrainProfile(
+            id: "willienelson", name: "Willie Nelson", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Reeferman Seeds"),
+        StrainProfile(
+            id: "willywonka", name: "Willy Wonka", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Mint"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "xanadu", name: "Xanadu", type: .sativa, effects: [.init(name: "Focused"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Uplifted")], flavors: [.init(name: "Pepper"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "zellysgift", name: "Zellyâ€™s Gift", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "zetasage", name: "Zeta Sage", type: .sativa, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "303og", name: "303 OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Hungry"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "3xcrazy", name: "3X Crazy", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Grape"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "5thelement", name: "5th Element", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Elemental Seeds"),
+        StrainProfile(
+            id: "8ballkush", name: "8 Ball Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "818og", name: "818 OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "91krypt", name: "91 Krypt", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "acekillerog", name: "Ace Killer OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "afghanhawaiian", name: "Afghan Hawaiian", type: .indica, effects: [.init(name: "Tingly"), .init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Energetic")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "afghanskunk", name: "Afghan Skunk", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Expert Seeds"),
+        StrainProfile(
+            id: "afghansourkush", name: "Afghan Sour Kush", type: .hybrid, effects: [.init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "MTG Seeds"),
+        StrainProfile(
+            id: "afghanicbd", name: "Afghani CBD", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "afkansastan", name: "Afkansastan", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "airjordanog", name: "Air Jordan OG", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [.init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "alienbubba", name: "Alien Bubba", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "The Cali Connection"),
+        StrainProfile(
+            id: "alienrift", name: "Alien Rift", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Ocean Grown Seeds"),
+        StrainProfile(
+            id: "aliensonmoonshine", name: "Aliens On Moonshine", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Focused")], flavors: [.init(name: "Vanilla")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "alpinestar", name: "Alpine Star", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Pine"), .init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "americankush", name: "American Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Lemon"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Alpha Kronik Genes"),
+        StrainProfile(
+            id: "ancientkush", name: "Ancient Kush", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Skunk"), .init(name: "Mint")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "ancientog", name: "Ancient OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Bodhi Seeds"),
+        StrainProfile(
+            id: "angelog", name: "Angel OG", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "anonymousog", name: "Anonymous OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Lemon"), .init(name: "Skunk"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "appleberry", name: "Appleberry", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Focused")], flavors: [.init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "argyle", name: "Argyle", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Tingly"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Pepper")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Tweed"),
+        StrainProfile(
+            id: "athabasca", name: "Athabasca", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy"), .init(name: "Ammonia")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "auroraborealis", name: "Aurora Borealis", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Flying Dutchmen Seed Company"),
+        StrainProfile(
+            id: "bakerstreet", name: "Bakerstreet", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bananacandy", name: "Banana Candy", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "barbarabud", name: "Barbara Bud", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "batmanog", name: "Batman OG", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Skunk"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bbking", name: "B.B. King", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Lemon"), .init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "MTG Seeds"),
+        StrainProfile(
+            id: "beastmode20", name: "Beastmode 2.0", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Tingly"), .init(name: "Sleepy"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bedica", name: "Bedica", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Tingly"), .init(name: "Happy")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bellringer", name: "Bell Ringer", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "berrynoir", name: "Berry Noir", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Berry"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bigwhite", name: "Big White", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "La Plata Labs"),
+        StrainProfile(
+            id: "biochem", name: "Biochem", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackafghan", name: "Black Afghan", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackbubba", name: "Black Bubba", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackcherryog", name: "Black Cherry OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blacklarrybird", name: "Black Larry Bird", type: .indica, effects: [.init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blacklimespecialreserve", name: "Black Lime Special Reserve", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Tingly")], flavors: [.init(name: "Lime"), .init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackberrybubble", name: "Blackberry Bubble", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Berry"), .init(name: "Blueberry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackberrycream", name: "Blackberry Cream", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Sleepy")], flavors: [.init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Exotic Genetix"),
+        StrainProfile(
+            id: "blackberryrhino", name: "Blackberry Rhino", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Hungry"), .init(name: "Sleepy")], flavors: [.init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackberryxblueberry", name: "Blackberry x Blueberry", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Sleepy")], flavors: [.init(name: "Blueberry"), .init(name: "Berry"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blackwater", name: "Blackwater", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blueafghani", name: "Blue Afghani", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Jordan of the Islands"),
+        StrainProfile(
+            id: "bluealien", name: "Blue Alien", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Blueberry"), .init(name: "Grape"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Pacific NW Roots"),
+        StrainProfile(
+            id: "bluebastard", name: "Blue Bastard", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Berry"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blueblood", name: "Blue Blood", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Blueberry"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Medicann Seeds"),
+        StrainProfile(
+            id: "bluekripple", name: "Blue Kripple", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dr. Krippling"),
+        StrainProfile(
+            id: "bluelights", name: "Blue Lights", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Energetic")], flavors: [.init(name: "Blueberry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bluemoonshine", name: "Blue Moonshine", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Berry"), .init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DJ Short"),
+        StrainProfile(
+            id: "blueox", name: "Blue Ox", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Berry"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "bluepower", name: "Blue Power", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sin City Seeds"),
+        StrainProfile(
+            id: "bluesteel", name: "Blue Steel", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [.init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bluezombie", name: "Blue Zombie", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blueberryskunk", name: "Blueberry Skunk", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Tingly")], flavors: [.init(name: "Blueberry"), .init(name: "Berry"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Flying Dutchmen Seed Company"),
+        StrainProfile(
+            id: "blueberryspacecake", name: "Blueberry Space Cake", type: .indica, effects: [.init(name: "Tingly"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "blueberrywaltz", name: "Blueberry Waltz", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "brandx", name: "Brand X", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "brandywine", name: "Brandywine", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "bubblegumkush", name: "Bubblegum Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "buckeyepurple", name: "Buckeye Purple", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Melvanetics"),
+        StrainProfile(
+            id: "buddhatahoe", name: "Buddha Tahoe", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Big Buddha Seeds"),
+        StrainProfile(
+            id: "butterog", name: "Butter OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "cactus", name: "Cactus", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "cadillacpurple", name: "Cadillac Purple", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [.init(name: "Grape"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "californiahashplant", name: "California Hash Plant", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Relaxed")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "candycane", name: "Candy Cane", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Mint")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Crop King Seeds"),
+        StrainProfile(
+            id: "cannasutra", name: "CannaSutra", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "capers", name: "Capers", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Uplifted")], flavors: [.init(name: "Skunk"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "caramelkonacoffeekush", name: "Caramel Kona Coffee Kush", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Coffee"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "caramella", name: "Caramella", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Homegrown Fantaseeds"),
+        StrainProfile(
+            id: "cascadiakush", name: "Cascadia Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Sleepy"), .init(name: "Happy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "casperog", name: "Casper OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Pine"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Archive Seed Bank"),
+        StrainProfile(
+            id: "cbdcriticalcure", name: "CBD Critical Cure", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "cbdcriticalmass", name: "CBD Critical Mass", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "CBD Crew"),
+        StrainProfile(
+            id: "cbdox", name: "CBD OX", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "cbdshark", name: "CBD Shark", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Focused"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "chemdog", name: "Chem D.O.G.", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "chemscout", name: "Chem Scout", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Loud Seeds"),
+        StrainProfile(
+            id: "chemo", name: "Chemo", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Federation Seed Company"),
+        StrainProfile(
+            id: "cherriesjubilee", name: "Cherries Jubilee", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "chinayunnan", name: "China Yunnan", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "chocolateog", name: "Chocolate OG", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "chrsuperog", name: "CHR Super OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy")], flavors: [.init(name: "Skunk"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "club69", name: "Club 69", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "coloradobubba", name: "Colorado Bubba", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Pineapple"), .init(name: "Mango"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "The Vault Genetics"),
+        StrainProfile(
+            id: "coloradoclementines", name: "Colorado Clementines", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Tingly")], flavors: [.init(name: "Citrus"), .init(name: "Orange"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "La Plata Labs"),
+        StrainProfile(
+            id: "commercecitykush", name: "Commerce City Kush", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "confidentialcheese", name: "Confidential Cheese", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Creative")], flavors: [.init(name: "Pine"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "conspiracykush", name: "Conspiracy Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA Seeds"),
+        StrainProfile(
+            id: "cookiemonster", name: "Cookie Monster", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "cookieskush", name: "Cookies Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "copperkush", name: "Copper Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Tingly")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Nine Point Growth Industries"),
+        StrainProfile(
+            id: "corleonekush", name: "Corleone Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "The Cali Connection"),
+        StrainProfile(
+            id: "cornbread", name: "Cornbread", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "creamcaramel", name: "Cream Caramel", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Honey"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sweet Seeds"),
+        StrainProfile(
+            id: "criticalhog", name: "Critical Hog", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "T.H.Seeds"),
+        StrainProfile(
+            id: "criticalplus20", name: "Critical Plus 2.0", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Lemon"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "criticalsensistar", name: "Critical Sensi Star", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Tingly")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Delicious Seeds"),
+        StrainProfile(
+            id: "crosswalker", name: "Crosswalker", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Blueberry"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "crouchingtigerhiddenalien", name: "Crouching Tiger Hidden Alien", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "crownog", name: "Crown OG", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Crown Genetics"),
+        StrainProfile(
+            id: "crownroyale", name: "Crown Royale", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "dakinikush", name: "Dakini Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Coffee"), .init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Centennial Seeds"),
+        StrainProfile(
+            id: "darksideofthemoon", name: "Dark Side of the Moon", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Exotic Genetix"),
+        StrainProfile(
+            id: "darksideog", name: "Darkside OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "deadwood", name: "Deadwood", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Creative"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Lavender"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "deathbubba", name: "Death Bubba", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "deathstarog", name: "Death Star OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "denvermaple", name: "Denver Maple", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "devilfruit", name: "Devil Fruit", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Hungry")], flavors: [.init(name: "Pepper"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Medical Seeds Co."),
+        StrainProfile(
+            id: "digweed", name: "Digweed", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Sleepy"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "dollasignogkush", name: "Dolla Sign OG Kush", type: .indica, effects: [.init(name: "Creative"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Hungry")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "dorit", name: "Dorit", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Ammonia")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Tikun Olam"),
+        StrainProfile(
+            id: "dankydoodle", name: "Danky Doodle", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Sweet"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "doublemint", name: "Double Mint", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Tingly")], flavors: [.init(name: "Mint"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Natural Genetics Seeds"),
+        StrainProfile(
+            id: "doubleog", name: "Double OG", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "doubletap", name: "Double Tap", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "drfunk", name: "Dr. Funk", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Berry"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "dreamberry", name: "Dream Berry", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Apothecary Seed Company"),
+        StrainProfile(
+            id: "dutchkush", name: "Dutch Kush", type: .indica, effects: [.init(name: "Hungry"), .init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Creative")], flavors: [.init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "easterneuropean", name: "Eastern European", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "edelweiss", name: "Edelweiss", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Sleepy"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Lime"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Flying Dutchmen Seed Company"),
+        StrainProfile(
+            id: "elchapoog", name: "El Chapo OG", type: .indica, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Coffee"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "eljefe", name: "El Jefe", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Happy"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "electricblackmamba", name: "Electric Black Mamba", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "emeraldog", name: "Emerald OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "California Breeders Association"),
+        StrainProfile(
+            id: "enemyofthestate", name: "Enemy of the State", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "enigma", name: "Enigma", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Alpha Kronik Genes"),
+        StrainProfile(
+            id: "eranalmog", name: "Eran Almog", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Tikun Olam"),
+        StrainProfile(
+            id: "erez", name: "Erez", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Berry"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Tikun Olam"),
+        StrainProfile(
+            id: "everlast", name: "Everlast", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "extremecream", name: "Extreme Cream", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Exotic Genetix"),
+        StrainProfile(
+            id: "extremeog", name: "Extreme OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Lime"), .init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Exotic Genetix"),
+        StrainProfile(
+            id: "fatpurple", name: "Fat Purple", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [.init(name: "Berry"), .init(name: "Grape"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Hazeman Seeds"),
+        StrainProfile(
+            id: "faygoredpop", name: "Faygo Red Pop", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Strawberry"), .init(name: "Rose"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "flamingcookies", name: "Flaming Cookies", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "CannaVenture"),
+        StrainProfile(
+            id: "floog", name: "Flo OG", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "flowerbombkush", name: "Flowerbomb Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Happy")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Strain Hunters Seed Bank"),
+        StrainProfile(
+            id: "fourway", name: "Four Way", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Focused")], flavors: [.init(name: "Pepper"), .init(name: "Sweet"), .init(name: "Honey")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Exotic Seed Co."),
+        StrainProfile(
+            id: "fredflipnstoned", name: "Fred Flipnâ€™ Stoned", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "freezeland", name: "Freezeland", type: .indica, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "frida", name: "Frida", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Uplifted")], flavors: [.init(name: "Lemon"), .init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "frosty", name: "Frosty", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Skunk"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "fruitylicious", name: "Fruitylicious", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Mandala Seeds"),
+        StrainProfile(
+            id: "gandalfog", name: "Gandalf OG", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Sweet"), .init(name: "Grape"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "garlicbud", name: "Garlic Bud", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sensi Seeds"),
+        StrainProfile(
+            id: "ghostogmoonshine", name: "Ghost OG Moonshine", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "ghostship", name: "Ghost Ship", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "gigabud", name: "Gigabud", type: .hybrid, effects: [.init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "G13 Labs"),
+        StrainProfile(
+            id: "gobbilygoo", name: "Gobbilygoo", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Berry"), .init(name: "Grape"), .init(name: "Lavender")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Alpha Kronik Genes"),
+        StrainProfile(
+            id: "gobbstopper", name: "Gobbstopper", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Alpha Kronik Genes"),
+        StrainProfile(
+            id: "godfatherog", name: "Godfather OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Alpha Medic, Inc."),
+        StrainProfile(
+            id: "godfatherpurplekush", name: "Godfather Purple Kush", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Tingly")], flavors: [.init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "godsbubba", name: "Godâ€™s Bubba", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "godstreat", name: "Godâ€™s Treat", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Blueberry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "godzilla", name: "Godzilla", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "CaÃ±a De EspaÃ±a"),
+        StrainProfile(
+            id: "gogmagog", name: "Gog & Magog", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "goldberry", name: "Goldberry", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Creative"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Mint"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "gorillabiscuit", name: "Gorilla Biscuit", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Coffee"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Seeds Of Compassion"),
+        StrainProfile(
+            id: "govermentmule", name: "Goverment Mule", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "granddoggypurps", name: "Grand Doggy Purps", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Creative"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Grape"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "grandmassugarcookies", name: "Grandmaâ€™s Sugar Cookies", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "grandpalarryog", name: "Grandpa Larry OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Grand Daddy Purp"),
+        StrainProfile(
+            id: "grandpasbreath", name: "Grandpaâ€™s Breath", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "grapecookies", name: "Grape Cookies", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Grape"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Purple Caper Seeds"),
+        StrainProfile(
+            id: "grapedrink", name: "Grape Drink", type: .hybrid, effects: [.init(name: "Tingly"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Grape"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "grapeinferno", name: "Grape Inferno", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA Seeds"),
+        StrainProfile(
+            id: "grapeox", name: "Grape OX", type: .hybrid, effects: [.init(name: "Hungry"), .init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Grape"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "grapevalleykush", name: "Grape Valley Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Creative")], flavors: [.init(name: "Pineapple")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Moxie Seeds"),
+        StrainProfile(
+            id: "greendragon", name: "Green Dragon", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Sleepy"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Master Thai"),
+        StrainProfile(
+            id: "greenmango", name: "Green Mango", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Creative")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "greenpoison", name: "Green Poison", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sweet Seeds"),
+        StrainProfile(
+            id: "greenpython", name: "Green Python", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Tingly")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "House Of Funk Genetics"),
+        StrainProfile(
+            id: "grimaceog", name: "Grimace OG", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Archive Seed Bank"),
+        StrainProfile(
+            id: "grimace", name: "Grimace", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "guarddawg", name: "Guard Dawg", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "RedEyed Genetics"),
+        StrainProfile(
+            id: "guidokush", name: "Guido Kush", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "gutbuster", name: "Gutbuster", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Sleepy")], flavors: [.init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Exotic Genetix"),
+        StrainProfile(
+            id: "hadeshaze", name: "Hades Haze", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hammerhead", name: "Hammerhead", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Relaxed"), .init(name: "Euphoric")], flavors: [.init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Medical Seeds Co."),
+        StrainProfile(
+            id: "haoma", name: "Haoma", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hardcoreog", name: "Hardcore OG", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Sleepy"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Pine"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "harmonia", name: "Harmonia", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hashbarog", name: "Hashbar OG", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Archive Seed Bank"),
+        StrainProfile(
+            id: "hawaiianpurplekush", name: "Hawaiian Purple Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Stoney Girl Gardens"),
+        StrainProfile(
+            id: "himalayanblackberry", name: "Himalayan Blackberry", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [.init(name: "Berry"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "honeybooboo", name: "Honey Boo Boo", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Honey"), .init(name: "Citrus"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "hulkamania", name: "Hulkamania", type: .indica, effects: [.init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "humboldtdream", name: "Humboldt Dream", type: .indica, effects: [.init(name: "Creative"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Berry"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "icedwidow", name: "Iced Widow", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "illog", name: "Ill OG", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "illuminatiog", name: "Illuminati OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jackburton", name: "Jack Burton", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Rose")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jawapie", name: "Jawa Pie", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Honey")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jedikush", name: "Jedi Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "The Cali Connection"),
+        StrainProfile(
+            id: "jellyroll", name: "Jelly Roll", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "joshdog", name: "Josh D OG", type: .indica, effects: [], flavors: [.init(name: "Berry"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jr", name: "Jr", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "jt15", name: "JT15", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "kalichina", name: "Kali China", type: .indica, effects: [.init(name: "Creative"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Focused")], flavors: [.init(name: "Mango")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "katsukush", name: "Katsu Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "kc36", name: "KC 36", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Blueberry"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "kellyhillgold", name: "Kelly Hill Gold", type: .indica, effects: [.init(name: "Happy"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Pepper"), .init(name: "Earthy"), .init(name: "Coffee")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "kiwiskunk", name: "Kiwiskunk", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Hungry"), .init(name: "Sleepy"), .init(name: "Creative")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Kiwiseeds"),
+        StrainProfile(
+            id: "kobainkush", name: "Kobain Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "RedEyed Genetics"),
+        StrainProfile(
+            id: "koolaidsmile", name: "Kool-Aid Smile", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric")], flavors: [.init(name: "Berry"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "krishnakush", name: "Krishna Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Lavender")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "kushadelic", name: "Kushadelic", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Pine"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Soma Seeds"),
+        StrainProfile(
+            id: "laog", name: "LA OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Berry"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "laultra", name: "LA Ultra", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Tingly")], flavors: [.init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lakfederalreserve", name: "L.A.K. Federal Reserve", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Hungry"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Lemon"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lasvegaspurplekushbx", name: "Las Vegas Purple Kush BX", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Creative")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lashkargah", name: "Lashkar Gah", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "leeroy", name: "Lee Roy", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Lime"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "legendog", name: "Legend OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "limepurplemist", name: "Lime Purple Mist", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [.init(name: "Lime"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "limesorbet", name: "Lime Sorbet", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Lime"), .init(name: "Sweet"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "lovepotion9", name: "Love Potion #9", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Honey")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Joker Collection"),
+        StrainProfile(
+            id: "lucidbolt", name: "Lucid Bolt", type: .indica, effects: [.init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Blueberry"), .init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "madscientist", name: "Mad Scientist", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Focused"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "madzilla", name: "Madzilla", type: .indica, effects: [.init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "magicbeansog", name: "Magic Beans OG", type: .indica, effects: [.init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Tingly")], flavors: [.init(name: "Lemon"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "magnificentmile", name: "Magnificent Mile", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mangolicious", name: "Mangolicious", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Pineapple")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "masterjedi", name: "Master Jedi", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Creative"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mataroblue", name: "Mataro Blue", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Berry"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Kannabia"),
+        StrainProfile(
+            id: "matsu", name: "Matsu", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Tingly"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mazarkush", name: "Mazar Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "merlotog", name: "Merlot OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Ocean Grown Seeds"),
+        StrainProfile(
+            id: "milkyway", name: "Milky Way", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly")], flavors: [.init(name: "Sweet"), .init(name: "Lavender")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Kiwiseeds"),
+        StrainProfile(
+            id: "molokaifrost", name: "Molokaâ€™i Frost", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "molokaipurpz", name: "Molokaâ€™i Purpz", type: .indica, effects: [.init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Berry"), .init(name: "Grape"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "moneymaker", name: "Money Maker", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Berry"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Strain Hunters Seed Bank"),
+        StrainProfile(
+            id: "monolith", name: "Monolith", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mossad", name: "Mossad", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Lemon"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mossimoog", name: "Mossimo OG", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Honey"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "motavation", name: "Motavation", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Magus Genetics"),
+        StrainProfile(
+            id: "motherofberries", name: "Mother of Berries", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Euphoric")], flavors: [.init(name: "Berry"), .init(name: "Blueberry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mtcook", name: "Mt. Cook", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Ammonia"), .init(name: "Pepper")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "mudbite", name: "Mud Bite", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "negra44", name: "Negra 44", type: .indica, effects: [.init(name: "Creative"), .init(name: "Energetic"), .init(name: "Relaxed"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "nexusog", name: "Nexus OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "nicecherry", name: "Nice Cherry", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "nicolekush", name: "Nicole Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "nightterrorog", name: "Night Terror OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "nighttrain", name: "Night Train", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Pepper")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "nordle", name: "Nordle", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Focused")], flavors: [.init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Mr. Nice"),
+        StrainProfile(
+            id: "northamericanindica", name: "North American Indica", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "northindian", name: "North Indian", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "northernwreck", name: "Northern Wreck", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "nuken", name: "Nuken", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Vancouver Seed Bank"),
+        StrainProfile(
+            id: "obamakush", name: "Obama Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "ocagold", name: "OCA Gold", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Honey"), .init(name: "Vanilla")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "oglaaffie", name: "OG LA Affie", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Pepper")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "oglosangeleskush", name: "OG Los Angeles Kush", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Tingly")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "ogreberry", name: "Ogre Berry", type: .hybrid, effects: [.init(name: "Focused"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Blueberry"), .init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "HappyDay Farms"),
+        StrainProfile(
+            id: "opalogkush", name: "Opal OG Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Lavender"), .init(name: "Strawberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "orangeafghani", name: "Orange Afghani", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "orangeromulan", name: "Orange Romulan", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Orange")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "oregondiesel", name: "Oregon Diesel", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Tingly")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "p51", name: "P-51", type: .indica, effects: [.init(name: "Happy"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Relaxed")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pacificblue", name: "Pacific Blue", type: .indica, effects: [.init(name: "Happy"), .init(name: "Tingly"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Blueberry"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pakistanvalleykush", name: "Pakistan Valley Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Pine"), .init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pakistanichitralkush", name: "Pakistani Chitral Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pamelina", name: "Pamelina", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "parisxxx", name: "Paris XXX", type: .indica, effects: [.init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Energetic"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "petroliaheadstash", name: "Petrolia Headstash", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric")], flavors: [.init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Reeferman Seeds"),
+        StrainProfile(
+            id: "pez", name: "Pez", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Energetic"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "phantomarrow", name: "Phantom Arrow", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "phishheadkush", name: "Phishhead Kush", type: .indica, effects: [.init(name: "Happy"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pinetarkush", name: "Pine Tar Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Hungry")], flavors: [.init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Tom Hill"),
+        StrainProfile(
+            id: "pinkberry", name: "Pink Berry", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Tingly")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Apothecary Seed Company"),
+        StrainProfile(
+            id: "pinkbubba", name: "Pink Bubba", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "pinkdeathstar", name: "Pink Death Star", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Riot Seeds"),
+        StrainProfile(
+            id: "plushberry", name: "Plushberry", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA Seeds"),
+        StrainProfile(
+            id: "pokie", name: "Pokie", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Focused"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "popcornkush", name: "Popcorn Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "primus", name: "Primus", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "punabuddaz", name: "Puna Buddaz", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Creative")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "punkylion", name: "Punky Lion", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Samsara Seeds"),
+        StrainProfile(
+            id: "purelove", name: "Pure Love", type: .indica, effects: [.init(name: "Focused"), .init(name: "Relaxed")], flavors: [.init(name: "Mango"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purpleberry", name: "Purple Berry", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Berry"), .init(name: "Blueberry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "CannaVenture"),
+        StrainProfile(
+            id: "purplebubba", name: "Purple Bubba", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Grape"), .init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplebud", name: "Purple Bud", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [.init(name: "Pine"), .init(name: "Pepper"), .init(name: "Lavender")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplebush", name: "Purple Bush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Focused"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplecheddar", name: "Purple Cheddar", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Connoisseur Genetics"),
+        StrainProfile(
+            id: "purplechemdawg", name: "Purple Chemdawg", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Creative")], flavors: [.init(name: "Grape"), .init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplecottoncandy", name: "Purple Cotton Candy", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purpleelephant", name: "Purple Elephant", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplehindukush", name: "Purple Hindu Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplejollyrancher", name: "Purple Jolly Rancher", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplelinda", name: "Purple Linda", type: .indica, effects: [.init(name: "Relaxed")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplemartiankush", name: "Purple Martian Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Focused")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplemonkeyballs", name: "Purple Monkey Balls", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Grape"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purpleogkush", name: "Purple OG Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplepeopleeater", name: "Purple People Eater", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Relaxed")], flavors: [.init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "purplepinecone", name: "Purple Pinecone", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sagarmatha Seeds"),
+        StrainProfile(
+            id: "purplestar", name: "Purple Star", type: .hybrid, effects: [.init(name: "Tingly"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Uplifted")], flavors: [.init(name: "Berry"), .init(name: "Citrus"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dutch Passion Seed Company"),
+        StrainProfile(
+            id: "purpleswish", name: "Purple Swish", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "quinntonic", name: "Quin-N-Tonic", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Focused"), .init(name: "Hungry"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "qush", name: "Qush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "TGA Seeds"),
+        StrainProfile(
+            id: "rainbowjones", name: "Rainbow Jones", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "raredankness1", name: "Rare Dankness #1", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "raredarkness", name: "Rare Darkness", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Grape"), .init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "raycharles", name: "Ray Charles", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "redeyeog", name: "Red Eye OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "remedy", name: "Remedy", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "ripcitypurps", name: "Rip City Purps", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "rockbud", name: "Rockbud", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "rockstarkush", name: "Rockstar Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "rockstarmasterkush", name: "Rockstar Master Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Pine"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "rockstar", name: "Rockstar", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DNA Genetics"),
+        StrainProfile(
+            id: "rockymountainblueberry", name: "Rocky Mountain Blueberry", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Energetic")], flavors: [.init(name: "Blueberry"), .init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "rollexogkush", name: "Rollex OG Kush", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Ammonia")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "The Devils Harvest"),
+        StrainProfile(
+            id: "rosebud", name: "Rose Bud", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Rose"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "russianassassin", name: "Russian Assassin", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Tingly")], flavors: [.init(name: "Skunk"), .init(name: "Ammonia")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "salmonriverog", name: "Salmon River OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dynasty Seeds"),
+        StrainProfile(
+            id: "satelliteog", name: "Satellite OG", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Satellite"),
+        StrainProfile(
+            id: "secretgardenog", name: "Secret Garden OG", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Lavender")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sensiskunk", name: "Sensi Skunk", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Creative"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Earthy"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Sensi Seeds"),
+        StrainProfile(
+            id: "sexxpot", name: "Sexxpot", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sharkattack", name: "Shark Attack", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Focused"), .init(name: "Hungry"), .init(name: "Creative")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dinafem Seeds"),
+        StrainProfile(
+            id: "sincitykush", name: "Sin City Kush", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy")], flavors: [.init(name: "Grape"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Alpha Kronik Genes"),
+        StrainProfile(
+            id: "siriusblack", name: "Sirius Black", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "skunk47", name: "Skunk 47", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "snowleopard", name: "Snow Leopard", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Bodhi Seeds"),
+        StrainProfile(
+            id: "snowmonster", name: "Snow Monster", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "snowmountain", name: "Snow Mountain", type: .hybrid, effects: [.init(name: "Uplifted"), .init(name: "Relaxed")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"], breeder: "SnowHigh Seeds"),
+        StrainProfile(
+            id: "snowryder", name: "Snow Ryder", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Relaxed")], flavors: [.init(name: "Pepper"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "soulshinealoha", name: "Soulshine Aloha", type: .indica, effects: [.init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Happy")], flavors: [], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourape", name: "Sour Ape", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Energetic"), .init(name: "Happy")], flavors: [.init(name: "Skunk"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourbubba", name: "Sour Bubba", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Riot Seeds"),
+        StrainProfile(
+            id: "sourbubble", name: "Sour Bubble", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sourspyder", name: "Sour Spyder", type: .indica, effects: [.init(name: "Tingly"), .init(name: "Energetic"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Ammonia"), .init(name: "Citrus"), .init(name: "Coffee")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "southasianindica", name: "South Asian Indica", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "southcentralla", name: "South Central LA", type: .indica, effects: [.init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Hungry"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "spacedawg", name: "Space Dawg", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "spacemonster", name: "Space Monster", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Uplifted"), .init(name: "Creative"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Ammonia")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "MTG Seeds"),
+        StrainProfile(
+            id: "starberryindica", name: "Star Berry Indica", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Energetic")], flavors: [.init(name: "Berry"), .init(name: "Citrus"), .init(name: "Lemon")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "starkiller", name: "Star Killer", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry")], flavors: [.init(name: "Lemon"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "starmasterkush", name: "Star Master Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Skunk"), .init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "starbud", name: "StarBud", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "HortiLab Seeds"),
+        StrainProfile(
+            id: "stephenhawkingkush", name: "Stephen Hawking Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Focused"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Alpha Kronik Genes"),
+        StrainProfile(
+            id: "strawberryfields", name: "Strawberry Fields", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Hungry")], flavors: [.init(name: "Strawberry"), .init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Crockett Family Farms"),
+        StrainProfile(
+            id: "strawberryfrost", name: "Strawberry Frost", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Hungry")], flavors: [.init(name: "Sweet"), .init(name: "Strawberry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sugarkush", name: "Sugar Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Happy"), .init(name: "Tingly")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dizzy Duck Seeds"),
+        StrainProfile(
+            id: "sugarmama", name: "Sugar Mama", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sunshinedaydream", name: "Sunshine Daydream", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Bodhi Seeds"),
+        StrainProfile(
+            id: "superbud", name: "Super Bud", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Creative")], flavors: [.init(name: "Citrus"), .init(name: "Mint")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Green House Seed Co."),
+        StrainProfile(
+            id: "supercheese", name: "Super Cheese", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Energetic")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Positronics Seeds"),
+        StrainProfile(
+            id: "superchronic", name: "Super Chronic", type: .indica, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Focused")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "superkush", name: "Super Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "supergirl", name: "Supergirl", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sweetandsourwidow", name: "Sweet and Sour Widow", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric"), .init(name: "Tingly")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sweetbabyjane", name: "Sweet Baby Jane", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Tingly")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "sweetblackangel", name: "Sweet Black Angel", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Samsara Seeds"),
+        StrainProfile(
+            id: "sweetdeepgrapefruit", name: "Sweet Deep Grapefruit", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Citrus"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Dinafem Seeds"),
+        StrainProfile(
+            id: "sweetlafayette", name: "Sweet Lafayette", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus"), .init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Nine Point Growth Industries"),
+        StrainProfile(
+            id: "swissindica", name: "Swiss Indica", type: .hybrid, effects: [.init(name: "Energetic"), .init(name: "Creative"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted")], flavors: [.init(name: "Ammonia"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "terminatorog", name: "Terminator OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Creative"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Pine"), .init(name: "Rose")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "theblack", name: "The Black", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "theox", name: "The OX", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Tingly")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Coffee")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Rare Dankness Seeds"),
+        StrainProfile(
+            id: "thesister", name: "The Sister", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Tingly"), .init(name: "Creative")], flavors: [.init(name: "Sweet"), .init(name: "Skunk")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "throwbackkush", name: "Throwback Kush", type: .hybrid, effects: [.init(name: "Hungry"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy")], flavors: [.init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Exotic Genetix"),
+        StrainProfile(
+            id: "tigermelon", name: "Tigermelon", type: .hybrid, effects: [.init(name: "Happy"), .init(name: "Relaxed")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "torabora", name: "Tora Bora", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Reserva Privada"),
+        StrainProfile(
+            id: "tranquilelephantizerremix", name: "Tranquil Elephantizer: Remix", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Pepper"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "truex", name: "True X", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "trufflebutter", name: "Truffle Butter", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Euphoric"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Vanilla")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "tunakush", name: "Tuna Kush", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Skunk"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "tyson", name: "Tyson", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "u2kush", name: "U2 Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "ultrabanana", name: "Ultra Banana", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Hungry"), .init(name: "Relaxed")], flavors: [.init(name: "Ammonia"), .init(name: "Lemon"), .init(name: "Pineapple")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "ultravioletog", name: "UltraViolet OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Uplifted"), .init(name: "Tingly"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Archive Seed Bank"),
+        StrainProfile(
+            id: "uw", name: "UW", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Hungry"), .init(name: "Happy"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "westcoastdawg", name: "West Coast Dawg", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Uplifted"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Happy")], flavors: [.init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "westog", name: "West OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Euphoric")], flavors: [.init(name: "Citrus"), .init(name: "Lime")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitakerblues", name: "Whitaker Blues", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Euphoric")], flavors: [.init(name: "Sweet"), .init(name: "Apple")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "DJ Short"),
+        StrainProfile(
+            id: "whitebastard", name: "White Bastard", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Focused"), .init(name: "Happy")], flavors: [.init(name: "Sweet"), .init(name: "Blueberry"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitebubblegum", name: "White Bubblegum", type: .indica, effects: [], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitecaramelcookie", name: "White Caramel Cookie", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Relaxed"), .init(name: "Sleepy")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Grape")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitedragon", name: "White Dragon", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Hungry"), .init(name: "Euphoric")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "THC Seeds"),
+        StrainProfile(
+            id: "whiteempress", name: "White Empress", type: .hybrid, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitefire43", name: "White Fire 43", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitekryptonite", name: "White Kryptonite", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitekush", name: "White Kush", type: .hybrid, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Berry"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whiteog", name: "White OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Karma Genetics"),
+        StrainProfile(
+            id: "whitetyghdream", name: "White Tygh Dream", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Focused"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Hungry")], flavors: [.init(name: "Citrus"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "whitewalkerog", name: "Whitewalker OG", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Tingly"), .init(name: "Euphoric"), .init(name: "Sleepy")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"], breeder: "Gold Coast Collection"),
+        StrainProfile(
+            id: "wonderkid", name: "Wonder Kid", type: .indica, effects: [.init(name: "Euphoric"), .init(name: "Happy"), .init(name: "Relaxed"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Sweet"), .init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "wonderwomanog", name: "Wonder Woman OG", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Sleepy"), .init(name: "Tingly"), .init(name: "Uplifted")], flavors: [.init(name: "Citrus")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "woodykush", name: "Woody Kush", type: .hybrid, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Sleepy"), .init(name: "Hungry")], flavors: [.init(name: "Pine"), .init(name: "Earthy")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "wsu", name: "WSU", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Euphoric"), .init(name: "Hungry"), .init(name: "Happy")], flavors: [.init(name: "Pine"), .init(name: "Earthy"), .init(name: "Berry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "xwing", name: "X-Wing", type: .indica, effects: [.init(name: "Happy"), .init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Creative"), .init(name: "Hungry")], flavors: [.init(name: "Earthy"), .init(name: "Sweet")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "xxx420", name: "XXX 420", type: .indica, effects: [.init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Uplifted"), .init(name: "Energetic")], flavors: [.init(name: "Sweet"), .init(name: "Berry"), .init(name: "Blueberry")], terpenes: [], sources: ["Kushy (MIT)"]),
+        StrainProfile(
+            id: "xxxog", name: "XXX OG", type: .indica, effects: [.init(name: "Sleepy"), .init(name: "Relaxed"), .init(name: "Happy"), .init(name: "Euphoric"), .init(name: "Uplifted")], flavors: [.init(name: "Earthy"), .init(name: "Pine")], terpenes: [], sources: ["Kushy (MIT)"]),
         StrainProfile(
             id: "sexbud", name: "SexBud", type: .sativa, thc: 18, cbd: 0.5,
             effects: [.init(name: "Energetic", intensity: 0.78)],
