@@ -408,6 +408,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 42.0.0;
+				OTHER_SWIFT_FLAGS = "-Xfrontend -warn-long-function-bodies=500 -Xfrontend -warn-long-expression-type-checking=500";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sowens.The-SESH-";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -447,6 +448,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 42.0.0;
+				OTHER_SWIFT_FLAGS = "-Xfrontend -warn-long-function-bodies=500 -Xfrontend -warn-long-expression-type-checking=500";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sowens.The-SESH-";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

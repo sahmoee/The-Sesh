@@ -923,60 +923,23 @@ struct FriendsView: View {
         } else {
             List {
                 ForEach(friends) { f in
-                    HStack(spacing: 12) {
-                        PresenceAvatar(user: f, size: 44)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(f.displayName).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
-                            if f.activity.isActive {
-                                // Emoji + sentence-case status, e.g. "🌿 Rolling up"
-                                HStack(spacing: 5) {
-                                    ActivityGlyph(activity: f.activity, size: 14)
-                                    Text(f.activity.phrase.replacingOccurrences(of: "is ", with: "").capitalized)
-                                        .font(.system(size: 13, weight: .medium)).foregroundStyle(f.activity.tint)
-                                }
-                                // Live indicator / elapsed
-                                HStack(spacing: 5) {
-                                    if f.activity == .live {
-                                        Circle().fill(Palette.moodAngry).frame(width: 6, height: 6)
-                                        Text("Live now").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
-                                    } else {
-                                        Text("\(seshAgo(f.lastSeen)) elapsed").font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
-                                    }
-                                }
-                            } else {
-                                HStack(spacing: 5) {
-                                    Circle().fill(Palette.textTertiary.opacity(0.5)).frame(width: 6, height: 6)
-                                    Text("Offline · \(seshAgo(f.lastSeen))").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-                                }
-                            }
+                    FriendRow(friend: f)
+                        .listRowInsets(EdgeInsets(top: 5, leading: 0, bottom: 5, trailing: 0))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                Haptics.warning(); social.removeFriend(f)
+                            } label: { Label("Remove", systemImage: "person.badge.minus") }
+                            Button {
+                                Haptics.warning(); Task { await social.block(f) }
+                            } label: { Label("Block", systemImage: "hand.raised") }
+                            .tint(Palette.moodAngry)
                         }
-                        Spacer()
-                        if f.streak > 0 {
-                            HStack(spacing: 3) {
-                                Image(systemName: "flame.fill").font(.system(size: 11)).foregroundStyle(Palette.gold)
-                                Text("\(f.streak)").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.text)
-                            }
+                        .contextMenu {
+                            Button(role: .destructive) { social.removeFriend(f) } label: { Label("Remove friend", systemImage: "person.badge.minus") }
+                            Button(role: .destructive) { Task { await social.block(f) } } label: { Label("Block", systemImage: "hand.raised") }
                         }
-                    }
-                    .padding(12)
-                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.card))
-                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                    .listRowInsets(EdgeInsets(top: 5, leading: 0, bottom: 5, trailing: 0))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            Haptics.warning(); social.removeFriend(f)
-                        } label: { Label("Remove", systemImage: "person.badge.minus") }
-                        Button {
-                            Haptics.warning(); Task { await social.block(f) }
-                        } label: { Label("Block", systemImage: "hand.raised") }
-                        .tint(Palette.moodAngry)
-                    }
-                    .contextMenu {
-                        Button(role: .destructive) { social.removeFriend(f) } label: { Label("Remove friend", systemImage: "person.badge.minus") }
-                        Button(role: .destructive) { Task { await social.block(f) } } label: { Label("Block", systemImage: "hand.raised") }
-                    }
                 }
             }
             .listStyle(.plain)
@@ -994,6 +957,55 @@ struct FriendsView: View {
             working = false
             status = result
             if result.contains("added") { codeInput = ""; Haptics.success() } else { Haptics.warning() }
+        }
+    }
+}
+
+// MARK: - One friend row (split out so FriendsView.friendsList type-checks fast)
+
+private struct FriendRow: View {
+    let friend: SeshUser
+
+    var body: some View {
+        HStack(spacing: 12) {
+            PresenceAvatar(user: friend, size: 44)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(friend.displayName).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                statusLines
+            }
+            Spacer()
+            if friend.streak > 0 {
+                HStack(spacing: 3) {
+                    Image(systemName: "flame.fill").font(.system(size: 11)).foregroundStyle(Palette.gold)
+                    Text("\(friend.streak)").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.text)
+                }
+            }
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.card))
+        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+    }
+
+    @ViewBuilder private var statusLines: some View {
+        if friend.activity.isActive {
+            HStack(spacing: 5) {
+                ActivityGlyph(activity: friend.activity, size: 14)
+                Text(friend.activity.phrase.replacingOccurrences(of: "is ", with: "").capitalized)
+                    .font(.system(size: 13, weight: .medium)).foregroundStyle(friend.activity.tint)
+            }
+            HStack(spacing: 5) {
+                if friend.activity == .live {
+                    Circle().fill(Palette.moodAngry).frame(width: 6, height: 6)
+                    Text("Live now").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+                } else {
+                    Text("\(seshAgo(friend.lastSeen)) elapsed").font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
+                }
+            }
+        } else {
+            HStack(spacing: 5) {
+                Circle().fill(Palette.textTertiary.opacity(0.5)).frame(width: 6, height: 6)
+                Text("Offline · \(seshAgo(friend.lastSeen))").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+            }
         }
     }
 }

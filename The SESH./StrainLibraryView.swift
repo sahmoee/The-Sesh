@@ -169,113 +169,128 @@ struct StrainLibraryView: View {
     /// A stable "featured" pick + a "popular this week" ranked list, derived
     /// from the catalog so they're consistent without a backend.
     private var featuredSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            forYouBlock
+            featuredStrainBlock
+            popularBlock
+            Text("ALL STRAINS").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+        }
+        .padding(.bottom, 4)
+    }
+
+    @ViewBuilder private var forYouBlock: some View {
         let all = strains.strains
-        let featured = featuredStrain(from: all)
-        let popular = popularStrains(from: all)
         let recs = session.recommendedStrains(limit: 4)
-        return VStack(alignment: .leading, spacing: 16) {
-            // For You — from your own history (only if you've logged strains)
-            if !recs.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("FOR YOU").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
-                    VStack(spacing: 0) {
-                        ForEach(Array(recs.enumerated()), id: \.element.id) { idx, rec in
-                            if let profile = all.first(where: { $0.name.caseInsensitiveCompare(rec.name) == .orderedSame }) {
-                                NavigationLink {
-                                    StrainCatalogDetailView(profile: profile, onLog: onLog, onEdit: { editingStrain = $0 })
-                                        .navigationBarBackButtonHidden(true)
-                                } label: {
-                                    HStack(spacing: 12) {
-                                        StoredImage(name: profile.photoName, size: 44, corner: Radius.sm)
-                                        VStack(alignment: .leading, spacing: 1) {
-                                            Text(rec.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
-                                            Text(rec.reason).font(.system(size: 12)).foregroundStyle(Palette.greenBright)
-                                        }
-                                        Spacer()
-                                        if rec.stats.averageRating > 0 {
-                                            HStack(spacing: 3) {
-                                                Image(systemName: "star.fill").font(.system(size: 10)).foregroundStyle(Palette.gold)
-                                                Text(String(format: "%.1f", rec.stats.averageRating)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.text)
-                                            }
-                                        }
-                                    }
-                                    .padding(.vertical, 9)
-                                }.buttonStyle(.plain)
-                                if idx < recs.count - 1 { Divider().overlay(Palette.stroke) }
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-                    .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                }
-            }
-
-            if let f = featured {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("FEATURED STRAIN").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
-                    NavigationLink {
-                        StrainCatalogDetailView(profile: f, onLog: onLog, onEdit: { editingStrain = $0 })
-                            .navigationBarBackButtonHidden(true)
-                    } label: {
-                        DarkCard {
-                            HStack(spacing: 14) {
-                                StoredImage(name: f.photoName, size: 84, corner: Radius.md)
-                                VStack(alignment: .leading, spacing: 5) {
-                                    HStack(spacing: 6) {
-                                        Text(f.name).font(.system(size: 18, weight: .bold)).foregroundStyle(Palette.text)
-                                        Image(systemName: "star.fill").font(.system(size: 12)).foregroundStyle(Palette.gold)
-                                    }
-                                    Text(f.type.rawValue).font(.system(size: 12, weight: .medium)).foregroundStyle(f.type.tint)
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "star.fill").font(.system(size: 11)).foregroundStyle(Palette.gold)
-                                        Text(communityRating(f)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.text)
-                                    }
-                                    if let summary = f.summary {
-                                        Text(summary).font(.system(size: 12)).foregroundStyle(Palette.textSecondary).lineLimit(2)
-                                    }
-                                }
-                                Spacer(minLength: 0)
-                            }
-                        }
-                    }.buttonStyle(.plain)
-                }
-            }
-
+        if !recs.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                Text("POPULAR THIS WEEK").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+                Text("FOR YOU").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
                 VStack(spacing: 0) {
-                    ForEach(Array(popular.enumerated()), id: \.element.id) { idx, s in
-                        NavigationLink {
-                            StrainCatalogDetailView(profile: s, onLog: onLog, onEdit: { editingStrain = $0 })
-                                .navigationBarBackButtonHidden(true)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Text("\(idx + 1)").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.gold).frame(width: 20)
-                                BudThumb(size: 40, seed: abs(s.id.hashValue % 60))
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(s.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
-                                    Text(s.type.rawValue).font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
-                                }
-                                Spacer()
-                                HStack(spacing: 3) {
-                                    Image(systemName: "star.fill").font(.system(size: 10)).foregroundStyle(Palette.gold)
-                                    Text(shortRating(s)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.text)
-                                }
-                            }
-                            .padding(.vertical, 9)
-                        }.buttonStyle(.plain)
-                        if idx < popular.count - 1 { Divider().overlay(Palette.stroke) }
+                    ForEach(Array(recs.enumerated()), id: \.element.id) { idx, rec in
+                        if let profile = all.first(where: { $0.name.caseInsensitiveCompare(rec.name) == .orderedSame }) {
+                            NavigationLink {
+                                StrainCatalogDetailView(profile: profile, onLog: onLog, onEdit: { editingStrain = $0 })
+                                    .navigationBarBackButtonHidden(true)
+                            } label: {
+                                forYouRow(rec: rec, profile: profile)
+                            }.buttonStyle(.plain)
+                            if idx < recs.count - 1 { Divider().overlay(Palette.stroke) }
+                        }
                     }
                 }
                 .padding(.horizontal, 14)
                 .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
                 .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
             }
-
-            Text("ALL STRAINS").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
         }
-        .padding(.bottom, 4)
+    }
+
+    private func forYouRow(rec: AppSession.Recommendation, profile: StrainProfile) -> some View {
+        HStack(spacing: 12) {
+            StoredImage(name: profile.photoName, size: 44, corner: Radius.sm)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(rec.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                Text(rec.reason).font(.system(size: 12)).foregroundStyle(Palette.greenBright)
+            }
+            Spacer()
+            if rec.stats.averageRating > 0 {
+                HStack(spacing: 3) {
+                    Image(systemName: "star.fill").font(.system(size: 10)).foregroundStyle(Palette.gold)
+                    Text(String(format: "%.1f", rec.stats.averageRating)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.text)
+                }
+            }
+        }
+        .padding(.vertical, 9)
+    }
+
+    @ViewBuilder private var featuredStrainBlock: some View {
+        if let f = featuredStrain(from: strains.strains) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("FEATURED STRAIN").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+                NavigationLink {
+                    StrainCatalogDetailView(profile: f, onLog: onLog, onEdit: { editingStrain = $0 })
+                        .navigationBarBackButtonHidden(true)
+                } label: {
+                    DarkCard {
+                        HStack(spacing: 14) {
+                            StoredImage(name: f.photoName, size: 84, corner: Radius.md)
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack(spacing: 6) {
+                                    Text(f.name).font(.system(size: 18, weight: .bold)).foregroundStyle(Palette.text)
+                                    Image(systemName: "star.fill").font(.system(size: 12)).foregroundStyle(Palette.gold)
+                                }
+                                Text(f.type.rawValue).font(.system(size: 12, weight: .medium)).foregroundStyle(f.type.tint)
+                                HStack(spacing: 4) {
+                                    Image(systemName: "star.fill").font(.system(size: 11)).foregroundStyle(Palette.gold)
+                                    Text(communityRating(f)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.text)
+                                }
+                                if let summary = f.summary {
+                                    Text(summary).font(.system(size: 12)).foregroundStyle(Palette.textSecondary).lineLimit(2)
+                                }
+                            }
+                            Spacer(minLength: 0)
+                        }
+                    }
+                }.buttonStyle(.plain)
+            }
+        }
+    }
+
+    @ViewBuilder private var popularBlock: some View {
+        let popular = popularStrains(from: strains.strains)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("POPULAR THIS WEEK").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+            VStack(spacing: 0) {
+                ForEach(Array(popular.enumerated()), id: \.element.id) { idx, s in
+                    NavigationLink {
+                        StrainCatalogDetailView(profile: s, onLog: onLog, onEdit: { editingStrain = $0 })
+                            .navigationBarBackButtonHidden(true)
+                    } label: {
+                        popularRow(index: idx, strain: s)
+                    }.buttonStyle(.plain)
+                    if idx < popular.count - 1 { Divider().overlay(Palette.stroke) }
+                }
+            }
+            .padding(.horizontal, 14)
+            .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
+            .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+        }
+    }
+
+    private func popularRow(index idx: Int, strain s: StrainProfile) -> some View {
+        HStack(spacing: 12) {
+            Text("\(idx + 1)").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.gold).frame(width: 20)
+            BudThumb(size: 40, seed: abs(s.id.hashValue % 60))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(s.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                Text(s.type.rawValue).font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+            }
+            Spacer()
+            HStack(spacing: 3) {
+                Image(systemName: "star.fill").font(.system(size: 10)).foregroundStyle(Palette.gold)
+                Text(shortRating(s)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.text)
+            }
+        }
+        .padding(.vertical, 9)
     }
 
     private func featuredStrain(from all: [StrainProfile]) -> StrainProfile? {

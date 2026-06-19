@@ -54,7 +54,7 @@ enum PhotoStore {
 }
 
 private extension UIImage {
-    func downscaled(to maxDimension: CGFloat) -> UIImage {
+    nonisolated func downscaled(to maxDimension: CGFloat) -> UIImage {
         let maxSide = max(size.width, size.height)
         guard maxSide > maxDimension else { return self }
         let scale = maxDimension / maxSide

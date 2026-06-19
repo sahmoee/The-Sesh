@@ -155,163 +155,12 @@ struct JournalView: View {
         ZStack {
             AppBackground()
             VStack(spacing: 0) {
-                ZStack {
-                    Text("Journal")
-                        .font(.system(size: 22, weight: .semibold, design: .serif))
-                        .foregroundStyle(Palette.text)
-                    HStack {
-                        Image(systemName: "line.3.horizontal").font(.system(size: 20)).foregroundStyle(Palette.text)
-                        Spacer()
-                        Menu {
-                            Picker("Sort", selection: $sort) {
-                                ForEach(JournalSort.allCases) { s in
-                                    Label(s.rawValue, systemImage: s.symbol).tag(s)
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "arrow.up.arrow.down").font(.system(size: 16)).foregroundStyle(Palette.text)
-                        }
-                        Button {
-                            Haptics.tap(); showLogChooser = true
-                        } label: {
-                            Image(systemName: "plus.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("New log")
-                        .padding(.leading, 14)
-                    }
-                }
-                .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 14)
-
-                // Search
-                HStack(spacing: 8) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass").foregroundStyle(Palette.textSecondary)
-                        TextField("", text: $query,
-                                  prompt: Text("Search your sessions...").foregroundStyle(Palette.textTertiary))
-                            .foregroundStyle(Palette.text)
-                        if !query.isEmpty {
-                            Button { query = "" } label: {
-                                Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.textSecondary)
-                            }.buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, 14).padding(.vertical, 12)
-                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-
-                    Button { showFilters = true } label: {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: "slider.horizontal.3")
-                                .font(.system(size: 18))
-                                .foregroundStyle(activeRefinements > 0 ? Palette.onGreen : Palette.text)
-                                .frame(width: 46, height: 46)
-                                .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                                    .fill(activeRefinements > 0 ? Palette.green : Palette.field))
-                                .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                            if activeRefinements > 0 {
-                                Text("\(activeRefinements)").font(.system(size: 10, weight: .bold)).foregroundStyle(.white)
-                                    .frame(width: 16, height: 16).background(Circle().fill(Palette.moodAngry)).offset(x: 4, y: -4)
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Filters")
-                    .accessibilityValue(activeRefinements > 0 ? "\(activeRefinements) active" : "none active")
-                }
-                .padding(.horizontal, 18).padding(.bottom, 12)
-
+                headerBar
+                searchBar
                 UnderlineTabs(items: filters, selection: $filter)
                     .padding(.horizontal, 18).padding(.bottom, 6)
-
-                // Result count + sort summary
-                HStack {
-                    Text("\(filtered.count) \(filtered.count == 1 ? "session" : "sessions")")
-                        .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-                    Spacer()
-                    Button { showManageCategories = true; Haptics.tap() } label: {
-                        Label("Categories", systemImage: "tag")
-                            .font(.system(size: 12)).foregroundStyle(Palette.green)
-                    }.buttonStyle(.plain)
-                    Text("·").font(.system(size: 12)).foregroundStyle(Palette.textTertiary).padding(.horizontal, 2)
-                    Label(sort.rawValue, systemImage: sort.symbol)
-                        .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-                }
-                .padding(.horizontal, 18).padding(.bottom, 8)
-
-                if session.entries.isEmpty {
-                    EmptyStateView(icon: "doc.text",
-                                   title: "Nothing logged yet",
-                                   message: "Record your first session or capture a thought to start your log.",
-                                   actionTitle: "Add to Log", actionIcon: "plus",
-                                   action: { showLogChooser = true })
-                    Spacer()
-                } else if filtered.isEmpty {
-                    EmptyStateView(icon: "magnifyingglass",
-                                   title: "Nothing matches",
-                                   message: "Try a different search or filter.",
-                                   actionTitle: activeRefinements > 0 || !query.isEmpty ? "Clear filters" : nil,
-                                   actionIcon: "xmark",
-                                   action: { query = ""; filter = "All"; effectFilter = nil; minRating = 0 })
-                    Spacer()
-                } else {
-                    List {
-                        ForEach(groupedFeed, id: \.0) { day, items in
-                            Section {
-                                ForEach(items) { item in
-                                    switch item {
-                                    case .entry(let e):
-                                        SessionCard(entry: e, seed: abs(e.id.hashValue % 60))
-                                            .listRowInsets(EdgeInsets(top: 6, leading: 18, bottom: 6, trailing: 18))
-                                            .listRowSeparator(.hidden)
-                                            .listRowBackground(Color.clear)
-                                            .contentShape(Rectangle())
-                                            .onTapGesture { editing = e }
-                                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                                Button(role: .destructive) {
-                                                    Haptics.warning(); session.delete(e)
-                                                } label: { Label("Delete", systemImage: "trash") }
-                                                Button {
-                                                    Haptics.selection(); session.toggleFavorite(e)
-                                                } label: { Label("Favorite", systemImage: "heart") }
-                                                .tint(Palette.green)
-                                            }
-                                            .contextMenu {
-                                                Button { editing = e } label: { Label("Edit", systemImage: "pencil") }
-                                                Button { session.toggleFavorite(e) } label: {
-                                                    Label(e.category == .personalFaves ? "Remove favorite" : "Add to favorites", systemImage: "heart")
-                                                }
-                                                Button(role: .destructive) { session.delete(e) } label: { Label("Delete", systemImage: "trash") }
-                                            }
-                                    case .thought(let t):
-                                        ThoughtCard(thought: t)
-                                            .listRowInsets(EdgeInsets(top: 6, leading: 18, bottom: 6, trailing: 18))
-                                            .listRowSeparator(.hidden)
-                                            .listRowBackground(Color.clear)
-                                            .contentShape(Rectangle())
-                                            .onTapGesture { editingThought = t }
-                                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                                Button(role: .destructive) {
-                                                    Haptics.warning(); session.deleteThought(t)
-                                                } label: { Label("Delete", systemImage: "trash") }
-                                                Button {
-                                                    Haptics.selection(); session.toggleThoughtFavorite(t)
-                                                } label: { Label("Favorite", systemImage: "star") }
-                                                .tint(Palette.gold)
-                                            }
-                                    }
-                                }
-                            } header: {
-                                if !day.isEmpty {
-                                    Text(day).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.textSecondary)
-                                }
-                            }
-                        }
-                        Color.clear.frame(height: 70).listRowBackground(Color.clear).listRowSeparator(.hidden)
-                    }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
-                }
+                resultSummaryBar
+                feedContent
             }
         }
         .sheet(item: $editing) { entry in
@@ -339,6 +188,186 @@ struct JournalView: View {
         .sheet(isPresented: $showManageCategories) {
             ManageCategoriesView().environment(session)
                 .presentationDetents([.medium, .large])
+        }
+    }
+
+    @ViewBuilder private var headerBar: some View {
+        ZStack {
+            Text("Journal")
+                .font(.system(size: 22, weight: .semibold, design: .serif))
+                .foregroundStyle(Palette.text)
+            HStack {
+                Image(systemName: "line.3.horizontal").font(.system(size: 20)).foregroundStyle(Palette.text)
+                Spacer()
+                Menu {
+                    Picker("Sort", selection: $sort) {
+                        ForEach(JournalSort.allCases) { s in
+                            Label(s.rawValue, systemImage: s.symbol).tag(s)
+                        }
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down").font(.system(size: 16)).foregroundStyle(Palette.text)
+                }
+                Button {
+                    Haptics.tap(); showLogChooser = true
+                } label: {
+                    Image(systemName: "plus.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("New log")
+                .padding(.leading, 14)
+            }
+        }
+        .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 14)
+    }
+
+    @ViewBuilder private var searchBar: some View {
+        HStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass").foregroundStyle(Palette.textSecondary)
+                TextField("", text: $query,
+                          prompt: Text("Search your sessions...").foregroundStyle(Palette.textTertiary))
+                    .foregroundStyle(Palette.text)
+                if !query.isEmpty {
+                    Button { query = "" } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.textSecondary)
+                    }.buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+
+            Button { showFilters = true } label: {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 18))
+                        .foregroundStyle(activeRefinements > 0 ? Palette.onGreen : Palette.text)
+                        .frame(width: 46, height: 46)
+                        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                            .fill(activeRefinements > 0 ? Palette.green : Palette.field))
+                        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+                    if activeRefinements > 0 {
+                        Text("\(activeRefinements)").font(.system(size: 10, weight: .bold)).foregroundStyle(.white)
+                            .frame(width: 16, height: 16).background(Circle().fill(Palette.moodAngry)).offset(x: 4, y: -4)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Filters")
+            .accessibilityValue(activeRefinements > 0 ? "\(activeRefinements) active" : "none active")
+        }
+        .padding(.horizontal, 18).padding(.bottom, 12)
+    }
+
+    @ViewBuilder private var resultSummaryBar: some View {
+        HStack {
+            Text("\(filtered.count) \(filtered.count == 1 ? "session" : "sessions")")
+                .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+            Spacer()
+            Button { showManageCategories = true; Haptics.tap() } label: {
+                Label("Categories", systemImage: "tag")
+                    .font(.system(size: 12)).foregroundStyle(Palette.green)
+            }.buttonStyle(.plain)
+            Text("·").font(.system(size: 12)).foregroundStyle(Palette.textTertiary).padding(.horizontal, 2)
+            Label(sort.rawValue, systemImage: sort.symbol)
+                .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+        }
+        .padding(.horizontal, 18).padding(.bottom, 8)
+    }
+
+    @ViewBuilder private var feedContent: some View {
+        if session.entries.isEmpty {
+            EmptyStateView(icon: "doc.text",
+                           title: "Nothing logged yet",
+                           message: "Record your first session or capture a thought to start your log.",
+                           actionTitle: "Add to Log", actionIcon: "plus",
+                           action: { showLogChooser = true })
+            Spacer()
+        } else if filtered.isEmpty {
+            EmptyStateView(icon: "magnifyingglass",
+                           title: "Nothing matches",
+                           message: "Try a different search or filter.",
+                           actionTitle: activeRefinements > 0 || !query.isEmpty ? "Clear filters" : nil,
+                           actionIcon: "xmark",
+                           action: { query = ""; filter = "All"; effectFilter = nil; minRating = 0 })
+            Spacer()
+        } else {
+            feedList
+        }
+    }
+
+    @ViewBuilder private var feedList: some View {
+        List {
+            ForEach(groupedFeed, id: \.0) { day, items in
+                Section {
+                    ForEach(items) { item in
+                        LogItemRow(item: item,
+                                   onEditEntry: { editing = $0 },
+                                   onEditThought: { editingThought = $0 })
+                    }
+                } header: {
+                    if !day.isEmpty {
+                        Text(day).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.textSecondary)
+                    }
+                }
+            }
+            Color.clear.frame(height: 70).listRowBackground(Color.clear).listRowSeparator(.hidden)
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+    }
+}
+
+// MARK: - One row in the unified Log feed (split out so the feed type-checks fast)
+
+private struct LogItemRow: View {
+    @Environment(AppSession.self) private var session
+    let item: LogItem
+    let onEditEntry: (JournalEntry) -> Void
+    let onEditThought: (HighThought) -> Void
+
+    var body: some View {
+        switch item {
+        case .entry(let e):
+            SessionCard(entry: e, seed: abs(e.id.hashValue % 60))
+                .listRowInsets(EdgeInsets(top: 6, leading: 18, bottom: 6, trailing: 18))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .contentShape(Rectangle())
+                .onTapGesture { onEditEntry(e) }
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        Haptics.warning(); session.delete(e)
+                    } label: { Label("Delete", systemImage: "trash") }
+                    Button {
+                        Haptics.selection(); session.toggleFavorite(e)
+                    } label: { Label("Favorite", systemImage: "heart") }
+                    .tint(Palette.green)
+                }
+                .contextMenu {
+                    Button { onEditEntry(e) } label: { Label("Edit", systemImage: "pencil") }
+                    Button { session.toggleFavorite(e) } label: {
+                        Label(e.category == .personalFaves ? "Remove favorite" : "Add to favorites", systemImage: "heart")
+                    }
+                    Button(role: .destructive) { session.delete(e) } label: { Label("Delete", systemImage: "trash") }
+                }
+        case .thought(let t):
+            ThoughtCard(thought: t)
+                .listRowInsets(EdgeInsets(top: 6, leading: 18, bottom: 6, trailing: 18))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .contentShape(Rectangle())
+                .onTapGesture { onEditThought(t) }
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        Haptics.warning(); session.deleteThought(t)
+                    } label: { Label("Delete", systemImage: "trash") }
+                    Button {
+                        Haptics.selection(); session.toggleThoughtFavorite(t)
+                    } label: { Label("Favorite", systemImage: "star") }
+                    .tint(Palette.gold)
+                }
         }
     }
 }

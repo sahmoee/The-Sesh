@@ -73,330 +73,17 @@ struct LogSeshView: View {
 
                 ScrollView {
                     VStack(spacing: 18) {
-                        // Strain + photo row, with type-ahead from the catalog
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(alignment: .bottom, spacing: 10) {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    FieldLabel(text: "Strain")
-                                    TextField("", text: $strain,
-                                              prompt: Text("Enter strain name").foregroundStyle(Palette.textTertiary))
-                                        .foregroundStyle(Palette.text)
-                                        .submitLabel(.done)
-                                        .padding(.horizontal, 14).padding(.vertical, 13)
-                                        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                                        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                                        .onChange(of: strain) { _, newValue in
-                                            showSuggestions = true
-                                            if let m = matched, m.name != newValue { matched = nil }
-                                        }
-                                }
-                                // Real photo capture (camera or library)
-                                VStack(alignment: .leading, spacing: 8) {
-                                    FieldLabel(text: "Photo")
-                                    PhotoField(photoName: $photoName, size: 48)
-                                }
-                            }
-
-                            if !suggestions.isEmpty {
-                                VStack(spacing: 0) {
-                                    ForEach(suggestions) { s in
-                                        Button { select(s) } label: {
-                                            HStack(spacing: 10) {
-                                                Image(systemName: "leaf.fill").font(.system(size: 12)).foregroundStyle(s.type.tint)
-                                                VStack(alignment: .leading, spacing: 1) {
-                                                    Text(s.name).font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.text)
-                                                    Text(strainSubtitle(s)).font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
-                                                }
-                                                Spacer()
-                                            }
-                                            .contentShape(Rectangle())
-                                            .padding(.horizontal, 12).padding(.vertical, 10)
-                                        }
-                                        .buttonStyle(.plain)
-                                        if s.id != suggestions.last?.id {
-                                            Rectangle().fill(Palette.stroke).frame(height: 0.5)
-                                        }
-                                    }
-                                }
-                                .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.cardElevated))
-                                .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                            }
-
-                            // Offer to save a brand-new strain to the local library.
-                            if showSuggestions, matched == nil, canAddNew {
-                                Button { addNewStrain() } label: {
-                                    HStack(spacing: 10) {
-                                        Image(systemName: "plus.circle.fill").font(.system(size: 14)).foregroundStyle(Palette.green)
-                                        Text("Add \"\(strain.trimmingCharacters(in: .whitespaces))\" as a new strain")
-                                            .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.text)
-                                            .lineLimit(1)
-                                        Spacer()
-                                    }
-                                    .contentShape(Rectangle())
-                                    .padding(.horizontal, 12).padding(.vertical, 11)
-                                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.green.opacity(0.4), lineWidth: 1))
-                                }
-                                .buttonStyle(.plain)
-                            }
-
-                            if let m = matched { StrainMatchChip(profile: m) }
-
-                            // Additional strains in the same sesh (#multi-strain)
-                            if !extraStrains.isEmpty {
-                                VStack(spacing: 6) {
-                                    ForEach(Array(extraStrains.enumerated()), id: \.offset) { idx, name in
-                                        HStack(spacing: 8) {
-                                            Image(systemName: "leaf.fill").font(.system(size: 11)).foregroundStyle(Palette.green)
-                                            Text(name).font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.text)
-                                            Spacer()
-                                            Button {
-                                                extraStrains.remove(at: idx); Haptics.selection()
-                                            } label: {
-                                                Image(systemName: "xmark.circle.fill").font(.system(size: 15)).foregroundStyle(Palette.textTertiary)
-                                            }.buttonStyle(.plain)
-                                        }
-                                        .padding(.horizontal, 12).padding(.vertical, 9)
-                                        .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
-                                    }
-                                }
-                            }
-                            // Add-another-strain row
-                            HStack(spacing: 8) {
-                                TextField("", text: $newStrainEntry,
-                                          prompt: Text("Add another strain…").foregroundStyle(Palette.textTertiary))
-                                    .foregroundStyle(Palette.text).submitLabel(.done)
-                                    .onSubmit { addExtraStrain() }
-                                    .padding(.horizontal, 12).padding(.vertical, 10)
-                                    .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
-                                    .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).stroke(Palette.strokeSoft, lineWidth: 1))
-                                Button { addExtraStrain() } label: {
-                                    Image(systemName: "plus.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(newStrainEntry.trimmingCharacters(in: .whitespaces).isEmpty)
-                                .opacity(newStrainEntry.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
-                            }
-                            if !extraStrains.isEmpty {
-                                Text("This sesh has \(extraStrains.count + 1) strains. The first is used for strain stats.")
-                                    .font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
-                            }
-                        }
-
-                        InputField(label: "Roll up / Method Used", placeholder: "e.g. Raw Classic", value: $method)
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            FieldLabel(text: "Rate Your High")
-                            RatingSlider(value: $rating)
-                        }
-
-                        // Mood
-                        VStack(alignment: .leading, spacing: 12) {
-                            FieldLabel(text: "How are you feeling currently? (Choose)")
-                            LazyVGrid(columns: moodCols, spacing: 12) {
-                                ForEach(Mood.allCases) { m in
-                                    OptionChip(title: m.rawValue, symbol: m.symbol, isSelected: mood == m) {
-                                        Haptics.selection()
-                                        mood = (mood == m) ? nil : m
-                                    }
-                                }
-                            }
-                        }
-
-                        // Mood shift (before → after) — optional, #6
-                        VStack(alignment: .leading, spacing: 12) {
-                            Toggle(isOn: $trackMoodShift.animation()) {
-                                FieldLabel(text: "Track mood shift?")
-                            }.tint(Palette.green)
-                            if trackMoodShift {
-                                moodScaleRow("Before", value: $moodBefore)
-                                moodScaleRow("After", value: $moodAfter)
-                                let delta = moodAfter - moodBefore
-                                HStack(spacing: 6) {
-                                    Image(systemName: delta > 0 ? "arrow.up.right" : delta < 0 ? "arrow.down.right" : "arrow.right")
-                                        .font(.system(size: 12, weight: .bold))
-                                    Text(delta > 0 ? "Lifted your mood (+\(delta))" : delta < 0 ? "Brought it down (\(delta))" : "No change")
-                                        .font(.system(size: 13, weight: .medium))
-                                }
-                                .foregroundStyle(delta > 0 ? Palette.greenBright : delta < 0 ? Palette.moodAngry : Palette.textSecondary)
-                            }
-                        }
-
-                        // Would you smoke again? — Definitely / Maybe / No
-                        VStack(alignment: .leading, spacing: 12) {
-                            FieldLabel(text: "Would you smoke again?")
-                            HStack(spacing: 10) {
-                                ForEach(SmokeAgain.allCases) { opt in
-                                    EmojiChip(emoji: opt.emoji, title: opt.rawValue,
-                                              isSelected: smokeAgain == opt) {
-                                        Haptics.selection()
-                                        smokeAgain = (smokeAgain == opt) ? nil : opt
-                                    }
-                                }
-                            }
-                        }
-
-                        // Category — built-ins + your custom categories (#custom categories)
-                        VStack(alignment: .leading, spacing: 12) {
-                            FieldLabel(text: "Add to Category / List?")
-                            LazyVGrid(columns: moodCols, spacing: 12) {
-                                // Built-in categories
-                                ForEach(SeshCategory.allCases) { c in
-                                    OptionChip(title: c.rawValue, symbol: c.symbol, isSelected: category == c && customCategory == nil) {
-                                        Haptics.selection()
-                                        if category == c { category = nil }
-                                        else { category = c; customCategory = nil }
-                                    }
-                                }
-                                // Custom categories
-                                ForEach(session.customCategories, id: \.self) { name in
-                                    OptionChip(title: name, symbol: "tag.fill", isSelected: customCategory == name) {
-                                        Haptics.selection()
-                                        if customCategory == name { customCategory = nil }
-                                        else { customCategory = name; category = nil }
-                                    }
-                                }
-                            }
-                            // Add a new custom category inline
-                            if showAddCategory {
-                                HStack(spacing: 8) {
-                                    TextField("", text: $newCategoryName,
-                                              prompt: Text("New category name…").foregroundStyle(Palette.textTertiary))
-                                        .foregroundStyle(Palette.text).submitLabel(.done)
-                                        .onSubmit { commitNewCategory() }
-                                        .padding(.horizontal, 12).padding(.vertical, 10)
-                                        .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
-                                        .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).stroke(Palette.strokeSoft, lineWidth: 1))
-                                    Button { commitNewCategory() } label: {
-                                        Image(systemName: "checkmark.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty)
-                                    .opacity(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
-                                }
-                            } else {
-                                Button { withAnimation { showAddCategory = true } } label: {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "plus").font(.system(size: 12, weight: .semibold))
-                                        Text("New category").font(.system(size: 13, weight: .medium))
-                                    }.foregroundStyle(Palette.green)
-                                }.buttonStyle(.plain)
-                            }
-                        }
-
-                        // "Why are you saving this?" — only when adding to Favorites (#champions)
-                        if category == .personalFaves {
-                            VStack(alignment: .leading, spacing: 12) {
-                                FieldLabel(text: "Why are you saving this?")
-                                LazyVGrid(columns: moodCols, spacing: 12) {
-                                    ForEach(Champion.allCases) { c in
-                                        EmojiChip(emoji: c.emoji, title: c.rawValue,
-                                                  isSelected: champion == c.rawValue) {
-                                            Haptics.selection()
-                                            champion = (champion == c.rawValue) ? nil : c.rawValue
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Session Tags — multi-select (separate from Vault & Effects)
-                        VStack(alignment: .leading, spacing: 12) {
-                            FieldLabel(text: "Session Tags")
-                            LazyVGrid(columns: moodCols, spacing: 12) {
-                                ForEach(SessionType.allCases) { t in
-                                    EmojiChip(emoji: t.emoji, title: t.rawValue,
-                                              isSelected: sessionTags.contains(t.rawValue)) {
-                                        Haptics.selection()
-                                        if sessionTags.contains(t.rawValue) { sessionTags.remove(t.rawValue) }
-                                        else { sessionTags.insert(t.rawValue) }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Effects — how did it make you feel? (multi-select + custom)
-                        VStack(alignment: .leading, spacing: 12) {
-                            FieldLabel(text: "How did it make you feel?")
-                            LazyVGrid(columns: moodCols, spacing: 12) {
-                                ForEach(SeshEffect.allCases) { ef in
-                                    EmojiChip(emoji: ef.emoji, title: ef.rawValue,
-                                              isSelected: effects.contains(ef.rawValue)) {
-                                        Haptics.selection()
-                                        if effects.contains(ef.rawValue) { effects.remove(ef.rawValue) }
-                                        else { effects.insert(ef.rawValue) }
-                                    }
-                                }
-                            }
-                            // Custom effects already chosen (tap to remove)
-                            let customs = Array(effects.filter { e in !SeshEffect.allCases.contains { $0.rawValue == e } }).sorted()
-                            if !customs.isEmpty {
-                                FlowLayout(spacing: 8) {
-                                    ForEach(customs, id: \.self) { c in
-                                        Button { effects.remove(c); Haptics.selection() } label: {
-                                            HStack(spacing: 5) {
-                                                Text(c).font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.onGreen)
-                                                Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).foregroundStyle(Palette.onGreen)
-                                            }
-                                            .padding(.horizontal, 12).padding(.vertical, 7)
-                                            .background(Capsule().fill(Palette.green))
-                                        }.buttonStyle(.plain)
-                                    }
-                                }
-                            }
-                            // ➕ Custom
-                            if showCustomEffect {
-                                HStack(spacing: 8) {
-                                    TextField("", text: $customEffect,
-                                              prompt: Text("Custom feeling…").foregroundStyle(Palette.textTertiary))
-                                        .foregroundStyle(Palette.text).submitLabel(.done)
-                                        .onSubmit { commitCustomEffect() }
-                                        .padding(.horizontal, 12).padding(.vertical, 10)
-                                        .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
-                                        .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).stroke(Palette.strokeSoft, lineWidth: 1))
-                                    Button { commitCustomEffect() } label: {
-                                        Image(systemName: "checkmark.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
-                                    }.buttonStyle(.plain)
-                                    .disabled(customEffect.trimmingCharacters(in: .whitespaces).isEmpty)
-                                    .opacity(customEffect.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
-                                }
-                            } else {
-                                Button { withAnimation { showCustomEffect = true } } label: {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "plus").font(.system(size: 12, weight: .semibold))
-                                        Text("Custom").font(.system(size: 13, weight: .medium))
-                                    }.foregroundStyle(Palette.green)
-                                }.buttonStyle(.plain)
-                            }
-                        }
-
-                        // Amount (optional) — #2/#3 dosage
-                        VStack(alignment: .leading, spacing: 8) {
-                            FieldLabel(text: "Amount (optional)")
-                            HStack(spacing: 8) {
-                                TextField("", text: $amount, prompt: Text("0").foregroundStyle(Palette.textTertiary))
-                                    .keyboardType(.decimalPad).foregroundStyle(Palette.text)
-                                    .padding(.horizontal, 14).padding(.vertical, 13)
-                                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                                Menu {
-                                    ForEach(["g", "hits", "mg", "bowls", "ml"], id: \.self) { u in
-                                        Button(u) { amountUnit = u }
-                                    }
-                                } label: {
-                                    HStack(spacing: 4) {
-                                        Text(amountUnit).font(.system(size: 15, weight: .medium)).foregroundStyle(Palette.text)
-                                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
-                                    }
-                                    .padding(.horizontal, 14).padding(.vertical, 13)
-                                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                                }
-                            }
-                        }
-
+                        strainSection
+                        methodAndRatingSection
+                        moodSection
+                        moodShiftSection
+                        smokeAgainSection
+                        categorySection
+                        championSection
+                        sessionTagsSection
+                        effectsSection
+                        amountSection
                         NotesField(label: "Personal Notes", placeholder: "How was your experience?", text: $notes)
-
                         PrimaryButton(title: isEditing ? "Save Changes" : "Save Entry") { save() }
                             .padding(.top, 4)
                     }
@@ -406,6 +93,362 @@ struct LogSeshView: View {
             }
         }
         .onAppear(perform: loadInitial)
+    }
+
+    // MARK: Sections (split out so the type-checker resolves each in isolation)
+
+    @ViewBuilder private var strainSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .bottom, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
+                    FieldLabel(text: "Strain")
+                    TextField("", text: $strain,
+                              prompt: Text("Enter strain name").foregroundStyle(Palette.textTertiary))
+                        .foregroundStyle(Palette.text)
+                        .submitLabel(.done)
+                        .padding(.horizontal, 14).padding(.vertical, 13)
+                        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+                        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+                        .onChange(of: strain) { _, newValue in
+                            showSuggestions = true
+                            if let m = matched, m.name != newValue { matched = nil }
+                        }
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    FieldLabel(text: "Photo")
+                    PhotoField(photoName: $photoName, size: 48)
+                }
+            }
+
+            suggestionsList
+            addNewStrainButton
+            if let m = matched { StrainMatchChip(profile: m) }
+            extraStrainsList
+            addAnotherStrainRow
+
+            if !extraStrains.isEmpty {
+                Text("This sesh has \(extraStrains.count + 1) strains. The first is used for strain stats.")
+                    .font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
+            }
+        }
+    }
+
+    @ViewBuilder private var suggestionsList: some View {
+        if !suggestions.isEmpty {
+            VStack(spacing: 0) {
+                ForEach(suggestions) { s in
+                    Button { select(s) } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "leaf.fill").font(.system(size: 12)).foregroundStyle(s.type.tint)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(s.name).font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.text)
+                                Text(strainSubtitle(s)).font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+                            }
+                            Spacer()
+                        }
+                        .contentShape(Rectangle())
+                        .padding(.horizontal, 12).padding(.vertical, 10)
+                    }
+                    .buttonStyle(.plain)
+                    if s.id != suggestions.last?.id {
+                        Rectangle().fill(Palette.stroke).frame(height: 0.5)
+                    }
+                }
+            }
+            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.cardElevated))
+            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+        }
+    }
+
+    @ViewBuilder private var addNewStrainButton: some View {
+        if showSuggestions, matched == nil, canAddNew {
+            Button { addNewStrain() } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "plus.circle.fill").font(.system(size: 14)).foregroundStyle(Palette.green)
+                    Text("Add \"\(strain.trimmingCharacters(in: .whitespaces))\" as a new strain")
+                        .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.text)
+                        .lineLimit(1)
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+                .padding(.horizontal, 12).padding(.vertical, 11)
+                .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+                .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.green.opacity(0.4), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder private var extraStrainsList: some View {
+        if !extraStrains.isEmpty {
+            VStack(spacing: 6) {
+                ForEach(Array(extraStrains.enumerated()), id: \.offset) { idx, name in
+                    HStack(spacing: 8) {
+                        Image(systemName: "leaf.fill").font(.system(size: 11)).foregroundStyle(Palette.green)
+                        Text(name).font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.text)
+                        Spacer()
+                        Button {
+                            extraStrains.remove(at: idx); Haptics.selection()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill").font(.system(size: 15)).foregroundStyle(Palette.textTertiary)
+                        }.buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 9)
+                    .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var addAnotherStrainRow: some View {
+        HStack(spacing: 8) {
+            TextField("", text: $newStrainEntry,
+                      prompt: Text("Add another strain…").foregroundStyle(Palette.textTertiary))
+                .foregroundStyle(Palette.text).submitLabel(.done)
+                .onSubmit { addExtraStrain() }
+                .padding(.horizontal, 12).padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
+                .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).stroke(Palette.strokeSoft, lineWidth: 1))
+            Button { addExtraStrain() } label: {
+                Image(systemName: "plus.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
+            }
+            .buttonStyle(.plain)
+            .disabled(newStrainEntry.trimmingCharacters(in: .whitespaces).isEmpty)
+            .opacity(newStrainEntry.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
+        }
+    }
+
+    @ViewBuilder private var methodAndRatingSection: some View {
+        InputField(label: "Roll up / Method Used", placeholder: "e.g. Raw Classic", value: $method)
+        VStack(alignment: .leading, spacing: 8) {
+            FieldLabel(text: "Rate Your High")
+            RatingSlider(value: $rating)
+        }
+    }
+
+    @ViewBuilder private var moodSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FieldLabel(text: "How are you feeling currently? (Choose)")
+            LazyVGrid(columns: moodCols, spacing: 12) {
+                ForEach(Mood.allCases) { m in
+                    OptionChip(title: m.rawValue, symbol: m.symbol, isSelected: mood == m) {
+                        Haptics.selection()
+                        mood = (mood == m) ? nil : m
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var moodShiftSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Toggle(isOn: $trackMoodShift.animation()) {
+                FieldLabel(text: "Track mood shift?")
+            }.tint(Palette.green)
+            if trackMoodShift {
+                moodScaleRow("Before", value: $moodBefore)
+                moodScaleRow("After", value: $moodAfter)
+                moodDeltaRow
+            }
+        }
+    }
+
+    @ViewBuilder private var moodDeltaRow: some View {
+        let delta = moodAfter - moodBefore
+        let symbol: String = delta > 0 ? "arrow.up.right" : (delta < 0 ? "arrow.down.right" : "arrow.right")
+        let label: String = delta > 0 ? "Lifted your mood (+\(delta))" : (delta < 0 ? "Brought it down (\(delta))" : "No change")
+        let tint: Color = delta > 0 ? Palette.greenBright : (delta < 0 ? Palette.moodAngry : Palette.textSecondary)
+        HStack(spacing: 6) {
+            Image(systemName: symbol).font(.system(size: 12, weight: .bold))
+            Text(label).font(.system(size: 13, weight: .medium))
+        }
+        .foregroundStyle(tint)
+    }
+
+    @ViewBuilder private var smokeAgainSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FieldLabel(text: "Would you smoke again?")
+            HStack(spacing: 10) {
+                ForEach(SmokeAgain.allCases) { opt in
+                    EmojiChip(emoji: opt.emoji, title: opt.rawValue,
+                              isSelected: smokeAgain == opt) {
+                        Haptics.selection()
+                        smokeAgain = (smokeAgain == opt) ? nil : opt
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var categorySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FieldLabel(text: "Add to Category / List?")
+            LazyVGrid(columns: moodCols, spacing: 12) {
+                ForEach(SeshCategory.allCases) { c in
+                    OptionChip(title: c.rawValue, symbol: c.symbol, isSelected: category == c && customCategory == nil) {
+                        Haptics.selection()
+                        if category == c { category = nil }
+                        else { category = c; customCategory = nil }
+                    }
+                }
+                ForEach(session.customCategories, id: \.self) { name in
+                    OptionChip(title: name, symbol: "tag.fill", isSelected: customCategory == name) {
+                        Haptics.selection()
+                        if customCategory == name { customCategory = nil }
+                        else { customCategory = name; category = nil }
+                    }
+                }
+            }
+            addCategoryRow
+        }
+    }
+
+    @ViewBuilder private var addCategoryRow: some View {
+        if showAddCategory {
+            HStack(spacing: 8) {
+                TextField("", text: $newCategoryName,
+                          prompt: Text("New category name…").foregroundStyle(Palette.textTertiary))
+                    .foregroundStyle(Palette.text).submitLabel(.done)
+                    .onSubmit { commitNewCategory() }
+                    .padding(.horizontal, 12).padding(.vertical, 10)
+                    .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).stroke(Palette.strokeSoft, lineWidth: 1))
+                Button { commitNewCategory() } label: {
+                    Image(systemName: "checkmark.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
+                }
+                .buttonStyle(.plain)
+                .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty)
+                .opacity(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
+            }
+        } else {
+            Button { withAnimation { showAddCategory = true } } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus").font(.system(size: 12, weight: .semibold))
+                    Text("New category").font(.system(size: 13, weight: .medium))
+                }.foregroundStyle(Palette.green)
+            }.buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder private var championSection: some View {
+        if category == .personalFaves {
+            VStack(alignment: .leading, spacing: 12) {
+                FieldLabel(text: "Why are you saving this?")
+                LazyVGrid(columns: moodCols, spacing: 12) {
+                    ForEach(Champion.allCases) { c in
+                        EmojiChip(emoji: c.emoji, title: c.rawValue,
+                                  isSelected: champion == c.rawValue) {
+                            Haptics.selection()
+                            champion = (champion == c.rawValue) ? nil : c.rawValue
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var sessionTagsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FieldLabel(text: "Session Tags")
+            LazyVGrid(columns: moodCols, spacing: 12) {
+                ForEach(SessionType.allCases) { t in
+                    EmojiChip(emoji: t.emoji, title: t.rawValue,
+                              isSelected: sessionTags.contains(t.rawValue)) {
+                        Haptics.selection()
+                        if sessionTags.contains(t.rawValue) { sessionTags.remove(t.rawValue) }
+                        else { sessionTags.insert(t.rawValue) }
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var effectsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FieldLabel(text: "How did it make you feel?")
+            LazyVGrid(columns: moodCols, spacing: 12) {
+                ForEach(SeshEffect.allCases) { ef in
+                    EmojiChip(emoji: ef.emoji, title: ef.rawValue,
+                              isSelected: effects.contains(ef.rawValue)) {
+                        Haptics.selection()
+                        if effects.contains(ef.rawValue) { effects.remove(ef.rawValue) }
+                        else { effects.insert(ef.rawValue) }
+                    }
+                }
+            }
+            customEffectChips
+            customEffectInput
+        }
+    }
+
+    @ViewBuilder private var customEffectChips: some View {
+        let customs = Array(effects.filter { e in !SeshEffect.allCases.contains { $0.rawValue == e } }).sorted()
+        if !customs.isEmpty {
+            FlowLayout(spacing: 8) {
+                ForEach(customs, id: \.self) { c in
+                    Button { effects.remove(c); Haptics.selection() } label: {
+                        HStack(spacing: 5) {
+                            Text(c).font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.onGreen)
+                            Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).foregroundStyle(Palette.onGreen)
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 7)
+                        .background(Capsule().fill(Palette.green))
+                    }.buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var customEffectInput: some View {
+        if showCustomEffect {
+            HStack(spacing: 8) {
+                TextField("", text: $customEffect,
+                          prompt: Text("Custom feeling…").foregroundStyle(Palette.textTertiary))
+                    .foregroundStyle(Palette.text).submitLabel(.done)
+                    .onSubmit { commitCustomEffect() }
+                    .padding(.horizontal, 12).padding(.vertical, 10)
+                    .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).stroke(Palette.strokeSoft, lineWidth: 1))
+                Button { commitCustomEffect() } label: {
+                    Image(systemName: "checkmark.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
+                }.buttonStyle(.plain)
+                .disabled(customEffect.trimmingCharacters(in: .whitespaces).isEmpty)
+                .opacity(customEffect.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
+            }
+        } else {
+            Button { withAnimation { showCustomEffect = true } } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus").font(.system(size: 12, weight: .semibold))
+                    Text("Custom").font(.system(size: 13, weight: .medium))
+                }.foregroundStyle(Palette.green)
+            }.buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder private var amountSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            FieldLabel(text: "Amount (optional)")
+            HStack(spacing: 8) {
+                TextField("", text: $amount, prompt: Text("0").foregroundStyle(Palette.textTertiary))
+                    .keyboardType(.decimalPad).foregroundStyle(Palette.text)
+                    .padding(.horizontal, 14).padding(.vertical, 13)
+                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+                Menu {
+                    ForEach(["g", "hits", "mg", "bowls", "ml"], id: \.self) { u in
+                        Button(u) { amountUnit = u }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(amountUnit).font(.system(size: 15, weight: .medium)).foregroundStyle(Palette.text)
+                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 13)
+                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+                }
+            }
+        }
     }
 
     // MARK: Actions
