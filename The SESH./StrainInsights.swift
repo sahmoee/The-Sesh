@@ -14,7 +14,7 @@ import Foundation
 enum InsightLevel: Int {
     case veryLow = 1, low, medium, high, veryHigh
 
-    var label: String {
+    nonisolated var label: String {
         switch self {
         case .veryLow:  return "Very Low"
         case .low:      return "Low"
@@ -24,38 +24,41 @@ enum InsightLevel: Int {
         }
     }
     /// 0...1 for drawing a bar.
-    var fraction: Double { Double(rawValue) / 5.0 }
+    nonisolated var fraction: Double { Double(rawValue) / 5.0 }
 }
 
-/// Computes the derived comparison fields for a strain.
+/// Computes the derived comparison fields for a strain. Every method is `nonisolated`
+/// because it's a pure function of its `StrainProfile` argument — no UI, no actor
+/// state — so it must be callable from any context. (The project defaults to
+/// MainActor isolation under Swift 6, which would otherwise isolate these.)
 enum StrainInsights {
 
     /// Lowercased effect names for quick matching.
-    private static func effectSet(_ s: StrainProfile) -> Set<String> {
+    nonisolated private static func effectSet(_ s: StrainProfile) -> Set<String> {
         Set(s.effects.map { $0.name.lowercased() })
     }
-    private static func has(_ s: StrainProfile, _ names: String...) -> Bool {
+    nonisolated private static func has(_ s: StrainProfile, _ names: String...) -> Bool {
         let e = effectSet(s)
         return names.contains { e.contains($0) }
     }
 
     // MARK: Genetics (already in the model)
 
-    static func genetics(_ s: StrainProfile) -> String {
+    nonisolated static func genetics(_ s: StrainProfile) -> String {
         if let l = s.lineage, !l.isEmpty { return l }
         return "—"
     }
 
     // MARK: Flavor (already in the model)
 
-    static func flavor(_ s: StrainProfile) -> String {
+    nonisolated static func flavor(_ s: StrainProfile) -> String {
         let f = s.flavors.prefix(3).map(\.name)
         return f.isEmpty ? "—" : f.joined(separator: ", ")
     }
 
     // MARK: Typical Feel
 
-    static func typicalFeel(_ s: StrainProfile) -> String {
+    nonisolated static func typicalFeel(_ s: StrainProfile) -> String {
         let relaxing = has(s, "relaxed", "sleepy", "calming")
         let upbeat   = has(s, "energetic", "focused", "creative", "uplifting")
         let euphoric = has(s, "euphoric", "happy", "giggly")
@@ -75,7 +78,7 @@ enum StrainInsights {
 
     // MARK: Best Time
 
-    static func bestTime(_ s: StrainProfile) -> String {
+    nonisolated static func bestTime(_ s: StrainProfile) -> String {
         if has(s, "sleepy") { return "Night" }
         if has(s, "energetic", "focused") && !has(s, "relaxed") { return "Daytime" }
         switch s.type {
@@ -88,7 +91,7 @@ enum StrainInsights {
 
     // MARK: Couch Lock (sedation / heaviness)
 
-    static func couchLock(_ s: StrainProfile) -> InsightLevel {
+    nonisolated static func couchLock(_ s: StrainProfile) -> InsightLevel {
         var score = 0
         if has(s, "sleepy")  { score += 2 }
         if has(s, "relaxed") { score += 1 }
@@ -104,7 +107,7 @@ enum StrainInsights {
 
     // MARK: Socializing
 
-    static func socializing(_ s: StrainProfile) -> InsightLevel {
+    nonisolated static func socializing(_ s: StrainProfile) -> InsightLevel {
         var score = 0
         if has(s, "happy", "giggly", "talkative") { score += 2 }
         if has(s, "energetic", "euphoric")        { score += 1 }
@@ -120,7 +123,7 @@ enum StrainInsights {
 
     // MARK: Sleep Aid
 
-    static func sleepAid(_ s: StrainProfile) -> InsightLevel {
+    nonisolated static func sleepAid(_ s: StrainProfile) -> InsightLevel {
         var score = 0
         if has(s, "sleepy")  { score += 3 }
         if has(s, "relaxed") { score += 1 }
@@ -137,7 +140,7 @@ enum StrainInsights {
     // MARK: helpers
 
     /// Map a raw score to a 1–5 level. `base` is where a neutral (0) score lands.
-    private static func clamp(_ score: Int, base: Int) -> InsightLevel {
+    nonisolated private static func clamp(_ score: Int, base: Int) -> InsightLevel {
         let v = max(1, min(5, base + score))
         return InsightLevel(rawValue: v) ?? .medium
     }

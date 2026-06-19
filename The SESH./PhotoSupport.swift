@@ -17,7 +17,7 @@ import UIKit
 /// Persists captured images to Documents/SeshPhotos and hands back a stable
 /// filename to store on the model. Keeps the JSON small (no base64 blobs).
 enum PhotoStore {
-    private static var folder: URL {
+    nonisolated private static var folder: URL {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("SeshPhotos", isDirectory: true)
         if !FileManager.default.fileExists(atPath: dir.path) {
@@ -26,11 +26,11 @@ enum PhotoStore {
         return dir
     }
 
-    static func url(for name: String) -> URL { folder.appendingPathComponent(name) }
+    nonisolated static func url(for name: String) -> URL { folder.appendingPathComponent(name) }
 
     /// Downscales to a sane max dimension and saves as JPEG. Returns the filename.
     @discardableResult
-    static func save(_ image: UIImage, maxDimension: CGFloat = 1600, quality: CGFloat = 0.8) -> String? {
+    nonisolated static func save(_ image: UIImage, maxDimension: CGFloat = 1600, quality: CGFloat = 0.8) -> String? {
         let scaled = image.downscaled(to: maxDimension)
         guard let data = scaled.jpegData(compressionQuality: quality) else { return nil }
         let name = "sesh_\(UUID().uuidString).jpg"
@@ -42,12 +42,12 @@ enum PhotoStore {
         }
     }
 
-    static func load(_ name: String?) -> UIImage? {
+    nonisolated static func load(_ name: String?) -> UIImage? {
         guard let name, !name.isEmpty else { return nil }
         return UIImage(contentsOfFile: url(for: name).path)
     }
 
-    static func delete(_ name: String?) {
+    nonisolated static func delete(_ name: String?) {
         guard let name, !name.isEmpty else { return }
         try? FileManager.default.removeItem(at: url(for: name))
     }

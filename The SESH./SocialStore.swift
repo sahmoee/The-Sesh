@@ -84,7 +84,7 @@ final class SocialStore {
         blockedIDs.insert(user.id)
         friends.removeAll { $0.id == user.id }
         feed.removeAll { $0.userHandle == user.handle }
-        await api.block(userID: user.id, identity: identity)
+        _ = await api.block(userID: user.id, identity: identity)
         await refresh()
     }
 
@@ -97,7 +97,7 @@ final class SocialStore {
 
     func unblock(userID: String) async {
         blockedIDs.remove(userID)
-        await api.unblock(userID: userID, identity: identity)
+        _ = await api.unblock(userID: userID, identity: identity)
         await refresh()
     }
 

@@ -58,7 +58,6 @@ enum JourneyBuilder {
         let thoughts = s.thoughts.count
         let streak = s.bestStreakEver
         let withPhoto = s.entries.contains { $0.photoName != nil }
-        let withCompanions = s.entries.contains { ($0.companions?.isEmpty == false) }
         let friendCount = social?.friends.count ?? 0
         let cyphsJoined = s.cyphsJoinedCount
         let cyphsHosted = s.cyphsHostedCount
