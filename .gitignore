@@ -1,5 +1,3 @@
-# === The Sesh — .gitignore ===
-
 # Secrets — NEVER commit
 Secrets.xcconfig
 *.secret.xcconfig
@@ -11,22 +9,25 @@ Secrets.xcconfig
 *.cer
 *.mobileprovision
 AuthKey_*.p8
-
-# Cloudflare worker local state (worker SECRETS live in Cloudflare via `wrangler secret put`)
+# Cloudflare worker local state (secrets live in Cloudflare)
 _worker/**/.wrangler/
 **/.wrangler/
-
 # Xcode
 build/
 DerivedData/
+.bbderived/
 *.xcuserstate
 xcuserdata/
 *.xcscmblueprint
 *.xccheckout
 *.moved-aside
-
-# SwiftPM / Node / macOS
+*.hmap
+*.ipa
+*.dSYM
+# SwiftPM
 .build/
 .swiftpm/
+# Node
 node_modules/
+# macOS
 .DS_Store
