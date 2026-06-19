@@ -156,32 +156,92 @@ struct CompareStrainsView: View {
 
     private var stats: [StrainPersonalStats] { picks.map { session.personalStats(forStrain: $0) } }
 
+    // Precomputed, explicitly-typed row values. Computing these here (instead of
+    // inline in the ViewBuilder) keeps Swift's type-checker from exploding on the
+    // nested optional .map chains — that was hanging the compiler.
+    private var typeValues: [String] {
+        picks.map { (p: String) -> String in profile(p)?.type.rawValue ?? "—" }
+    }
+    private var thcValues: [String] {
+        picks.map { (p: String) -> String in
+            guard let t = profile(p)?.thc else { return "—" }
+            return String(format: "%.0f%%", t)
+        }
+    }
+    private var topEffectValues: [String] {
+        picks.map { (p: String) -> String in
+            let names: [String] = profile(p)?.effects.prefix(2).map(\.name) ?? []
+            return names.isEmpty ? "—" : names.joined(separator: ", ")
+        }
+    }
+    private var geneticsValues: [String] {
+        picks.map { (p: String) -> String in
+            guard let pr = profile(p) else { return "—" }
+            return StrainInsights.genetics(pr)
+        }
+    }
+    private var feelValues: [String] {
+        picks.map { (p: String) -> String in
+            guard let pr = profile(p) else { return "—" }
+            return StrainInsights.typicalFeel(pr)
+        }
+    }
+    private var bestTimeValues: [String] {
+        picks.map { (p: String) -> String in
+            guard let pr = profile(p) else { return "—" }
+            return StrainInsights.bestTime(pr)
+        }
+    }
+    private var flavorValues: [String] {
+        picks.map { (p: String) -> String in
+            guard let pr = profile(p) else { return "—" }
+            return StrainInsights.flavor(pr)
+        }
+    }
+    private var couchLockValues: [InsightLevel?] {
+        picks.map { (p: String) -> InsightLevel? in profile(p).map(StrainInsights.couchLock) }
+    }
+    private var socializingValues: [InsightLevel?] {
+        picks.map { (p: String) -> InsightLevel? in profile(p).map(StrainInsights.socializing) }
+    }
+    private var sleepAidValues: [InsightLevel?] {
+        picks.map { (p: String) -> InsightLevel? in profile(p).map(StrainInsights.sleepAid) }
+    }
+    private var ratingValues: [String] {
+        stats.map { (s: StrainPersonalStats) -> String in
+            s.hasHistory ? String(format: "%.1f", s.averageRating) : "—"
+        }
+    }
+    private var sessionValues: [String] {
+        stats.map { (s: StrainPersonalStats) -> String in "\(s.sessions)" }
+    }
+    private var favoriteValues: [String] {
+        stats.map { (s: StrainPersonalStats) -> String in s.isFavorite ? "Yes" : "No" }
+    }
+
     private var comparisonGrid: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             VStack(spacing: 0) {
                 gridRow("", picks.map { $0 }, header: true)
                 // Database attributes (work for ANY strain, logged or not)
                 sectionLabel("STRAIN INFO")
-                gridDataRow("Type", picks.map { profile($0)?.type.rawValue ?? "—" })
-                gridDataRow("THC", picks.map { p in profile(p)?.thc.map { String(format: "%.0f%%", $0) } ?? "—" })
-                gridDataRow("Top Effects", picks.map { p in
-                    let effs = profile(p)?.effects.prefix(2).map(\.name).joined(separator: ", ")
-                    return (effs?.isEmpty ?? true) ? "—" : (effs ?? "—")
-                })
+                gridDataRow("Type", typeValues)
+                gridDataRow("THC", thcValues)
+                gridDataRow("Top Effects", topEffectValues)
                 // Profile & feel (derived from each strain's type + effects)
                 sectionLabel("PROFILE & FEEL")
-                gridDataRow("Genetics", picks.map { profile($0).map(StrainInsights.genetics) ?? "—" })
-                gridDataRow("Typical Feel", picks.map { profile($0).map(StrainInsights.typicalFeel) ?? "—" })
-                gridDataRow("Best Time", picks.map { profile($0).map(StrainInsights.bestTime) ?? "—" })
-                gridDataRow("Flavor", picks.map { profile($0).map(StrainInsights.flavor) ?? "—" })
-                gridLevelRow("Couch Lock", picks.map { profile($0).map(StrainInsights.couchLock) })
-                gridLevelRow("Socializing", picks.map { profile($0).map(StrainInsights.socializing) })
-                gridLevelRow("Sleep Aid", picks.map { profile($0).map(StrainInsights.sleepAid) })
+                gridDataRow("Genetics", geneticsValues)
+                gridDataRow("Typical Feel", feelValues)
+                gridDataRow("Best Time", bestTimeValues)
+                gridDataRow("Flavor", flavorValues)
+                gridLevelRow("Couch Lock", couchLockValues)
+                gridLevelRow("Socializing", socializingValues)
+                gridLevelRow("Sleep Aid", sleepAidValues)
                 // Your personal history
                 sectionLabel("YOUR HISTORY")
-                gridDataRow("Your Rating", stats.map { $0.hasHistory ? String(format: "%.1f", $0.averageRating) : "—" })
-                gridDataRow("Sessions", stats.map { "\($0.sessions)" })
-                gridDataRow("Favorite", stats.map { $0.isFavorite ? "Yes" : "No" })
+                gridDataRow("Your Rating", ratingValues)
+                gridDataRow("Sessions", sessionValues)
+                gridDataRow("Favorite", favoriteValues)
                 ForEach(effectRows, id: \.self) { eff in
                     gridEffectRow(eff)
                 }
