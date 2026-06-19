@@ -66,62 +66,9 @@ struct ComposeThoughtView: View {
                     VStack(spacing: 18) {
                         NotesField(label: "What's on your mind?",
                                    placeholder: "Whoa, what if...", text: $text, minHeight: 120)
-
-                        VStack(alignment: .leading, spacing: 12) {
-                            FieldLabel(text: "Tag (optional)")
-                            HStack(spacing: 10) {
-                                ForEach(ThoughtTag.allCases) { t in
-                                    Button {
-                                        Haptics.selection(); tag = (tag == t) ? nil : t
-                                    } label: {
-                                        Text(t.rawValue)
-                                            .font(.system(size: 14, weight: .medium))
-                                            .foregroundStyle(tag == t ? Palette.onGreen : Palette.textSecondary)
-                                            .padding(.horizontal, 16).padding(.vertical, 9)
-                                            .background(Capsule().fill(tag == t ? Palette.green : Palette.field))
-                                            .overlay(Capsule().stroke(tag == t ? Color.clear : Palette.stroke, lineWidth: 1))
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-
-                        VStack(alignment: .leading, spacing: 12) {
-                            FieldLabel(text: "Who can see this?")
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                                ForEach(PostVisibility.allCases) { v in
-                                    Button {
-                                        Haptics.selection(); visibility = v
-                                    } label: {
-                                        HStack(spacing: 6) {
-                                            Image(systemName: v.symbol).font(.system(size: 13))
-                                            Text(v.rawValue).font(.system(size: 13, weight: .medium)).lineLimit(1)
-                                        }
-                                        .foregroundStyle(visibility == v ? Palette.onGreen : Palette.text)
-                                        .frame(maxWidth: .infinity).padding(.vertical, 10)
-                                        .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
-                                            .fill(visibility == v ? Palette.green : Palette.field))
-                                        .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
-                                            .stroke(visibility == v ? Color.clear : Palette.stroke, lineWidth: 1))
-                                    }.buttonStyle(.plain)
-                                }
-                            }
-                        }
-
-                        PrimaryButton(title: editing == nil ? "Capture Thought" : "Save Changes") {
-                            let s = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                            guard !s.isEmpty else { return }
-                            if var e = editing {
-                                e.text = s; e.tag = tag; e.visibility = visibility
-                                session.updateThought(e)
-                            } else {
-                                var t = HighThought(text: s, tag: tag)
-                                t.visibility = visibility
-                                session.addThought(t)
-                            }
-                            Haptics.success()
-                            dismiss()
-                        }
+                        tagSection
+                        visibilitySection
+                        PrimaryButton(title: editing == nil ? "Capture Thought" : "Save Changes") { saveThought() }
                     }
                     .padding(.horizontal, 18).padding(.bottom, 28)
                 }
@@ -133,5 +80,65 @@ struct ComposeThoughtView: View {
             didLoad = true
             if let e = editing { text = e.text; tag = e.tag; visibility = e.visibility }
         }
+    }
+
+    @ViewBuilder private var tagSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FieldLabel(text: "Tag (optional)")
+            HStack(spacing: 10) {
+                ForEach(ThoughtTag.allCases) { t in
+                    Button {
+                        Haptics.selection(); tag = (tag == t) ? nil : t
+                    } label: {
+                        Text(t.rawValue)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(tag == t ? Palette.onGreen : Palette.textSecondary)
+                            .padding(.horizontal, 16).padding(.vertical, 9)
+                            .background(Capsule().fill(tag == t ? Palette.green : Palette.field))
+                            .overlay(Capsule().stroke(tag == t ? Color.clear : Palette.stroke, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var visibilitySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FieldLabel(text: "Who can see this?")
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                ForEach(PostVisibility.allCases) { v in
+                    Button {
+                        Haptics.selection(); visibility = v
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: v.symbol).font(.system(size: 13))
+                            Text(v.rawValue).font(.system(size: 13, weight: .medium)).lineLimit(1)
+                        }
+                        .foregroundStyle(visibility == v ? Palette.onGreen : Palette.text)
+                        .frame(maxWidth: .infinity).padding(.vertical, 10)
+                        .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
+                            .fill(visibility == v ? Palette.green : Palette.field))
+                        .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
+                            .stroke(visibility == v ? Color.clear : Palette.stroke, lineWidth: 1))
+                    }.buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private func saveThought() {
+        let s = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return }
+        if var e = editing {
+            e.text = s; e.tag = tag; e.visibility = visibility
+            session.updateThought(e)
+        } else {
+            var t = HighThought(text: s, tag: tag)
+            t.visibility = visibility
+            session.addThought(t)
+        }
+        Haptics.success()
+        dismiss()
     }
 }

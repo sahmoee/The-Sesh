@@ -39,110 +39,15 @@ struct StrainLibraryView: View {
             ZStack(alignment: .bottom) {
                 AppBackground()
                 VStack(spacing: 0) {
-                    ZStack {
-                        Text("Strains")
-                            .font(.system(size: 22, weight: .semibold, design: .serif))
-                            .foregroundStyle(Palette.text)
-                        HStack {
-                            Spacer()
-                            Button { showAdd = true } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
-
-                    // Search
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass").foregroundStyle(Palette.textSecondary)
-                        TextField("", text: $query,
-                                  prompt: Text("Search strains...").foregroundStyle(Palette.textTertiary))
-                            .foregroundStyle(Palette.text)
-                        if !query.isEmpty {
-                            Button { query = "" } label: {
-                                Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.textSecondary)
-                            }.buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, 14).padding(.vertical, 12)
-                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                    .contentShape(Rectangle())
-                    .padding(.horizontal, 18).padding(.bottom, 10)
-
-                    // Intelligence center tools
+                    libraryHeader
+                    librarySearchBar
                     StrainToolsBar()
                         .padding(.bottom, 10)
-
                     FilterPills(items: filterLabels, selection: filterBinding)
                         .padding(.horizontal, 18).padding(.bottom, 8)
-
-                    if results.isEmpty {
-                        emptyState
-                        Spacer()
-                    } else {
-                        List {
-                            if query.isEmpty && typeFilter == nil {
-                                StrainFunFactCard()
-                                    .listRowInsets(EdgeInsets(top: 4, leading: 18, bottom: 8, trailing: 18))
-                                    .listRowSeparator(.hidden)
-                                    .listRowBackground(Color.clear)
-                                featuredSection
-                                    .listRowInsets(EdgeInsets(top: 4, leading: 18, bottom: 4, trailing: 18))
-                                    .listRowSeparator(.hidden)
-                                    .listRowBackground(Color.clear)
-                            }
-                            ForEach(results) { s in
-                                NavigationLink {
-                                    StrainCatalogDetailView(profile: s, onLog: onLog, onEdit: { editingStrain = $0 })
-                                        .navigationBarBackButtonHidden(true)
-                                } label: {
-                                    StrainRow(profile: s, seed: abs(s.id.hashValue % 60))
-                                }
-                                .listRowInsets(EdgeInsets(top: 6, leading: 18, bottom: 6, trailing: 18))
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    if strains.isCustom(s) {
-                                        Button(role: .destructive) {
-                                            Haptics.warning(); strains.deleteCustom(s)
-                                        } label: { Label("Delete", systemImage: "trash") }
-                                        Button {
-                                            editingStrain = s
-                                        } label: { Label("Edit", systemImage: "pencil") }
-                                        .tint(Palette.green)
-                                    }
-                                }
-                                .contextMenu {
-                                    Button { onLog(s) } label: { Label("Log this strain", systemImage: "plus") }
-                                    if strains.isCustom(s) {
-                                        Button { editingStrain = s } label: { Label("Edit", systemImage: "pencil") }
-                                        Button(role: .destructive) { strains.deleteCustom(s) } label: { Label("Delete", systemImage: "trash") }
-                                    }
-                                }
-                            }
-                            Color.clear.frame(height: 80).listRowBackground(Color.clear).listRowSeparator(.hidden)
-                        }
-                        .listStyle(.plain)
-                        .scrollContentBackground(.hidden)
-                    }
+                    libraryListContent
                 }
-
-                // Floating add-custom button
-                Button { showAdd = true } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus").font(.system(size: 15, weight: .semibold))
-                        Text("Add Strain").font(.system(size: 15, weight: .semibold))
-                    }
-                    .foregroundStyle(Palette.onGreen)
-                    .padding(.horizontal, 20).padding(.vertical, 13)
-                    .background(Capsule().fill(Palette.green))
-                    .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
-                }
-                .buttonStyle(.plain)
-                .padding(.bottom, 16)
+                floatingAddButton
             }
             .toolbar(.hidden, for: .navigationBar)
         }
@@ -152,6 +57,83 @@ struct StrainLibraryView: View {
         .sheet(item: $editingStrain) { s in
             StrainEditorView(editing: s).environment(strains)
         }
+    }
+
+    @ViewBuilder private var libraryHeader: some View {
+        ZStack {
+            Text("Strains")
+                .font(.system(size: 22, weight: .semibold, design: .serif))
+                .foregroundStyle(Palette.text)
+            HStack {
+                Spacer()
+                Button { showAdd = true } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
+    }
+
+    @ViewBuilder private var librarySearchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass").foregroundStyle(Palette.textSecondary)
+            TextField("", text: $query,
+                      prompt: Text("Search strains...").foregroundStyle(Palette.textTertiary))
+                .foregroundStyle(Palette.text)
+            if !query.isEmpty {
+                Button { query = "" } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.textSecondary)
+                }.buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 12)
+        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+        .contentShape(Rectangle())
+        .padding(.horizontal, 18).padding(.bottom, 10)
+    }
+
+    @ViewBuilder private var libraryListContent: some View {
+        if results.isEmpty {
+            emptyState
+            Spacer()
+        } else {
+            List {
+                if query.isEmpty && typeFilter == nil {
+                    StrainFunFactCard()
+                        .listRowInsets(EdgeInsets(top: 4, leading: 18, bottom: 8, trailing: 18))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                    featuredSection
+                        .listRowInsets(EdgeInsets(top: 4, leading: 18, bottom: 4, trailing: 18))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                }
+                ForEach(results) { s in
+                    StrainListRow(profile: s, onLog: onLog, onEdit: { editingStrain = $0 })
+                }
+                Color.clear.frame(height: 80).listRowBackground(Color.clear).listRowSeparator(.hidden)
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+        }
+    }
+
+    @ViewBuilder private var floatingAddButton: some View {
+        Button { showAdd = true } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "plus").font(.system(size: 15, weight: .semibold))
+                Text("Add Strain").font(.system(size: 15, weight: .semibold))
+            }
+            .foregroundStyle(Palette.onGreen)
+            .padding(.horizontal, 20).padding(.vertical, 13)
+            .background(Capsule().fill(Palette.green))
+            .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
+        }
+        .buttonStyle(.plain)
+        .padding(.bottom, 16)
     }
 
     private var emptyState: some View {
@@ -187,12 +169,7 @@ struct StrainLibraryView: View {
                 VStack(spacing: 0) {
                     ForEach(Array(recs.enumerated()), id: \.element.id) { idx, rec in
                         if let profile = all.first(where: { $0.name.caseInsensitiveCompare(rec.name) == .orderedSame }) {
-                            NavigationLink {
-                                StrainCatalogDetailView(profile: profile, onLog: onLog, onEdit: { editingStrain = $0 })
-                                    .navigationBarBackButtonHidden(true)
-                            } label: {
-                                forYouRow(rec: rec, profile: profile)
-                            }.buttonStyle(.plain)
+                            ForYouRow(rec: rec, profile: profile, onLog: onLog, onEdit: { editingStrain = $0 })
                             if idx < recs.count - 1 { Divider().overlay(Palette.stroke) }
                         }
                     }
@@ -202,24 +179,6 @@ struct StrainLibraryView: View {
                 .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
             }
         }
-    }
-
-    private func forYouRow(rec: AppSession.Recommendation, profile: StrainProfile) -> some View {
-        HStack(spacing: 12) {
-            StoredImage(name: profile.photoName, size: 44, corner: Radius.sm)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(rec.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
-                Text(rec.reason).font(.system(size: 12)).foregroundStyle(Palette.greenBright)
-            }
-            Spacer()
-            if rec.stats.averageRating > 0 {
-                HStack(spacing: 3) {
-                    Image(systemName: "star.fill").font(.system(size: 10)).foregroundStyle(Palette.gold)
-                    Text(String(format: "%.1f", rec.stats.averageRating)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.text)
-                }
-            }
-        }
-        .padding(.vertical, 9)
     }
 
     @ViewBuilder private var featuredStrainBlock: some View {
@@ -316,6 +275,77 @@ struct StrainLibraryView: View {
     private func shortRating(_ s: StrainProfile) -> String {
         let seed = abs(s.id.hashValue)
         return String(format: "%.1f", 4.0 + Double(seed % 10) / 10.0)
+    }
+}
+
+// MARK: - "For You" recommendation row (split out so forYouBlock type-checks fast)
+
+private struct ForYouRow: View {
+    let rec: AppSession.Recommendation
+    let profile: StrainProfile
+    let onLog: (StrainProfile) -> Void
+    let onEdit: (StrainProfile) -> Void
+
+    var body: some View {
+        NavigationLink {
+            StrainCatalogDetailView(profile: profile, onLog: onLog, onEdit: onEdit)
+                .navigationBarBackButtonHidden(true)
+        } label: {
+            HStack(spacing: 12) {
+                StoredImage(name: profile.photoName, size: 44, corner: Radius.sm)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(rec.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                    Text(rec.reason).font(.system(size: 12)).foregroundStyle(Palette.greenBright)
+                }
+                Spacer()
+                if rec.stats.averageRating > 0 {
+                    HStack(spacing: 3) {
+                        Image(systemName: "star.fill").font(.system(size: 10)).foregroundStyle(Palette.gold)
+                        Text(String(format: "%.1f", rec.stats.averageRating)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.text)
+                    }
+                }
+            }
+            .padding(.vertical, 9)
+        }.buttonStyle(.plain)
+    }
+}
+
+// MARK: - One row in the main strain list (split out so the List type-checks fast)
+
+private struct StrainListRow: View {
+    @Environment(StrainStore.self) private var strains
+    let profile: StrainProfile
+    let onLog: (StrainProfile) -> Void
+    let onEdit: (StrainProfile) -> Void
+
+    var body: some View {
+        NavigationLink {
+            StrainCatalogDetailView(profile: profile, onLog: onLog, onEdit: onEdit)
+                .navigationBarBackButtonHidden(true)
+        } label: {
+            StrainRow(profile: profile, seed: abs(profile.id.hashValue % 60))
+        }
+        .listRowInsets(EdgeInsets(top: 6, leading: 18, bottom: 6, trailing: 18))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            if strains.isCustom(profile) {
+                Button(role: .destructive) {
+                    Haptics.warning(); strains.deleteCustom(profile)
+                } label: { Label("Delete", systemImage: "trash") }
+                Button {
+                    onEdit(profile)
+                } label: { Label("Edit", systemImage: "pencil") }
+                .tint(Palette.green)
+            }
+        }
+        .contextMenu {
+            Button { onLog(profile) } label: { Label("Log this strain", systemImage: "plus") }
+            if strains.isCustom(profile) {
+                Button { onEdit(profile) } label: { Label("Edit", systemImage: "pencil") }
+                Button(role: .destructive) { strains.deleteCustom(profile) } label: { Label("Delete", systemImage: "trash") }
+            }
+        }
     }
 }
 

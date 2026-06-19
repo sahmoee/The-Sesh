@@ -125,6 +125,58 @@ struct RootView: View {
     }
 
     var body: some View {
+        tabContent
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            TabBar(selection: $selection)
+        }
+        .id(theme.choice)
+        .preferredColorScheme(theme.choice.isDark ? .dark : .light)
+        .toast($toastMessage)
+        .task {
+            if AppChangelog.shouldShowWhatsNew { showWhatsNew = true }
+        }
+        .sheet(isPresented: $showWhatsNew) {
+            WhatsNewView().presentationDetents([.large])
+        }
+        .sheet(isPresented: $showLog, onDismiss: { onLogDismiss() }) {
+            LogSeshView(prefill: logPrefill).environment(session).environment(strains)
+                .onAppear { entryCountBefore = session.entries.count }
+        }
+        .sheet(isPresented: $showQuickThought, onDismiss: { onThoughtDismiss() }) {
+            ComposeThoughtView().environment(session).presentationDetents([.medium, .large])
+                .onAppear { thoughtCountBefore = session.thoughts.count }
+        }
+        .fullScreenCover(isPresented: $showStartSesh, onDismiss: { onStartSeshDismiss() }) {
+            StartSeshView(initialActivity: chosenActivity, endImmediately: endSeshFromWidget)
+                .environment(session).environment(strains).environment(social)
+                .onDisappear {
+                    if session.entries.count > entryCountBefore { toastMessage = "Sesh saved to Journal" }
+                }
+                .onAppear { entryCountBefore = session.entries.count }
+        }
+        .confirmationDialog(inProgressMessage, isPresented: $showInProgressWarning, titleVisibility: .visible) {
+            Button("Save & start new") { saveOldThenStart() }
+            Button("Discard & start new", role: .destructive) { discardAndStart() }
+            Button("Cancel", role: .cancel) { pendingStartActivity = nil }
+        }
+        .sheet(isPresented: $showActivityChooser, onDismiss: { onChooserDismiss() }) {
+            StartSeshChooser(onPick: { act in
+                pendingChooserActivity = act
+            })
+            .environment(social)
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+        }
+        .onOpenURL { url in
+            handleDeepLink(url)
+        }
+        .sheet(isPresented: $showCompare) {
+            CompareStrainsView().environment(session).environment(strains)
+        }
+    }
+
+    @ViewBuilder private var tabContent: some View {
         Group {
             switch selection {
             case .home:
@@ -144,73 +196,32 @@ struct RootView: View {
             case .profile:  ProfileView()
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            TabBar(selection: $selection)
+    }
+
+    private func onLogDismiss() {
+        if session.entries.count > entryCountBefore {
+            toastMessage = "Sesh logged"
+            social.setMyActivity(.smoking, detail: session.entries.first?.strain)
         }
-        .id(theme.choice)
-        .preferredColorScheme(theme.choice.isDark ? .dark : .light)
-        .toast($toastMessage)
-        .task {
-            if AppChangelog.shouldShowWhatsNew { showWhatsNew = true }
+    }
+
+    private func onThoughtDismiss() {
+        if session.thoughts.count > thoughtCountBefore { toastMessage = "Thought captured" }
+    }
+
+    private func onStartSeshDismiss() {
+        chosenActivity = nil
+        endSeshFromWidget = false
+        if let next = startAfterSave {
+            startAfterSave = nil
+            requestStart(next)
         }
-        .sheet(isPresented: $showWhatsNew) {
-            WhatsNewView().presentationDetents([.large])
-        }
-        .sheet(isPresented: $showLog, onDismiss: {
-            if session.entries.count > entryCountBefore {
-                toastMessage = "Sesh logged"
-                social.setMyActivity(.smoking, detail: session.entries.first?.strain)
-            }
-        }) {
-            LogSeshView(prefill: logPrefill).environment(session).environment(strains)
-                .onAppear { entryCountBefore = session.entries.count }
-        }
-        .sheet(isPresented: $showQuickThought, onDismiss: {
-            if session.thoughts.count > thoughtCountBefore { toastMessage = "Thought captured" }
-        }) {
-            ComposeThoughtView().environment(session).presentationDetents([.medium, .large])
-                .onAppear { thoughtCountBefore = session.thoughts.count }
-        }
-        .fullScreenCover(isPresented: $showStartSesh, onDismiss: {
-            chosenActivity = nil
-            endSeshFromWidget = false
-            // If the user chose "Save & start new", launch the queued activity now.
-            if let next = startAfterSave {
-                startAfterSave = nil
-                requestStart(next)
-            }
-        }) {
-            StartSeshView(initialActivity: chosenActivity, endImmediately: endSeshFromWidget)
-                .environment(session).environment(strains).environment(social)
-                .onDisappear {
-                    if session.entries.count > entryCountBefore { toastMessage = "Sesh saved to Journal" }
-                }
-                .onAppear { entryCountBefore = session.entries.count }
-        }
-        .confirmationDialog(inProgressMessage, isPresented: $showInProgressWarning, titleVisibility: .visible) {
-            Button("Save & start new") { saveOldThenStart() }
-            Button("Discard & start new", role: .destructive) { discardAndStart() }
-            Button("Cancel", role: .cancel) { pendingStartActivity = nil }
-        }
-        .sheet(isPresented: $showActivityChooser, onDismiss: {
-            if let act = pendingChooserActivity {
-                pendingChooserActivity = nil
-                requestStart(act)
-            }
-        }) {
-            StartSeshChooser(onPick: { act in
-                pendingChooserActivity = act
-            })
-            .environment(social)
-            .presentationDetents([.medium])
-            .presentationDragIndicator(.visible)
-        }
-        .onOpenURL { url in
-            handleDeepLink(url)
-        }
-        .sheet(isPresented: $showCompare) {
-            CompareStrainsView().environment(session).environment(strains)
+    }
+
+    private func onChooserDismiss() {
+        if let act = pendingChooserActivity {
+            pendingChooserActivity = nil
+            requestStart(act)
         }
     }
 }

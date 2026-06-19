@@ -24,166 +24,12 @@ struct JourneyView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        // Header
-                        ZStack {
-                            Text("Your Journey")
-                                .font(.system(size: 22, weight: .semibold, design: .serif))
-                                .foregroundStyle(Palette.onCream)
-                            HStack {
-                                Image(systemName: "chart.bar.xaxis")
-                                    .font(.system(size: 18)).foregroundStyle(Palette.onCream)
-                                Spacer()
-                                NavigationLink {
-                                    ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true)
-                                } label: {
-                                    Image(systemName: "gearshape")
-                                        .font(.system(size: 18)).foregroundStyle(Palette.onCream)
-                                }
-                            }
-                        }
-                        .padding(.top, 8)
-
-                        // Connection status (loading/error state, #22)
-                        if social.loading && !social.online {
-                            HStack(spacing: 8) {
-                                ProgressView().controlSize(.small)
-                                Text("Connecting…").font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
-                            }
-                            .frame(maxWidth: .infinity).padding(.vertical, 8)
-                            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                        } else if !social.online {
-                            Button { Task { await social.refresh() } } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "wifi.exclamationmark").font(.system(size: 13))
-                                    Text("Offline — showing local data. Tap to retry.").font(.system(size: 13, weight: .medium))
-                                    Spacer()
-                                    Image(systemName: "arrow.clockwise").font(.system(size: 13))
-                                }
-                                .foregroundStyle(Palette.gold)
-                                .padding(.horizontal, 12).padding(.vertical, 10)
-                                .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.gold.opacity(0.12)))
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        // ── Social hub ──────────────────────────────
-                        Text("Sesh Together")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Palette.onCream)
-
-                        // Active friends presence (cream-styled inline)
-                        if !social.activeFriends.isEmpty {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 14) {
-                                    ForEach(social.activeFriends) { f in
-                                        Button { friendPeek = f } label: {
-                                            VStack(spacing: 5) {
-                                                PresenceAvatar(user: f, size: 50)
-                                                Text(f.displayName).font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.onCream).lineLimit(1)
-                                                ActivityGlyph(activity: f.activity, size: 13)
-                                            }.frame(width: 60)
-                                        }.buttonStyle(.plain)
-                                    }
-                                }.padding(.vertical, 2)
-                            }
-                        }
-
-                        VStack(spacing: 12) {
-                            Button { showStartSesh = true } label: {
-                                if let live = session.liveSesh {
-                                    exploreRow("play.circle.fill", "Resume sesh",
-                                               "\(live.stage.rawValue)\(live.strainName.isEmpty ? "" : " · \(live.strainName)")")
-                                } else {
-                                    exploreRow("play.circle.fill", "Start sesh", "Begin a live session")
-                                }
-                            }.buttonStyle(.plain)
-                            NavigationLink { FriendsView().navigationBarBackButtonHidden(true) } label: {
-                                exploreRow("person.2.fill", "Friends", "Add friends and see who's around")
-                            }.buttonStyle(.plain)
-                            NavigationLink { FriendActivityView().navigationBarBackButtonHidden(true) } label: {
-                                exploreRow("sparkles", "Activity", "See what your friends are up to")
-                            }.buttonStyle(.plain)
-                            NavigationLink { CyphersView().navigationBarBackButtonHidden(true) } label: {
-                                exploreRow("dot.radiowaves.left.and.right", "Cyphers", "Host or join a shared session")
-                            }.buttonStyle(.plain)
-                            NavigationLink { LiveChatView().navigationBarBackButtonHidden(true) } label: {
-                                exploreRow("bubble.left.and.bubble.right.fill", "Live Chat", "Hop into the live room right now")
-                            }.buttonStyle(.plain)
-                            NavigationLink { ChatRoomsView().navigationBarBackButtonHidden(true) } label: {
-                                exploreRow("bubble.left.and.bubble.right", "Chat Rooms", "Jump into the conversation")
-                            }.buttonStyle(.plain)
-                        }
-
-                        // Overview
-                        Text("Overview")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Palette.onCream)
-                            .padding(.top, 4)
-
-                        HStack(spacing: 12) {
-                            overviewTile(title: "Current Streak", value: "\(session.currentStreak)",
-                                         suffix: "Days", emoji: "flame.fill", emojiColor: Palette.moodAngry)
-                            NavigationLink {
-                                StatsView().environment(session).navigationBarBackButtonHidden(true)
-                            } label: {
-                                overviewTile(title: "Sessions Logged", value: "\(session.sessionsLogged)",
-                                             suffix: nil, emoji: "doc.text", emojiColor: Palette.green)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        HStack(spacing: 12) {
-                            overviewTile(title: "Unique Strains Tried", value: "\(session.uniqueStrains)",
-                                         suffix: nil, emoji: "leaf.fill", emojiColor: Palette.green)
-                            NavigationLink {
-                                StatsView(initialTab: "Spending").environment(session).navigationBarBackButtonHidden(true)
-                            } label: {
-                                overviewTile(title: "This Month Spent",
-                                             value: String(format: "$%.2f", session.thisMonthSpent),
-                                             suffix: nil, emoji: "dollarsign.circle", emojiColor: Palette.green)
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        // Top stats
-                        Text("Top Stats")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Palette.onCream)
-                            .padding(.top, 4)
-
-                        VStack(spacing: 0) {
-                            topStatRow("trophy", "Highest Rated Strain",
-                                       session.highestRatedStrain ?? "—",
-                                       trailing: session.highestRating > 0 ? String(format: "%.1f", session.highestRating) : nil,
-                                       trailingIsRating: true)
-                            divider
-                            topStatRow("shield", "Most Relaxing",
-                                       session.topStrain(for: .chill) ?? session.topStrain(for: .couchPotato) ?? "—",
-                                       trailingIcon: "leaf.fill")
-                            divider
-                            topStatRow("bolt", "Most Productive",
-                                       session.topStrain(for: .productive) ?? "—",
-                                       trailingIcon: "bolt.fill")
-                            divider
-                            topStatRow("bag", "Most Purchased",
-                                       session.mostPurchasedStrain ?? "—",
-                                       trailingIcon: "cart.fill")
-                        }
-                        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.creamElevated))
-                        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.creamStroke, lineWidth: 1))
-
-                        // Explore links
-                        VStack(spacing: 12) {
-                            NavigationLink { BadgesView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                exploreRow("rosette", "Badges", "See what you've earned")
-                            }.buttonStyle(.plain)
-                            NavigationLink { InsightsListView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                exploreRow("sparkles", "Strain Insights", "What each strain does for you")
-                            }.buttonStyle(.plain)
-                            NavigationLink { StatsView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                exploreRow("chart.bar", "Stats", "Mood, strains & spending")
-                            }.buttonStyle(.plain)
-                        }
-                        .padding(.top, 4)
+                        headerSection
+                        connectionStatus
+                        socialHubSection
+                        overviewSection
+                        topStatsSection
+                        exploreSection
                     }
                     .padding(.horizontal, 18).padding(.bottom, 28)
                 }
@@ -198,6 +44,174 @@ struct JourneyView: View {
             StartSeshView()
                 .environment(session).environment(strains).environment(social)
         }
+    }
+
+    // MARK: Sections
+
+    @ViewBuilder private var headerSection: some View {
+        ZStack {
+            Text("Your Journey")
+                .font(.system(size: 22, weight: .semibold, design: .serif))
+                .foregroundStyle(Palette.onCream)
+            HStack {
+                Image(systemName: "chart.bar.xaxis")
+                    .font(.system(size: 18)).foregroundStyle(Palette.onCream)
+                Spacer()
+                NavigationLink {
+                    ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true)
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 18)).foregroundStyle(Palette.onCream)
+                }
+            }
+        }
+        .padding(.top, 8)
+    }
+
+    @ViewBuilder private var connectionStatus: some View {
+        if social.loading && !social.online {
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text("Connecting…").font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+        } else if !social.online {
+            Button { Task { await social.refresh() } } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "wifi.exclamationmark").font(.system(size: 13))
+                    Text("Offline — showing local data. Tap to retry.").font(.system(size: 13, weight: .medium))
+                    Spacer()
+                    Image(systemName: "arrow.clockwise").font(.system(size: 13))
+                }
+                .foregroundStyle(Palette.gold)
+                .padding(.horizontal, 12).padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.gold.opacity(0.12)))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder private var socialHubSection: some View {
+        Text("Sesh Together")
+            .font(.system(size: 17, weight: .semibold))
+            .foregroundStyle(Palette.onCream)
+
+        if !social.activeFriends.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(social.activeFriends) { f in
+                        Button { friendPeek = f } label: {
+                            VStack(spacing: 5) {
+                                PresenceAvatar(user: f, size: 50)
+                                Text(f.displayName).font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.onCream).lineLimit(1)
+                                ActivityGlyph(activity: f.activity, size: 13)
+                            }.frame(width: 60)
+                        }.buttonStyle(.plain)
+                    }
+                }.padding(.vertical, 2)
+            }
+        }
+
+        VStack(spacing: 12) {
+            Button { showStartSesh = true } label: {
+                if let live = session.liveSesh {
+                    exploreRow("play.circle.fill", "Resume sesh",
+                               "\(live.stage.rawValue)\(live.strainName.isEmpty ? "" : " · \(live.strainName)")")
+                } else {
+                    exploreRow("play.circle.fill", "Start sesh", "Begin a live session")
+                }
+            }.buttonStyle(.plain)
+            NavigationLink { FriendsView().navigationBarBackButtonHidden(true) } label: {
+                exploreRow("person.2.fill", "Friends", "Add friends and see who's around")
+            }.buttonStyle(.plain)
+            NavigationLink { FriendActivityView().navigationBarBackButtonHidden(true) } label: {
+                exploreRow("sparkles", "Activity", "See what your friends are up to")
+            }.buttonStyle(.plain)
+            NavigationLink { CyphersView().navigationBarBackButtonHidden(true) } label: {
+                exploreRow("dot.radiowaves.left.and.right", "Cyphers", "Host or join a shared session")
+            }.buttonStyle(.plain)
+            NavigationLink { LiveChatView().navigationBarBackButtonHidden(true) } label: {
+                exploreRow("bubble.left.and.bubble.right.fill", "Live Chat", "Hop into the live room right now")
+            }.buttonStyle(.plain)
+            NavigationLink { ChatRoomsView().navigationBarBackButtonHidden(true) } label: {
+                exploreRow("bubble.left.and.bubble.right", "Chat Rooms", "Jump into the conversation")
+            }.buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder private var overviewSection: some View {
+        Text("Overview")
+            .font(.system(size: 17, weight: .semibold))
+            .foregroundStyle(Palette.onCream)
+            .padding(.top, 4)
+
+        HStack(spacing: 12) {
+            overviewTile(title: "Current Streak", value: "\(session.currentStreak)",
+                         suffix: "Days", emoji: "flame.fill", emojiColor: Palette.moodAngry)
+            NavigationLink {
+                StatsView().environment(session).navigationBarBackButtonHidden(true)
+            } label: {
+                overviewTile(title: "Sessions Logged", value: "\(session.sessionsLogged)",
+                             suffix: nil, emoji: "doc.text", emojiColor: Palette.green)
+            }
+            .buttonStyle(.plain)
+        }
+        HStack(spacing: 12) {
+            overviewTile(title: "Unique Strains Tried", value: "\(session.uniqueStrains)",
+                         suffix: nil, emoji: "leaf.fill", emojiColor: Palette.green)
+            NavigationLink {
+                StatsView(initialTab: "Spending").environment(session).navigationBarBackButtonHidden(true)
+            } label: {
+                overviewTile(title: "This Month Spent",
+                             value: String(format: "$%.2f", session.thisMonthSpent),
+                             suffix: nil, emoji: "dollarsign.circle", emojiColor: Palette.green)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder private var topStatsSection: some View {
+        Text("Top Stats")
+            .font(.system(size: 17, weight: .semibold))
+            .foregroundStyle(Palette.onCream)
+            .padding(.top, 4)
+
+        VStack(spacing: 0) {
+            topStatRow("trophy", "Highest Rated Strain",
+                       session.highestRatedStrain ?? "—",
+                       trailing: session.highestRating > 0 ? String(format: "%.1f", session.highestRating) : nil,
+                       trailingIsRating: true)
+            divider
+            topStatRow("shield", "Most Relaxing",
+                       session.topStrain(for: .chill) ?? session.topStrain(for: .couchPotato) ?? "—",
+                       trailingIcon: "leaf.fill")
+            divider
+            topStatRow("bolt", "Most Productive",
+                       session.topStrain(for: .productive) ?? "—",
+                       trailingIcon: "bolt.fill")
+            divider
+            topStatRow("bag", "Most Purchased",
+                       session.mostPurchasedStrain ?? "—",
+                       trailingIcon: "cart.fill")
+        }
+        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.creamElevated))
+        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.creamStroke, lineWidth: 1))
+    }
+
+    @ViewBuilder private var exploreSection: some View {
+        VStack(spacing: 12) {
+            NavigationLink { BadgesView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                exploreRow("rosette", "Badges", "See what you've earned")
+            }.buttonStyle(.plain)
+            NavigationLink { InsightsListView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                exploreRow("sparkles", "Strain Insights", "What each strain does for you")
+            }.buttonStyle(.plain)
+            NavigationLink { StatsView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                exploreRow("chart.bar", "Stats", "Mood, strains & spending")
+            }.buttonStyle(.plain)
+        }
+        .padding(.top, 4)
     }
 
     private var divider: some View {

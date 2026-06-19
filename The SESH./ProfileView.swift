@@ -16,107 +16,119 @@ struct ProfileView: View {
                 AppBackground()
                 ScrollView {
                     VStack(spacing: 20) {
-                        ZStack {
-                            Text("Profile")
-                                .font(.system(size: 22, weight: .semibold, design: .serif))
-                                .foregroundStyle(Palette.text)
-                            HStack {
-                                Spacer()
-                                NavigationLink {
-                                    ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true)
-                                } label: {
-                                    Image(systemName: "gearshape").font(.system(size: 18)).foregroundStyle(Palette.text)
-                                }
-                            }
-                        }
-                        .padding(.top, 8)
-
-                        // Avatar + name
-                        VStack(spacing: 10) {
-                            ZStack {
-                                Circle().fill(Palette.cardElevated).frame(width: 96, height: 96)
-                                Circle().stroke(Palette.green, lineWidth: 2).frame(width: 96, height: 96)
-                                Image(systemName: "leaf.fill").font(.system(size: 40)).foregroundStyle(Palette.green)
-                            }
-                            Text(session.userName)
-                                .font(.system(size: 22, weight: .semibold, design: .serif))
-                                .foregroundStyle(Palette.text)
-                            Text(session.joinedText)
-                                .font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
-                            HStack(spacing: 6) {
-                                Image(systemName: "leaf.fill").font(.system(size: 11)).foregroundStyle(Palette.green)
-                                Text("Cannabis Explorer").font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.text)
-                            }
-                            .padding(.horizontal, 14).padding(.vertical, 7)
-                            .background(Capsule().fill(Palette.field))
-                            .overlay(Capsule().stroke(Palette.stroke, lineWidth: 1))
-                        }
-
-                        // Stat row
-                        HStack(spacing: 0) {
-                            statCol("\(session.sessionsLogged)", "Sessions")
-                            statCol("\(session.uniqueStrains)", "Strains")
-                            statCol("\(session.thoughts.count)", "Thoughts")
-                        }
-                        .padding(.vertical, 16)
-                        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-                        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-
-                        // Your SESH — gamification systems
-                        VStack(spacing: 0) {
-                            NavigationLink { JourneyMilestonesView().environment(session).environment(social).navigationBarBackButtonHidden(true) } label: {
-                                menuRow("trophy.fill", "Journey")
-                            }.buttonStyle(.plain)
-                            rowDivider
-                            NavigationLink { PersonalRecordsView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                menuRow("medal.fill", "Personal Records")
-                            }.buttonStyle(.plain)
-                            rowDivider
-                            NavigationLink { YearlyRecapView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                menuRow("calendar.badge.clock", "Yearly Recap")
-                            }.buttonStyle(.plain)
-                            rowDivider
-                            NavigationLink { SecretBadgesView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                menuRow("lock.fill", "Secret Badges")
-                            }.buttonStyle(.plain)
-                            rowDivider
-                            NavigationLink { PersonalityProfileView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                menuRow("person.fill.viewfinder", "Smoking Style")
-                            }.buttonStyle(.plain)
-                        }
-                        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-                        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-
-                        // Menu rows
-                        VStack(spacing: 0) {
-                            NavigationLink { ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                menuRow("square.and.pencil", "Edit Profile")
-                            }.buttonStyle(.plain)
-                            rowDivider
-                            NavigationLink { ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                menuRow("gearshape", "Settings")
-                            }.buttonStyle(.plain)
-                            rowDivider
-                            NavigationLink { ExportView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                menuRow("square.and.arrow.up", "Export Data")
-                            }.buttonStyle(.plain)
-                            rowDivider
-                            NavigationLink { ExportView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                                menuRow("arrow.clockwise", "Backup & Restore")
-                            }.buttonStyle(.plain)
-                            rowDivider
-                            NavigationLink { AboutView().navigationBarBackButtonHidden(true) } label: {
-                                menuRow("info.circle", "About The Sesh")
-                            }.buttonStyle(.plain)
-                        }
-                        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-                        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+                        headerSection
+                        avatarSection
+                        statRow
+                        gamificationMenu
+                        settingsMenu
                     }
                     .padding(.horizontal, 18).padding(.bottom, 28)
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
         }
+    }
+
+    @ViewBuilder private var headerSection: some View {
+        ZStack {
+            Text("Profile")
+                .font(.system(size: 22, weight: .semibold, design: .serif))
+                .foregroundStyle(Palette.text)
+            HStack {
+                Spacer()
+                NavigationLink {
+                    ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true)
+                } label: {
+                    Image(systemName: "gearshape").font(.system(size: 18)).foregroundStyle(Palette.text)
+                }
+            }
+        }
+        .padding(.top, 8)
+    }
+
+    @ViewBuilder private var avatarSection: some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Circle().fill(Palette.cardElevated).frame(width: 96, height: 96)
+                Circle().stroke(Palette.green, lineWidth: 2).frame(width: 96, height: 96)
+                Image(systemName: "leaf.fill").font(.system(size: 40)).foregroundStyle(Palette.green)
+            }
+            Text(session.userName)
+                .font(.system(size: 22, weight: .semibold, design: .serif))
+                .foregroundStyle(Palette.text)
+            Text(session.joinedText)
+                .font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
+            HStack(spacing: 6) {
+                Image(systemName: "leaf.fill").font(.system(size: 11)).foregroundStyle(Palette.green)
+                Text("Cannabis Explorer").font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.text)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 7)
+            .background(Capsule().fill(Palette.field))
+            .overlay(Capsule().stroke(Palette.stroke, lineWidth: 1))
+        }
+    }
+
+    @ViewBuilder private var statRow: some View {
+        HStack(spacing: 0) {
+            statCol("\(session.sessionsLogged)", "Sessions")
+            statCol("\(session.uniqueStrains)", "Strains")
+            statCol("\(session.thoughts.count)", "Thoughts")
+        }
+        .padding(.vertical, 16)
+        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
+        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+    }
+
+    @ViewBuilder private var gamificationMenu: some View {
+        VStack(spacing: 0) {
+            NavigationLink { JourneyMilestonesView().environment(session).environment(social).navigationBarBackButtonHidden(true) } label: {
+                menuRow("trophy.fill", "Journey")
+            }.buttonStyle(.plain)
+            rowDivider
+            NavigationLink { PersonalRecordsView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                menuRow("medal.fill", "Personal Records")
+            }.buttonStyle(.plain)
+            rowDivider
+            NavigationLink { YearlyRecapView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                menuRow("calendar.badge.clock", "Yearly Recap")
+            }.buttonStyle(.plain)
+            rowDivider
+            NavigationLink { SecretBadgesView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                menuRow("lock.fill", "Secret Badges")
+            }.buttonStyle(.plain)
+            rowDivider
+            NavigationLink { PersonalityProfileView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                menuRow("person.fill.viewfinder", "Smoking Style")
+            }.buttonStyle(.plain)
+        }
+        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
+        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+    }
+
+    @ViewBuilder private var settingsMenu: some View {
+        VStack(spacing: 0) {
+            NavigationLink { ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                menuRow("square.and.pencil", "Edit Profile")
+            }.buttonStyle(.plain)
+            rowDivider
+            NavigationLink { ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                menuRow("gearshape", "Settings")
+            }.buttonStyle(.plain)
+            rowDivider
+            NavigationLink { ExportView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                menuRow("square.and.arrow.up", "Export Data")
+            }.buttonStyle(.plain)
+            rowDivider
+            NavigationLink { ExportView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                menuRow("arrow.clockwise", "Backup & Restore")
+            }.buttonStyle(.plain)
+            rowDivider
+            NavigationLink { AboutView().navigationBarBackButtonHidden(true) } label: {
+                menuRow("info.circle", "About The Sesh")
+            }.buttonStyle(.plain)
+        }
+        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
+        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
     }
 
     private var rowDivider: some View {

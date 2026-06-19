@@ -686,127 +686,151 @@ struct StrainDetailView: View {
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
-                        DarkCard {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack(spacing: 12) {
-                                    BudThumb(size: 64, seed: seed)
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(insight.name).font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
-                                        HStack(spacing: 16) {
-                                            VStack(alignment: .leading, spacing: 0) {
-                                                Text("Total Sessions").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
-                                                Text("\(insight.sessions)").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
-                                            }
-                                            VStack(alignment: .leading, spacing: 0) {
-                                                Text("Average Rating").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
-                                                Text(String(format: "%.1f/10", insight.averageRating))
-                                                    .font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
-                                            }
-                                        }
-                                    }
-                                    Spacer()
-                                    Image(systemName: "heart").font(.system(size: 18)).foregroundStyle(Palette.textSecondary)
-                                }
-
-                                if let p = profile {
-                                    Rectangle().fill(Palette.stroke).frame(height: 1)
-                                    HStack(spacing: 10) {
-                                        infoPill(p.type.rawValue, color: p.type.tint)
-                                        if let thc = p.thc { infoPill("THC \(Int(thc))%", color: Palette.gold) }
-                                        if let cbd = p.cbd, cbd >= 1 { infoPill("CBD \(Int(cbd))%", color: Palette.greenBright) }
-                                        Spacer()
-                                    }
-                                }
-                            }
-                        }
-
-                        // Your history with this strain
-                        let myRatings = session.recentRatings(forStrain: insight.name)
-                        if !myRatings.isEmpty {
-                            DarkCard {
-                                VStack(alignment: .leading, spacing: 10) {
-                                    Text("Your history").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
-                                    HStack(spacing: 16) {
-                                        if let last = session.lastUsed(forStrain: insight.name) {
-                                            VStack(alignment: .leading, spacing: 1) {
-                                                Text("Last used").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
-                                                Text(Fmt.shortDate(last)).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
-                                            }
-                                        }
-                                        if let mood = session.bestMood(forStrain: insight.name) {
-                                            VStack(alignment: .leading, spacing: 1) {
-                                                Text("Usual mood").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
-                                                HStack(spacing: 4) {
-                                                    Image(systemName: mood.symbol).font(.system(size: 11)).foregroundStyle(Palette.green)
-                                                    Text(mood.rawValue).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
-                                                }
-                                            }
-                                        }
-                                        Spacer()
-                                    }
-                                    if myRatings.count > 1 {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text("Recent ratings").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
-                                            Sparkline(values: myRatings)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        Text("What it does for you").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
-                        VStack(spacing: 12) {
-                            ForEach(effects, id: \.0) { name, val in
-                                HStack(spacing: 12) {
-                                    Text(name).font(.system(size: 14)).foregroundStyle(Palette.text).frame(width: 80, alignment: .leading)
-                                    EffectBar(value: val)
-                                    Text(String(format: "%.1f", val)).font(.system(size: 13, weight: .medium))
-                                        .foregroundStyle(Palette.textSecondary).frame(width: 32, alignment: .trailing)
-                                }
-                            }
-                        }
-
-                        if let p = profile, !p.flavors.isEmpty {
-                            Text("Flavors").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).padding(.top, 4)
-                            FlowLayout(spacing: 8) {
-                                ForEach(p.flavors) { CategoryTag(text: $0.name) }
-                            }
-                        }
-
-                        if let p = profile, !p.terpenes.isEmpty {
-                            Text("Terpenes").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).padding(.top, 4)
-                            FlowLayout(spacing: 8) {
-                                ForEach(p.terpenes) { CategoryTag(text: $0.name) }
-                            }
-                        }
-
-                        Text("Best used for").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).padding(.top, 4)
-                        HStack(spacing: 12) {
-                            bestPill("leaf.fill", "Chill")
-                            bestPill("paintbrush.pointed", "Creative")
-                            bestPill("moon.stars", "Evening")
-                        }
-
-                        Text("Notes").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).padding(.top, 4)
-                        DarkCard {
-                            Text(noteText)
-                                .font(.system(size: 14)).foregroundStyle(Palette.text.opacity(0.9))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-
-                        if let p = profile, !p.sources.isEmpty {
-                            HStack(spacing: 4) {
-                                Image(systemName: "info.circle").font(.system(size: 11))
-                                Text("Strain data via \(p.sources.joined(separator: ", "))")
-                                    .font(.system(size: 11))
-                            }
-                            .foregroundStyle(Palette.textTertiary)
-                            .padding(.top, 2)
-                        }
+                        headerCard
+                        historyCard
+                        effectsBlock
+                        flavorsBlock
+                        terpenesBlock
+                        bestUsedBlock
+                        notesBlock
+                        sourcesBlock
                     }
                     .padding(.horizontal, 18).padding(.bottom, 28)
                 }
             }
+        }
+    }
+
+    @ViewBuilder private var headerCard: some View {
+        DarkCard {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    BudThumb(size: 64, seed: seed)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(insight.name).font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
+                        HStack(spacing: 16) {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text("Total Sessions").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+                                Text("\(insight.sessions)").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
+                            }
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text("Average Rating").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+                                Text(String(format: "%.1f/10", insight.averageRating))
+                                    .font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
+                            }
+                        }
+                    }
+                    Spacer()
+                    Image(systemName: "heart").font(.system(size: 18)).foregroundStyle(Palette.textSecondary)
+                }
+
+                if let p = profile {
+                    Rectangle().fill(Palette.stroke).frame(height: 1)
+                    HStack(spacing: 10) {
+                        infoPill(p.type.rawValue, color: p.type.tint)
+                        if let thc = p.thc { infoPill("THC \(Int(thc))%", color: Palette.gold) }
+                        if let cbd = p.cbd, cbd >= 1 { infoPill("CBD \(Int(cbd))%", color: Palette.greenBright) }
+                        Spacer()
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var historyCard: some View {
+        let myRatings = session.recentRatings(forStrain: insight.name)
+        if !myRatings.isEmpty {
+            DarkCard {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Your history").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                    HStack(spacing: 16) {
+                        if let last = session.lastUsed(forStrain: insight.name) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Last used").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+                                Text(Fmt.shortDate(last)).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
+                            }
+                        }
+                        if let mood = session.bestMood(forStrain: insight.name) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Usual mood").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+                                HStack(spacing: 4) {
+                                    Image(systemName: mood.symbol).font(.system(size: 11)).foregroundStyle(Palette.green)
+                                    Text(mood.rawValue).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
+                                }
+                            }
+                        }
+                        Spacer()
+                    }
+                    if myRatings.count > 1 {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Recent ratings").font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+                            Sparkline(values: myRatings)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var effectsBlock: some View {
+        Text("What it does for you").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
+        VStack(spacing: 12) {
+            ForEach(effects, id: \.0) { name, val in
+                HStack(spacing: 12) {
+                    Text(name).font(.system(size: 14)).foregroundStyle(Palette.text).frame(width: 80, alignment: .leading)
+                    EffectBar(value: val)
+                    Text(String(format: "%.1f", val)).font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Palette.textSecondary).frame(width: 32, alignment: .trailing)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var flavorsBlock: some View {
+        if let p = profile, !p.flavors.isEmpty {
+            Text("Flavors").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).padding(.top, 4)
+            FlowLayout(spacing: 8) {
+                ForEach(p.flavors) { CategoryTag(text: $0.name) }
+            }
+        }
+    }
+
+    @ViewBuilder private var terpenesBlock: some View {
+        if let p = profile, !p.terpenes.isEmpty {
+            Text("Terpenes").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).padding(.top, 4)
+            FlowLayout(spacing: 8) {
+                ForEach(p.terpenes) { CategoryTag(text: $0.name) }
+            }
+        }
+    }
+
+    @ViewBuilder private var bestUsedBlock: some View {
+        Text("Best used for").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).padding(.top, 4)
+        HStack(spacing: 12) {
+            bestPill("leaf.fill", "Chill")
+            bestPill("paintbrush.pointed", "Creative")
+            bestPill("moon.stars", "Evening")
+        }
+    }
+
+    @ViewBuilder private var notesBlock: some View {
+        Text("Notes").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).padding(.top, 4)
+        DarkCard {
+            Text(noteText)
+                .font(.system(size: 14)).foregroundStyle(Palette.text.opacity(0.9))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @ViewBuilder private var sourcesBlock: some View {
+        if let p = profile, !p.sources.isEmpty {
+            HStack(spacing: 4) {
+                Image(systemName: "info.circle").font(.system(size: 11))
+                Text("Strain data via \(p.sources.joined(separator: ", "))")
+                    .font(.system(size: 11))
+            }
+            .foregroundStyle(Palette.textTertiary)
+            .padding(.top, 2)
         }
     }
 
@@ -862,58 +886,9 @@ struct ToleranceCard: View {
         DarkCard {
             VStack(alignment: .leading, spacing: 12) {
                 if session.isOnTBreak {
-                    HStack {
-                        Label("Tolerance Break", systemImage: "pause.circle.fill")
-                            .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.greenBright)
-                        Spacer()
-                        Text("Day \(session.tBreakDays) of \(session.tBreakGoalDays)")
-                            .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
-                    }
-                    // Progress
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Palette.field).frame(height: 10)
-                        Capsule().fill(Palette.green).frame(height: 10)
-                            .frame(maxWidth: .infinity)
-                            .scaleEffect(x: max(0.02, session.tBreakProgress), anchor: .leading)
-                    }
-                    .accessibilityLabel("Break progress, day \(session.tBreakDays) of \(session.tBreakGoalDays)")
-                    if session.tBreakDays >= session.tBreakGoalDays {
-                        Text("Goal reached — nice work! 🎉").font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.greenBright)
-                    } else {
-                        Text("Stay strong. Your tolerance is resetting.").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-                    }
-                    Button { session.endTBreak(); Haptics.tap() } label: {
-                        Text("End break").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
-                            .frame(maxWidth: .infinity).padding(.vertical, 10)
-                            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                    }.buttonStyle(.plain)
+                    onBreakContent
                 } else {
-                    HStack {
-                        Label("Tolerance", systemImage: "gauge.medium")
-                            .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
-                        Spacer()
-                        Text(session.toleranceLabel)
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(toleranceColor)
-                            .padding(.horizontal, 10).padding(.vertical, 4)
-                            .background(Capsule().fill(toleranceColor.opacity(0.15)))
-                    }
-                    // Gauge
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Palette.field).frame(height: 10)
-                        Capsule().fill(toleranceColor).frame(height: 10)
-                            .frame(maxWidth: .infinity)
-                            .scaleEffect(x: max(0.02, session.toleranceEstimate), anchor: .leading)
-                    }
-                    .accessibilityLabel("Tolerance \(session.toleranceLabel)")
-                    Text("Based on your last 14 days. A break helps it reset.")
-                        .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-                    Button { showGoalPicker = true } label: {
-                        Label("Start a tolerance break", systemImage: "pause.circle")
-                            .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.onGreen)
-                            .frame(maxWidth: .infinity).padding(.vertical, 10)
-                            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.green))
-                    }.buttonStyle(.plain)
+                    notOnBreakContent
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -924,6 +899,61 @@ struct ToleranceCard: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+    }
+
+    @ViewBuilder private var onBreakContent: some View {
+        HStack {
+            Label("Tolerance Break", systemImage: "pause.circle.fill")
+                .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.greenBright)
+            Spacer()
+            Text("Day \(session.tBreakDays) of \(session.tBreakGoalDays)")
+                .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
+        }
+        ZStack(alignment: .leading) {
+            Capsule().fill(Palette.field).frame(height: 10)
+            Capsule().fill(Palette.green).frame(height: 10)
+                .frame(maxWidth: .infinity)
+                .scaleEffect(x: max(0.02, session.tBreakProgress), anchor: .leading)
+        }
+        .accessibilityLabel("Break progress, day \(session.tBreakDays) of \(session.tBreakGoalDays)")
+        if session.tBreakDays >= session.tBreakGoalDays {
+            Text("Goal reached — nice work! 🎉").font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.greenBright)
+        } else {
+            Text("Stay strong. Your tolerance is resetting.").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+        }
+        Button { session.endTBreak(); Haptics.tap() } label: {
+            Text("End break").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
+                .frame(maxWidth: .infinity).padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+        }.buttonStyle(.plain)
+    }
+
+    @ViewBuilder private var notOnBreakContent: some View {
+        HStack {
+            Label("Tolerance", systemImage: "gauge.medium")
+                .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+            Spacer()
+            Text(session.toleranceLabel)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(toleranceColor)
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(Capsule().fill(toleranceColor.opacity(0.15)))
+        }
+        ZStack(alignment: .leading) {
+            Capsule().fill(Palette.field).frame(height: 10)
+            Capsule().fill(toleranceColor).frame(height: 10)
+                .frame(maxWidth: .infinity)
+                .scaleEffect(x: max(0.02, session.toleranceEstimate), anchor: .leading)
+        }
+        .accessibilityLabel("Tolerance \(session.toleranceLabel)")
+        Text("Based on your last 14 days. A break helps it reset.")
+            .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+        Button { showGoalPicker = true } label: {
+            Label("Start a tolerance break", systemImage: "pause.circle")
+                .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.onGreen)
+                .frame(maxWidth: .infinity).padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.green))
+        }.buttonStyle(.plain)
     }
 
     private var toleranceColor: Color {

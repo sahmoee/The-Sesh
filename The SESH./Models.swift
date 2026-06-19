@@ -178,6 +178,12 @@ struct JournalEntry: Identifiable, Codable, Hashable {
         let head = companions.dropLast().joined(separator: ", ")
         return "Smoked with \(head) & \(companions.last!)"
     }
+
+    // Identity-based equality. Each entry has a stable `id`, so comparing by id
+    // is both correct and far cheaper than the compiler-synthesized field-by-field
+    // version (which was slow enough to trip the type-checker's budget).
+    static func == (lhs: JournalEntry, rhs: JournalEntry) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 /// Shared 0...4 mood scale labels/faces (used by logs). #6

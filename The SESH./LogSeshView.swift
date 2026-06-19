@@ -284,22 +284,30 @@ struct LogSeshView: View {
         VStack(alignment: .leading, spacing: 12) {
             FieldLabel(text: "Add to Category / List?")
             LazyVGrid(columns: moodCols, spacing: 12) {
-                ForEach(SeshCategory.allCases) { c in
-                    OptionChip(title: c.rawValue, symbol: c.symbol, isSelected: category == c && customCategory == nil) {
-                        Haptics.selection()
-                        if category == c { category = nil }
-                        else { category = c; customCategory = nil }
-                    }
-                }
-                ForEach(session.customCategories, id: \.self) { name in
-                    OptionChip(title: name, symbol: "tag.fill", isSelected: customCategory == name) {
-                        Haptics.selection()
-                        if customCategory == name { customCategory = nil }
-                        else { customCategory = name; category = nil }
-                    }
-                }
+                builtInCategoryChips
+                customCategoryChips
             }
             addCategoryRow
+        }
+    }
+
+    @ViewBuilder private var builtInCategoryChips: some View {
+        ForEach(SeshCategory.allCases) { c in
+            OptionChip(title: c.rawValue, symbol: c.symbol, isSelected: category == c && customCategory == nil) {
+                Haptics.selection()
+                if category == c { category = nil }
+                else { category = c; customCategory = nil }
+            }
+        }
+    }
+
+    @ViewBuilder private var customCategoryChips: some View {
+        ForEach(session.customCategories, id: \.self) { name in
+            OptionChip(title: name, symbol: "tag.fill", isSelected: customCategory == name) {
+                Haptics.selection()
+                if customCategory == name { customCategory = nil }
+                else { customCategory = name; category = nil }
+            }
         }
     }
 

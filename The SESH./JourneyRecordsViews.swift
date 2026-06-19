@@ -400,41 +400,14 @@ struct YearlyRecapView: View {
             VStack(spacing: 0) {
                 ScreenHeader(title: "Yearly Recap", onBack: { dismiss() })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 10)
-
-                // Year switcher
-                if availableYears.count > 1 {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(availableYears, id: \.self) { y in
-                                Button { withAnimation { year = y }; Haptics.selection() } label: {
-                                    Text(String(y)).font(.system(size: 14, weight: .semibold))
-                                        .foregroundStyle(y == year ? Palette.onGreen : Palette.text)
-                                        .padding(.horizontal, 16).padding(.vertical, 8)
-                                        .background(Capsule().fill(y == year ? Palette.green : Palette.field))
-                                }.buttonStyle(.plain)
-                            }
-                        }.padding(.horizontal, 18)
-                    }
-                    .padding(.bottom, 12)
-                }
-
+                yearSwitcher
                 ScrollView {
                     let recap = session.yearRecap(year)
                     VStack(spacing: 16) {
                         RecapCard(recap: recap, name: session.userName)
                             .padding(.horizontal, 18)
 
-                        Button {
-                            let card = RecapCard(recap: recap, name: session.userName)
-                                .frame(width: 360)
-                                .environment(\.colorScheme, .dark)
-                            let renderer = ImageRenderer(content: card)
-                            renderer.scale = 3
-                            if let img = renderer.uiImage {
-                                shareItem = [img]
-                            }
-                            Haptics.tap()
-                        } label: {
+                        Button { shareRecap(recap) } label: {
                             Label("Share your \(String(year))", systemImage: "square.and.arrow.up")
                                 .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.onGreen)
                                 .frame(maxWidth: .infinity).padding(.vertical, 14)
@@ -455,6 +428,36 @@ struct YearlyRecapView: View {
         .sheet(isPresented: Binding(get: { shareItem != nil }, set: { if !$0 { shareItem = nil } })) {
             if let items = shareItem { ShareSheet(items: items) }
         }
+    }
+
+    @ViewBuilder private var yearSwitcher: some View {
+        if availableYears.count > 1 {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(availableYears, id: \.self) { y in
+                        Button { withAnimation { year = y }; Haptics.selection() } label: {
+                            Text(String(y)).font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(y == year ? Palette.onGreen : Palette.text)
+                                .padding(.horizontal, 16).padding(.vertical, 8)
+                                .background(Capsule().fill(y == year ? Palette.green : Palette.field))
+                        }.buttonStyle(.plain)
+                    }
+                }.padding(.horizontal, 18)
+            }
+            .padding(.bottom, 12)
+        }
+    }
+
+    private func shareRecap(_ recap: YearRecap) {
+        let card = RecapCard(recap: recap, name: session.userName)
+            .frame(width: 360)
+            .environment(\.colorScheme, .dark)
+        let renderer = ImageRenderer(content: card)
+        renderer.scale = 3
+        if let img = renderer.uiImage {
+            shareItem = [img]
+        }
+        Haptics.tap()
     }
 }
 

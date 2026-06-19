@@ -72,15 +72,7 @@ struct StartSeshView: View {
                 companions: Array(invited),
                 attachedThought: attachedThought,
                 capturedThoughts: capturedThoughts,
-                onDone: {
-                    session.clearLiveSesh()
-                    LiveSeshActivityController.end()
-                    SeshWidgetBridge.update(streak: session.currentStreak,
-                                            lastStrain: session.entries.first?.strain ?? "—",
-                                            stashCount: session.stashRemaining.count,
-                                            isLive: false, liveStrain: "")
-                    dismiss()
-                })
+                onDone: { finishSave() })
             }
         }
         .onAppear(perform: restoreIfNeeded)
@@ -100,6 +92,16 @@ struct StartSeshView: View {
                 })
             .environment(session).environment(strains).environment(social)
         }
+    }
+
+    private func finishSave() {
+        session.clearLiveSesh()
+        LiveSeshActivityController.end()
+        SeshWidgetBridge.update(streak: session.currentStreak,
+                                lastStrain: session.entries.first?.strain ?? "—",
+                                stashCount: session.stashRemaining.count,
+                                isLive: false, liveStrain: "")
+        dismiss()
     }
 
     /// If a sesh was left running, drop straight back into it.
@@ -182,62 +184,67 @@ struct StartSeshView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     pickerSection("Who's Joining?", ["Just Me", "Invite Friends", "Existing Cyph"], $whoJoining)
-
-                    if whoJoining == "Invite Friends" {
-                        VStack(alignment: .leading, spacing: 8) {
-                            FieldLabel(text: "Invite")
-                            FlowLayout(spacing: 8) {
-                                ForEach(social.friends) { f in
-                                    Button {
-                                        if invited.contains(f.displayName) { invited.remove(f.displayName) }
-                                        else { invited.insert(f.displayName) }
-                                        Haptics.selection()
-                                    } label: {
-                                        Text(f.displayName).font(.system(size: 13, weight: .medium))
-                                            .foregroundStyle(invited.contains(f.displayName) ? Palette.onGreen : Palette.text)
-                                            .padding(.horizontal, 13).padding(.vertical, 8)
-                                            .background(Capsule().fill(invited.contains(f.displayName) ? Palette.green : Palette.field))
-                                            .overlay(Capsule().stroke(Palette.stroke, lineWidth: invited.contains(f.displayName) ? 0 : 1))
-                                    }.buttonStyle(.plain)
-                                }
-                            }
-                        }
-                    }
-
-                    // Session type
-                    VStack(alignment: .leading, spacing: 8) {
-                        FieldLabel(text: "Session Type")
-                        FlowLayout(spacing: 8) {
-                            ForEach(SessionType.allCases) { t in
-                                Button { sessionType = t; Haptics.selection() } label: {
-                                    HStack(spacing: 5) {
-                                        Text(t.emoji)
-                                        Text(t.rawValue).font(.system(size: 13, weight: .medium))
-                                    }
-                                    .foregroundStyle(sessionType == t ? Palette.onGreen : Palette.text)
-                                    .padding(.horizontal, 13).padding(.vertical, 8)
-                                    .background(Capsule().fill(sessionType == t ? Palette.green : Palette.field))
-                                    .overlay(Capsule().stroke(Palette.stroke, lineWidth: sessionType == t ? 0 : 1))
-                                }.buttonStyle(.plain)
-                            }
-                        }
-                    }
-
+                    inviteSection
+                    sessionTypeSection
                     pickerSection2("Privacy",
                                    [("Private", CypherVisibility.privateCypher), ("Friends", .friends), ("Public", .publicCypher)],
                                    $privacy)
-
-                    PrimaryButton(title: "Begin sesh", icon: "play.fill") {
-                        startedAt = Date(); elapsed = 0; stage = .pickingStrain
-                        phase = .live; Haptics.success()
-                        LiveSeshActivityController.start(strain: strainName, stageRaw: stage.rawValue, startedAt: startedAt)
-                        persistLive()
-                    }
-                    .padding(.top, 4)
+                    PrimaryButton(title: "Begin sesh", icon: "play.fill") { beginSesh() }
+                        .padding(.top, 4)
                 }
                 .padding(.horizontal, 18).padding(.bottom, 40)
             }
         }
+    }
+
+    @ViewBuilder private var inviteSection: some View {
+        if whoJoining == "Invite Friends" {
+            VStack(alignment: .leading, spacing: 8) {
+                FieldLabel(text: "Invite")
+                FlowLayout(spacing: 8) {
+                    ForEach(social.friends) { f in
+                        Button {
+                            if invited.contains(f.displayName) { invited.remove(f.displayName) }
+                            else { invited.insert(f.displayName) }
+                            Haptics.selection()
+                        } label: {
+                            Text(f.displayName).font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(invited.contains(f.displayName) ? Palette.onGreen : Palette.text)
+                                .padding(.horizontal, 13).padding(.vertical, 8)
+                                .background(Capsule().fill(invited.contains(f.displayName) ? Palette.green : Palette.field))
+                                .overlay(Capsule().stroke(Palette.stroke, lineWidth: invited.contains(f.displayName) ? 0 : 1))
+                        }.buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var sessionTypeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            FieldLabel(text: "Session Type")
+            FlowLayout(spacing: 8) {
+                ForEach(SessionType.allCases) { t in
+                    Button { sessionType = t; Haptics.selection() } label: {
+                        HStack(spacing: 5) {
+                            Text(t.emoji)
+                            Text(t.rawValue).font(.system(size: 13, weight: .medium))
+                        }
+                        .foregroundStyle(sessionType == t ? Palette.onGreen : Palette.text)
+                        .padding(.horizontal, 13).padding(.vertical, 8)
+                        .background(Capsule().fill(sessionType == t ? Palette.green : Palette.field))
+                        .overlay(Capsule().stroke(Palette.stroke, lineWidth: sessionType == t ? 0 : 1))
+                    }.buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private func beginSesh() {
+        startedAt = Date(); elapsed = 0; stage = .pickingStrain
+        phase = .live; Haptics.success()
+        LiveSeshActivityController.start(strain: strainName, stageRaw: stage.rawValue, startedAt: startedAt)
+        persistLive()
     }
 
     private func pickerSection(_ title: String, _ options: [String], _ binding: Binding<String>) -> some View {

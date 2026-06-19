@@ -69,30 +69,43 @@ struct JournalView: View {
     }
 
     private var filtered: [JournalEntry] {
-        let base = session.entries.filter { e in
-            let matchesQuery = query.isEmpty ||
-                e.strain.localizedCaseInsensitiveContains(query) ||
-                e.notes.localizedCaseInsensitiveContains(query) ||
-                e.method.localizedCaseInsensitiveContains(query)
-            let matchesFilter: Bool = {
-                switch filter {
-                case "All":         return true
-                case "Favorites":    return e.category == .personalFaves
-                case "Reliable":     return e.category == .goodEnough
-                case "Situational":  return e.category == .lastResort
-                case "Never Again":  return e.category == .neverAgain
-                default:            return e.customCategory == filter   // custom category name
-                }
-            }()
-            let matchesEffect = effectFilter == nil || (e.effects?.contains(effectFilter!) ?? false)
-            let matchesRating = e.rating >= Double(minRating)
-            return matchesQuery && matchesFilter && matchesEffect && matchesRating
-        }
+        let base = session.entries.filter { matches($0) }
         switch sort {
         case .newest: return base.sorted { $0.date > $1.date }
         case .rating: return base.sorted { $0.rating > $1.rating }
         case .price:  return base.sorted { ($0.price ?? 0) > ($1.price ?? 0) }
         }
+    }
+
+    private func matches(_ e: JournalEntry) -> Bool {
+        matchesQuery(e) && matchesFilter(e) && matchesEffect(e) && matchesRating(e)
+    }
+
+    private func matchesQuery(_ e: JournalEntry) -> Bool {
+        guard !query.isEmpty else { return true }
+        return e.strain.localizedCaseInsensitiveContains(query)
+            || e.notes.localizedCaseInsensitiveContains(query)
+            || e.method.localizedCaseInsensitiveContains(query)
+    }
+
+    private func matchesFilter(_ e: JournalEntry) -> Bool {
+        switch filter {
+        case "All":         return true
+        case "Favorites":    return e.category == .personalFaves
+        case "Reliable":     return e.category == .goodEnough
+        case "Situational":  return e.category == .lastResort
+        case "Never Again":  return e.category == .neverAgain
+        default:            return e.customCategory == filter   // custom category name
+        }
+    }
+
+    private func matchesEffect(_ e: JournalEntry) -> Bool {
+        guard let effectFilter else { return true }
+        return e.effects?.contains(effectFilter) ?? false
+    }
+
+    private func matchesRating(_ e: JournalEntry) -> Bool {
+        e.rating >= Double(minRating)
     }
 
     /// Grouped by relative day (only when sorting by date).
