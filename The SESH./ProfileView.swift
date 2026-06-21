@@ -108,19 +108,11 @@ struct ProfileView: View {
     @ViewBuilder private var settingsMenu: some View {
         VStack(spacing: 0) {
             NavigationLink { ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                menuRow("square.and.pencil", "Edit Profile")
-            }.buttonStyle(.plain)
-            rowDivider
-            NavigationLink { ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true) } label: {
                 menuRow("gearshape", "Settings")
             }.buttonStyle(.plain)
             rowDivider
             NavigationLink { ExportView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                menuRow("square.and.arrow.up", "Export Data")
-            }.buttonStyle(.plain)
-            rowDivider
-            NavigationLink { ExportView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                menuRow("arrow.clockwise", "Backup & Restore")
+                menuRow("square.and.arrow.up", "Export & Backup")
             }.buttonStyle(.plain)
             rowDivider
             NavigationLink { AboutView().navigationBarBackButtonHidden(true) } label: {
@@ -171,7 +163,7 @@ struct ProfileSettingsView: View {
         ZStack {
             AppBackground()
             VStack(spacing: 0) {
-                ScreenHeader(title: "Edit Profile", onBack: { dismiss() })
+                ScreenHeader(title: "Settings", onBack: { dismiss() })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
                 ScrollView {
                     VStack(spacing: 18) {

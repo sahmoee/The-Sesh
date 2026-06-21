@@ -14,6 +14,8 @@ struct JourneyView: View {
     @Environment(StrainStore.self) private var strains
     @State private var friendPeek: SeshUser?
     @State private var showStartSesh = false
+    /// Top-level segment: social Community vs personal Journey stats.
+    @State private var segment = "Community"
 
     var body: some View {
         NavigationStack {
@@ -25,11 +27,16 @@ struct JourneyView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         headerSection
+                        FilterPills(items: segments, selection: $segment)
+                            .padding(.bottom, 2)
                         connectionStatus
-                        socialHubSection
-                        overviewSection
-                        topStatsSection
-                        exploreSection
+                        if segment == "Community" {
+                            socialHubSection
+                        } else {
+                            overviewSection
+                            topStatsSection
+                            exploreSection
+                        }
                     }
                     .padding(.horizontal, 18).padding(.bottom, 28)
                 }
@@ -46,11 +53,13 @@ struct JourneyView: View {
         }
     }
 
+    private let segments = ["Community", "Journey"]
+
     // MARK: Sections
 
     @ViewBuilder private var headerSection: some View {
         ZStack {
-            Text("Your Journey")
+            Text(segment == "Community" ? "Social" : "Your Journey")
                 .font(.system(size: 22, weight: .semibold, design: .serif))
                 .foregroundStyle(Palette.onCream)
             HStack {
@@ -93,10 +102,6 @@ struct JourneyView: View {
     }
 
     @ViewBuilder private var socialHubSection: some View {
-        Text("Community")
-            .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(Palette.onCream)
-
         if !social.activeFriends.isEmpty {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 14) {

@@ -46,10 +46,23 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
+            version: "25.3.0",
+            buildLabel: "June 2026",
+            headline: "Less hunting, more doing.",
+            isLatest: true,
+            entries: [
+                ChangelogEntry(icon: "rectangle.split.2x1", tint: Palette.green,
+                               title: "Community & Journey, side by side",
+                               detail: "The Social tab now splits cleanly into Community (friends, Cyphers, chat) and Journey (your stats and records)."),
+                ChangelogEntry(icon: "person.crop.circle", tint: Palette.gold,
+                               title: "A tidier Me tab",
+                               detail: "Trimmed duplicate menu items so Settings, Export, and About are easy to find."),
+            ]),
+        ChangelogVersion(
             version: "25.2.0",
             buildLabel: "June 2026",
             headline: "Fresher discovery, tidier social.",
-            isLatest: true,
+            isLatest: false,
             entries: [
                 ChangelogEntry(icon: "shuffle", tint: Palette.greenBright,
                                title: "Fresh picks every visit",

@@ -16,7 +16,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "7B90A49B2FDFF5F70078E9C8"
+               BlueprintIdentifier = "7B15D1112FE86D4F00F13C0B"
                BuildableName = "SeshWidgetExtension.appex"
                BlueprintName = "SeshWidgetExtension"
                ReferencedContainer = "container:The SESH..xcodeproj">
