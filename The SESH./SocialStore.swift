@@ -34,6 +34,9 @@ final class SocialStore {
     var online = false           // did the Worker respond?
     var loading = false
 
+    /// Set by the app at launch so polled friend events become notifications.
+    weak var notifications: NotificationManager?
+
     private let api = SeshAPI()
     private var pollTask: Task<Void, Never>?
     private var openRoomID: String?     // room whose chat we're actively polling
@@ -216,11 +219,38 @@ final class SocialStore {
     func stopPolling() { pollTask?.cancel(); pollTask = nil }
 
     private func apply(_ s: SeshSnapshot) {
+        // Capture prior unread-per-room to detect new incoming chat messages.
+        let priorUnread = Dictionary(uniqueKeysWithValues: rooms.map { ($0.id, $0.unread) })
+
         friends = s.friends
         cyphers = s.cyphers
         rooms = s.rooms
         liveStreams = s.live
         feed = s.feed
+
+        // Turn newly-arrived friend events into notifications. The manager applies
+        // its own anti-spam throttle so rapid status flips don't flood the user.
+        let events = s.feed
+        let myHandle = me.handle
+        let openRoom = openRoomID
+        var chatNotes: [(title: String, body: String, id: String)] = []
+        for room in s.rooms {
+            let before = priorUnread[room.id] ?? 0
+            if room.unread > before, room.id != openRoom {
+                chatNotes.append((title: room.name,
+                                  body: room.lastMessage ?? "New message",
+                                  id: "chat-\(room.id)-\(room.lastMessageAt?.timeIntervalSince1970 ?? 0)"))
+            }
+        }
+
+        if let notifications {
+            Task { @MainActor in
+                notifications.ingestFeed(events, myHandle: myHandle)
+                for n in chatNotes {
+                    notifications.notify(kind: .chat, title: n.title, body: n.body, id: n.id)
+                }
+            }
+        }
     }
 
     // MARK: Activity / presence
@@ -249,6 +279,16 @@ final class SocialStore {
     /// Last status/detail we actually broadcast, used to suppress duplicate posts.
     private var lastPostedActivity: SeshActivity?
     private var lastPostedDetail: String?
+
+    /// Invite friends (by display name) to a sesh. Resolves names to handles and
+    /// tells the Worker, which pushes each invited friend.
+    func inviteFriends(named names: [String], detail: String? = nil) {
+        let handles = friends
+            .filter { names.contains($0.displayName) }
+            .map(\.handle)
+        guard !handles.isEmpty else { return }
+        Task { await api.postInvite(handles: handles, detail: detail, identity: identity) }
+    }
 
     /// Broadcast a milestone (new roll record, etc.) so friends get a push.
     /// Also drops a local feed event so it shows in the activity list.

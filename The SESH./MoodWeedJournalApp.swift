@@ -8,6 +8,7 @@ import SwiftUI
 @main
 struct SeshApp: App {
     @UIApplicationDelegateAdaptor(SeshAppDelegate.self) private var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
     @State private var session = AppSession()
     @State private var strains = StrainStore()
     @State private var social = SocialStore()
@@ -15,6 +16,7 @@ struct SeshApp: App {
     @State private var theme = ThemeManager()
     @State private var auth = AuthManager()
     @State private var strainImages = StrainImageStore()
+    @State private var notifications = NotificationManager()
     @AppStorage("sesh.skippedSignIn") private var skippedSignIn = false
     @AppStorage("sesh.onboarded.v2") private var onboarded = false
 
@@ -36,7 +38,10 @@ struct SeshApp: App {
             .environment(theme)
             .environment(auth)
             .environment(strainImages)
+            .environment(notifications)
             .task {
+                // Let the social layer push friend events into the notifier.
+                social.notifications = notifications
                 social.configure(userID: auth.userID, displayName: session.userName)
                 await social.bootstrap()
                 // Load the strain-image manifest from the Worker (fetch-on-demand;
@@ -50,6 +55,11 @@ struct SeshApp: App {
                 if onboarded && (auth.isSignedIn || skippedSignIn) {
                     PushManager.shared.requestAndRegister()
                 }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                // Foreground -> in-app banner; background -> lock-screen alert.
+                notifications.scenePhaseActive = (phase == .active)
+                if phase == .active { notifications.dismissBanner() }
             }
             .onChange(of: auth.userID) { _, _ in
                 social.configure(userID: auth.userID, displayName: session.userName)

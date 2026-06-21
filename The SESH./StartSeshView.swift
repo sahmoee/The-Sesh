@@ -65,33 +65,43 @@ struct StartSeshView: View {
             switch phase {
             case .setup: setupView
             case .live:  liveView
-            case .save:  SaveSeshView(
-                strainName: strainName,
-                sessionType: sessionType,
-                durationMinutes: max(1, Int(elapsed / 60)),
-                companions: Array(invited),
-                attachedThought: attachedThought,
-                capturedThoughts: capturedThoughts,
-                onDone: { finishSave() })
+            case .save:  saveView
             }
         }
         .onAppear(perform: restoreIfNeeded)
-        .fullScreenCover(isPresented: $showRollComplete) {
-            RollCompleteView(
-                seconds: rollFinalSeconds ?? 0,
-                isRecord: rollWasRecord,
-                onStartSmoking: {
-                    showRollComplete = false
-                    stage = .smoking
-                    social.setMyActivity(.smoking)
-                    persistLive()
-                },
-                onLogSession: {
-                    showRollComplete = false
-                    phase = .save
-                })
-            .environment(session).environment(strains).environment(social)
-        }
+        .fullScreenCover(isPresented: $showRollComplete) { rollCompleteCover }
+    }
+
+    /// The save screen, extracted so its multi-argument initializer type-checks
+    /// on its own instead of inside the switch (keeps `body` fast to type-check).
+    private var saveView: some View {
+        SaveSeshView(
+            strainName: strainName,
+            sessionType: sessionType,
+            durationMinutes: max(1, Int(elapsed / 60)),
+            companions: Array(invited),
+            attachedThought: attachedThought,
+            capturedThoughts: capturedThoughts,
+            onDone: { finishSave() })
+    }
+
+    /// The roll-complete cover, extracted from the fullScreenCover closure for
+    /// the same type-check reason.
+    private var rollCompleteCover: some View {
+        RollCompleteView(
+            seconds: rollFinalSeconds ?? 0,
+            isRecord: rollWasRecord,
+            onStartSmoking: {
+                showRollComplete = false
+                stage = .smoking
+                social.setMyActivity(.smoking)
+                persistLive()
+            },
+            onLogSession: {
+                showRollComplete = false
+                phase = .save
+            })
+        .environment(session).environment(strains).environment(social)
     }
 
     private func finishSave() {

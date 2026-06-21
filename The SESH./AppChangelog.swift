@@ -46,10 +46,23 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
+            version: "25.6.0",
+            buildLabel: "June 2026",
+            headline: "Notifications, fully wired.",
+            isLatest: true,
+            entries: [
+                ChangelogEntry(icon: "bell.badge.fill", tint: Palette.greenBright,
+                               title: "Friend notifications now live",
+                               detail: "Status changes, invites, and messages from friends now reach you reliably, with sensible limits so nothing spams you."),
+                ChangelogEntry(icon: "person.crop.circle.badge.plus", tint: Palette.green,
+                               title: "Sesh invites",
+                               detail: "Inviting friends when you start a sesh now lets them know."),
+            ]),
+        ChangelogVersion(
             version: "25.5.0",
             buildLabel: "June 2026",
             headline: "Strains get a face.",
-            isLatest: true,
+            isLatest: false,
             entries: [
                 ChangelogEntry(icon: "photo.on.rectangle.angled", tint: Palette.green,
                                title: "Strain images",
