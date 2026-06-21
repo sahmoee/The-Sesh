@@ -2,9 +2,19 @@
 //  AppChangelog.swift
 //  The SESH
 //
-//  Sole source of truth for the in-app "What's New". Exactly one version has
-//  isLatest: true; bump it alongside BuildConfig on every delivery and demote
-//  the previous latest. Newest version goes at the top of `versions`.
+//  Sole source of truth for the in-app "What's New" and the About screen's
+//  changelog list.
+//
+//  ── UPDATE THIS ON EVERY DELIVERY ──────────────────────────────────────────
+//  Each fix or new build MUST add (or extend) the top entry here. Checklist:
+//    1. Add a new ChangelogVersion at the TOP of `versions` (newest first).
+//    2. Set its isLatest: true, and set the PREVIOUS top entry's isLatest: false.
+//       Exactly one version may have isLatest: true at any time.
+//    3. Keep entries user-facing: what changed and why it matters, not the code.
+//    4. The displayed app version/build come from the bundle via BuildConfig —
+//       no need to hand-edit those; the `version` strings here are the readable
+//       history shown in About.
+//  ───────────────────────────────────────────────────────────────────────────
 //
 
 import SwiftUI
@@ -36,10 +46,29 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
+            version: "25.0.0",
+            buildLabel: "June 2026",
+            headline: "A cleaner home, faster everywhere.",
+            isLatest: true,
+            entries: [
+                ChangelogEntry(icon: "square.grid.2x2.fill", tint: Palette.green,
+                               title: "Redesigned Home",
+                               detail: "Four big buttons — Roll Up, Smoking, High Thoughts, and End Session — with your live feed right below."),
+                ChangelogEntry(icon: "brain", tint: Palette.purple,
+                               title: "High Thoughts",
+                               detail: "Capture a thought or start a rant in one tap from the Home screen."),
+                ChangelogEntry(icon: "bolt.fill", tint: Palette.gold,
+                               title: "Faster launches & smoother lists",
+                               detail: "Behind-the-scenes work makes the app build and open quicker, with snappier strain search."),
+                ChangelogEntry(icon: "info.circle.fill", tint: Palette.greenBright,
+                               title: "Fixed About scrolling",
+                               detail: "About The Sesh now scrolls cleanly with the header pinned and the last entry fully visible."),
+            ]),
+        ChangelogVersion(
             version: "24.0.0",
             buildLabel: "June 2026",
             headline: "Smarter sesh controls.",
-            isLatest: true,
+            isLatest: false,
             entries: [
                 ChangelogEntry(icon: "square.grid.2x2.fill", tint: Palette.green,
                                title: "Start a sesh from your Home Screen",
