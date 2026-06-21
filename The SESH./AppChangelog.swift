@@ -46,10 +46,23 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
+            version: "25.1.0",
+            buildLabel: "June 2026",
+            headline: "Presence, polished.",
+            isLatest: true,
+            entries: [
+                ChangelogEntry(icon: "moon.fill", tint: Palette.textSecondary,
+                               title: "Quieter when you're away",
+                               detail: "When you're not in a sesh, friends now see you as Away instead of a default status."),
+                ChangelogEntry(icon: "bolt.horizontal.fill", tint: Palette.greenBright,
+                               title: "Live status that keeps up",
+                               detail: "Your sesh on the lock screen and Dynamic Island updates as you move through each stage."),
+            ]),
+        ChangelogVersion(
             version: "25.0.0",
             buildLabel: "June 2026",
             headline: "A cleaner home, faster everywhere.",
-            isLatest: true,
+            isLatest: false,
             entries: [
                 ChangelogEntry(icon: "square.grid.2x2.fill", tint: Palette.green,
                                title: "Redesigned Home",

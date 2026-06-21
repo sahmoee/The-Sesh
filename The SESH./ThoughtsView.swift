@@ -49,6 +49,8 @@ struct ComposeThoughtView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
     var editing: HighThought? = nil
+    /// Optional tag to pre-select when composing a new thought (e.g. Rant from Home).
+    var initialTag: ThoughtTag? = nil
 
     @State private var text = ""
     @State private var tag: ThoughtTag?
@@ -59,13 +61,13 @@ struct ComposeThoughtView: View {
         ZStack {
             AppBackground()
             VStack(spacing: 0) {
-                ScreenHeader(title: editing == nil ? "Quick Thought" : "Edit Thought", onBack: { dismiss() })
+                ScreenHeader(title: headerTitle, onBack: { dismiss() })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
 
                 ScrollView {
                     VStack(spacing: 18) {
                         NotesField(label: "What's on your mind?",
-                                   placeholder: "Whoa, what if...", text: $text, minHeight: 120)
+                                   placeholder: composerPlaceholder, text: $text, minHeight: 120)
                         tagSection
                         visibilitySection
                         PrimaryButton(title: editing == nil ? "Capture Thought" : "Save Changes") { saveThought() }
@@ -78,8 +80,21 @@ struct ComposeThoughtView: View {
         .onAppear {
             guard !didLoad else { return }
             didLoad = true
-            if let e = editing { text = e.text; tag = e.tag; visibility = e.visibility }
+            if let e = editing {
+                text = e.text; tag = e.tag; visibility = e.visibility
+            } else if let initialTag {
+                tag = initialTag
+            }
         }
+    }
+
+    private var headerTitle: String {
+        if editing != nil { return "Edit Thought" }
+        return tag == .rant ? "Rant" : "High Thought"
+    }
+
+    private var composerPlaceholder: String {
+        tag == .rant ? "Let it all out…" : "Whoa, what if..."
     }
 
     @ViewBuilder private var tagSection: some View {

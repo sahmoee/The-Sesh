@@ -30,7 +30,7 @@ enum SeshActivity: String, Codable, CaseIterable, Identifiable {
     /// Present-tense phrase, e.g. "Shalise is rolling up".
     var phrase: String {
         switch self {
-        case .idle:        return "is chilling"
+        case .idle:        return "is away"
         case .available:   return "is available"
         case .busy:        return "is busy"
         case .rollingUp:   return "is rolling up"
@@ -45,7 +45,7 @@ enum SeshActivity: String, Codable, CaseIterable, Identifiable {
 
     var emoji: String {
         switch self {
-        case .idle:        return "😌"
+        case .idle:        return "🌙"
         case .available:   return "🟢"
         case .busy:        return "⛔️"
         case .rollingUp:   return "🤙"
