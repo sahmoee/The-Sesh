@@ -48,6 +48,12 @@ struct RootView: View {
     }()
     @State private var showLog = false
     @State private var showQuickThought = false
+    /// Pre-selected tag for the thought composer (e.g. .rant from High Thoughts).
+    @State private var quickThoughtTag: ThoughtTag? = nil
+    /// "High Thoughts" action sheet: choose Thought or Rant.
+    @State private var showHighThoughtChooser = false
+    @State private var showLounge = false
+    @State private var showStash = false
     @State private var showStartSesh = false
     @State private var showActivityChooser = false
     @State private var chosenActivity: StartActivity? = nil
@@ -143,10 +149,22 @@ struct RootView: View {
             LogSeshView(prefill: logPrefill).environment(session).environment(strains)
                 .onAppear { entryCountBefore = session.entries.count }
         }
-        .sheet(isPresented: $showQuickThought, onDismiss: { onThoughtDismiss() }) {
-            ComposeThoughtView().environment(session).presentationDetents([.medium, .large])
+        .sheet(isPresented: $showQuickThought, onDismiss: {
+            onThoughtDismiss(); quickThoughtTag = nil
+        }) {
+            ComposeThoughtView(initialTag: quickThoughtTag).environment(session)
+                .presentationDetents([.medium, .large])
                 .onAppear { thoughtCountBefore = session.thoughts.count }
         }
+        .confirmationDialog("High Thoughts", isPresented: $showHighThoughtChooser, titleVisibility: .visible) {
+            Button("Log a Thought") { quickThoughtTag = nil; showQuickThought = true }
+            Button("Start a Rant") { quickThoughtTag = .rant; showQuickThought = true }
+            Button("Cancel", role: .cancel) { }
+        }
+        .sheet(isPresented: $showStash) {
+            StashView().environment(session)
+        }
+        .fullScreenCover(isPresented: $showLounge) { LoungeView() }
         .fullScreenCover(isPresented: $showStartSesh, onDismiss: { onStartSeshDismiss() }) {
             StartSeshView(initialActivity: chosenActivity, endImmediately: endSeshFromWidget)
                 .environment(session).environment(strains).environment(social)
@@ -181,10 +199,17 @@ struct RootView: View {
             switch selection {
             case .home:
                 HomeView(
-                    onLog: { logPrefill = nil; showLog = true },
-                    onQuickThought: { showQuickThought = true },
-                    onStartSesh: { showActivityChooser = true },
-                    onCompare: { showCompare = true }
+                    onStartSesh: { activity in requestStart(activity) },
+                    onEndSesh: {
+                        // Same path the widget uses: end live sesh -> skippable save.
+                        endSeshFromWidget = true
+                        showStartSesh = true
+                    },
+                    onHighThought: { showHighThoughtChooser = true },
+                    onOpenStash: { showStash = true },
+                    onOpenLounge: { showLounge = true },
+                    onOpenStrains: { selection = .library },
+                    onMenu: { showActivityChooser = true }
                 )
             case .log:  JournalView()
             case .library:
