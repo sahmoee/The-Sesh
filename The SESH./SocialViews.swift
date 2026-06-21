@@ -144,7 +144,7 @@ struct BroadcastStrip: View {
                     }
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Your status").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.textTertiary)
-                        Text("You \(act.phrase) · \(elapsedPhrase(social.activityStartedAt))")
+                        Text("\(social.me.displayName) \(act.phrase) · \(elapsedPhrase(social.activityStartedAt))")
                             .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
                     }
                     Spacer()

@@ -43,9 +43,11 @@ final class AuthManager {
             userID = cred.user
             CloudSync.set(cred.user, forKey: idKey)
             if let name = cred.fullName {
-                let parts = [name.givenName, name.familyName].compactMap { $0 }
-                let joined = parts.joined(separator: " ")
-                if !joined.isEmpty { fullName = joined; CloudSync.set(joined, forKey: nameKey) }
+                // Prefer just the first name; fall back to the family name only
+                // if no given name was provided.
+                let chosen = name.givenName ?? name.familyName ?? ""
+                let trimmed = chosen.trimmingCharacters(in: .whitespaces)
+                if !trimmed.isEmpty { fullName = trimmed; CloudSync.set(trimmed, forKey: nameKey) }
             }
             if let mail = cred.email { email = mail; CloudSync.set(mail, forKey: emailKey) }
             Haptics.success()

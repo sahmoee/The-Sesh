@@ -39,13 +39,21 @@ struct RootView: View {
     @Environment(StrainStore.self) private var strains
     @Environment(SocialStore.self) private var social
     @Environment(ThemeManager.self) private var theme
-    @State private var selection: Tab = {
-        switch UserDefaults.standard.string(forKey: "sesh.intent") {
-        case "discover": return .library
-        case "connect":  return .journey
-        default:          return .home
+    @State private var selection: Tab = .home
+    /// Per-tab reset counter. Re-tapping the active tab bumps its value, which
+    /// changes that tab's .id and recreates it — popping navigation and
+    /// returning to the tab's default page (items: tap-to-go-home behaviour).
+    @State private var resetToken: [Tab: Int] = [:]
+
+    /// Called by the tab bar. Switching tabs preserves each tab's place; tapping
+    /// the already-selected tab returns it to its default page.
+    private func selectTab(_ tab: Tab) {
+        if selection == tab {
+            resetToken[tab, default: 0] += 1
+        } else {
+            selection = tab
         }
-    }()
+    }
     @State private var showLog = false
     @State private var showInbox = false
     @State private var showQuickThought = false
@@ -135,7 +143,7 @@ struct RootView: View {
         tabContent
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            TabBar(selection: $selection)
+            TabBar(selection: $selection, onSelect: { selectTab($0) })
         }
         .id(theme.choice)
         .preferredColorScheme(theme.choice.isDark ? .dark : .light)
@@ -200,9 +208,13 @@ struct RootView: View {
     }
 
     @ViewBuilder private var tabContent: some View {
-        Group {
-            switch selection {
-            case .home:
+        // All tabs are kept alive in a ZStack so each remembers its place
+        // (scroll + navigation) when you switch away and back. Only the selected
+        // tab is visible and interactive. Re-tapping the selected tab bumps its
+        // reset token, which recreates that tab's view tree — popping any
+        // navigation and returning to the tab's default page.
+        ZStack {
+            tabView(.home) {
                 HomeView(
                     onStartSesh: { activity in requestStart(activity) },
                     onEndSesh: {
@@ -217,16 +229,28 @@ struct RootView: View {
                     onMenu: { showActivityChooser = true },
                     onOpenInbox: { showInbox = true }
                 )
-            case .log:  JournalView()
-            case .library:
+            }
+            tabView(.log) { JournalView() }
+            tabView(.library) {
                 StrainLibraryView(onLog: { strain in
                     logPrefill = strain
                     showLog = true
                 })
-            case .journey:  JourneyView()
-            case .profile:  ProfileView()
             }
+            tabView(.journey) { JourneyView() }
+            tabView(.profile) { ProfileView() }
         }
+    }
+
+    /// Wraps a tab's content: kept alive but only shown/interactive when selected,
+    /// and keyed by a per-tab reset token so re-tapping returns it to its default.
+    @ViewBuilder private func tabView<Content: View>(_ tab: Tab, @ViewBuilder _ content: () -> Content) -> some View {
+        let isActive = selection == tab
+        content()
+            .id(resetToken[tab, default: 0])
+            .opacity(isActive ? 1 : 0)
+            .allowsHitTesting(isActive)
+            .accessibilityHidden(!isActive)
     }
 
     private func onLogDismiss() {
@@ -259,13 +283,16 @@ struct RootView: View {
 
 struct TabBar: View {
     @Binding var selection: Tab
+    /// Called when a tab is tapped. Lets RootView handle re-tap (return to
+    /// default page) vs. switch (preserve place).
+    var onSelect: (Tab) -> Void
 
     var body: some View {
         HStack(spacing: 0) {
             ForEach(Tab.allCases, id: \.self) { tab in
                 Button {
                     if selection != tab { Haptics.selection() }
-                    withAnimation(.easeOut(duration: 0.2)) { selection = tab }
+                    withAnimation(.easeOut(duration: 0.2)) { onSelect(tab) }
                 } label: {
                     VStack(spacing: 4) {
                         Image(systemName: iconName(tab))

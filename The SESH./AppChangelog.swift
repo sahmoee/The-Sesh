@@ -46,10 +46,23 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
+            version: "25.7.0",
+            buildLabel: "June 2026",
+            headline: "Navigation that remembers you.",
+            isLatest: true,
+            entries: [
+                ChangelogEntry(icon: "house.fill", tint: Palette.green,
+                               title: "Tabs remember your place",
+                               detail: "Switch tabs and come back where you left off. Tap a tab again to jump to the top."),
+                ChangelogEntry(icon: "person.text.rectangle", tint: Palette.gold,
+                               title: "Your name, done right",
+                               detail: "Your status shows your name, and signing in with Apple uses just your first name."),
+            ]),
+        ChangelogVersion(
             version: "25.6.0",
             buildLabel: "June 2026",
             headline: "Notifications, fully wired.",
-            isLatest: true,
+            isLatest: false,
             entries: [
                 ChangelogEntry(icon: "bell.badge.fill", tint: Palette.greenBright,
                                title: "Friend notifications now live",
