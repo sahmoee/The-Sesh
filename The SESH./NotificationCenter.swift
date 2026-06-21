@@ -6,17 +6,24 @@
 //  SocialStore's polling) into three surfaces:
 //    1. In-app banner — shown when the app is foregrounded (scenePhase .active).
 //    2. Lock-screen / system notification — a local UNNotificationRequest, used
-//       when the app is NOT active (backgrounded). No server needed for this:
-//       the device schedules it itself the moment a change is detected while the
-//       app is alive in the background.
+//       when the app is NOT active (backgrounded).
 //    3. A persistent in-app inbox (the bell screen), kept across launches.
 //
-//  NOTE ON FULLY-CLOSED DELIVERY: if the app is force-quit / not running at all,
-//  iOS won't run our polling, so a friend's change can only reach the device as a
-//  REMOTE push sent by the Cloudflare Worker via APNs (the token plumbing for
-//  that already exists in PushNotifications.swift). This file covers everything
-//  the client can do on its own — foreground banners, backgrounded lock-screen
-//  notifications, and the inbox — and de-dupes against remote pushes by id.
+//  ANTI-SPAM (in-app AND lock screen): friends flipping status rapidly, or many
+//  friends being active at once, must NOT produce a flood. Three guards:
+//    - Per-friend cooldown: after we surface a status change for a friend, further
+//      status changes from that same friend are coalesced (inbox-only, no banner /
+//      no lock-screen alert) until the cooldown elapses.
+//    - Global rate limit: at most a few *surfaced* status alerts per minute across
+//      all friends; the rest still land in the inbox silently.
+//    - Banner shows only the newest item (no stacked backlog).
+//  Invites and chats are exempt from the status throttle (they're not spammy and
+//  the user expects them), but still de-dupe by id.
+//
+//  NOTE ON FULLY-CLOSED DELIVERY: if the app is force-quit, iOS won't run our
+//  polling, so a friend's change can only reach the device as a REMOTE push from
+//  the Cloudflare Worker via APNs (token plumbing already in PushNotifications).
+//  Local notifications de-dupe against remote pushes by id.
 //
 
 import SwiftUI
@@ -76,11 +83,24 @@ final class NotificationManager {
     /// re-fire. Bounded to a recent window to avoid unbounded growth.
     private var seenIDs: Set<String> = []
 
+    // MARK: Anti-spam tuning
+
+    /// After a friend's status change is *surfaced* (banner/lock screen), further
+    /// status changes from that same friend are inbox-only until this elapses.
+    private let perFriendCooldown: TimeInterval = 150     // 2.5 min
+    /// Max status alerts *surfaced* per rolling window across all friends.
+    private let globalWindow: TimeInterval = 60           // 1 min
+    private let globalMaxPerWindow = 4
+
+    /// handle -> last time we surfaced a status alert for them.
+    private var lastSurfacedForFriend: [String: Date] = [:]
+    /// Timestamps of recently surfaced status alerts (for the global rate limit).
+    private var recentSurfacedAt: [Date] = []
+
     var unreadCount: Int { inbox.count(where: { !$0.read }) }
 
     init() {
         let d = UserDefaults.standard
-        // Default ON the first time (key absent).
         enabled = (d.object(forKey: DefaultsKey.notifEnabled) as? Bool) ?? true
         if let data = d.data(forKey: DefaultsKey.notifInbox),
            let saved = try? JSONDecoder().decode([SeshNotification].self, from: data) {
@@ -103,48 +123,74 @@ final class NotificationManager {
             persistSeen()
             return
         }
-        // Oldest → newest so the inbox ends up newest-first after inserts.
-        for event in events.sorted(by: { $0.at < $1.at }) {
-            guard !seenIDs.contains(event.id) else { continue }
+        // Oldest -> newest so the inbox ends up newest-first after inserts.
+        let fresh = events.sorted(by: { $0.at < $1.at }).filter { !seenIDs.contains($0.id) }
+        for event in fresh {
             seenIDs.insert(event.id)
-            // Don't notify about my own broadcasts.
-            guard event.userHandle != myHandle else { continue }
+            guard event.userHandle != myHandle else { continue }   // not my own
             let note = SeshNotification(
                 id: event.id, kind: .status,
                 title: event.userName,
                 body: event.activity.phrase.replacingOccurrences(of: "is ", with: "").capitalized
                     + (event.detail.map { " · \($0)" } ?? ""),
                 at: event.at)
-            deliver(note)
+            // Throttle decides whether this is surfaced or inbox-only.
+            deliverStatus(note, friendHandle: event.userHandle)
         }
         trimSeen()
         persistSeen()
     }
 
-    /// Record + deliver a one-off notification (invite, chat, milestone).
+    /// Record + deliver a one-off notification (invite, chat, milestone). These
+    /// are not subject to the status throttle.
     func notify(kind: SeshNotification.Kind, title: String, body: String,
                 id: String = UUID().uuidString, icon: String? = nil) {
         guard enabled || kind != .status else { return }
+        // De-dupe by id (covers chat re-detection across polls).
+        guard !seenIDs.contains(id) else { return }
+        seenIDs.insert(id); persistSeen()
         let note = SeshNotification(id: id, kind: kind, title: title, body: body,
                                     at: Date(), iconName: icon)
-        deliver(note)
+        addToInbox(note)
+        surface(note)
     }
 
     // MARK: Delivery
 
-    private func deliver(_ note: SeshNotification) {
-        // 1. Always record to the inbox.
+    /// Status delivery with anti-spam. Always records to the inbox; only surfaces
+    /// (banner/lock screen) if it passes the per-friend cooldown and global rate
+    /// limit.
+    private func deliverStatus(_ note: SeshNotification, friendHandle: String) {
+        addToInbox(note)
+
+        let now = Date()
+        // Per-friend cooldown.
+        if let last = lastSurfacedForFriend[friendHandle], now.timeIntervalSince(last) < perFriendCooldown {
+            return  // inbox-only
+        }
+        // Global rate limit (rolling window).
+        recentSurfacedAt.removeAll { now.timeIntervalSince($0) > globalWindow }
+        if recentSurfacedAt.count >= globalMaxPerWindow {
+            return  // inbox-only
+        }
+
+        lastSurfacedForFriend[friendHandle] = now
+        recentSurfacedAt.append(now)
+        surface(note)
+    }
+
+    private func addToInbox(_ note: SeshNotification) {
         inbox.insert(note, at: 0)
         if inbox.count > 200 { inbox.removeLast(inbox.count - 200) }
         persistInbox()
+    }
 
-        // 2. Route to a visible surface based on scene phase.
+    /// Route a notification to a visible surface based on scene phase.
+    private func surface(_ note: SeshNotification) {
         if scenePhaseActive {
-            // In-app banner (foreground). Replace any current banner.
-            activeBanner = note
+            activeBanner = note          // banner shows only the newest
         } else {
-            // Lock screen / system notification (backgrounded).
-            scheduleLocal(note)
+            scheduleLocal(note)          // lock screen / system banner
         }
     }
 
@@ -190,7 +236,6 @@ final class NotificationManager {
     /// Keep the seen-id set from growing without bound (cap ~500 ids).
     private func trimSeen() {
         guard seenIDs.count > 500 else { return }
-        // Keep ids referenced by the current inbox; drop the rest.
         let keep = Set(inbox.map(\.id))
         seenIDs = seenIDs.intersection(keep).union(Array(seenIDs).suffix(200))
     }

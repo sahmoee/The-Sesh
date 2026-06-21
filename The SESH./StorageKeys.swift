@@ -67,11 +67,10 @@ enum DefaultsKey {
     static let tBreakStart = "ht.tbreak.start.v1"
     static let tBreakGoal  = "ht.tbreak.goal.v1"
 
-    // Strain images: user-attached photos keyed by strain id
-    static let strainUserPhotos = "sesh.strain.userPhotos.v1"
-
-    // Notifications: enabled flag (shared with the NotificationManager)
-    static let notifEnabled = "sesh.notif.enabled.v1"
+    // Notifications: persisted inbox + last-seen event ids + enabled flag
+    static let notifInbox     = "sesh.notif.inbox.v1"
+    static let notifSeenIDs   = "sesh.notif.seenIDs.v1"
+    static let notifEnabled   = "sesh.notif.enabled.v1"
 }
 
 /// Shared contract between the app and the widget extension (#10).
