@@ -2,8 +2,9 @@
 //  HomeView.swift
 //  HighThoughts
 //
-//  Dark hero ("High Thoughts") over a parchment action card with greeting,
-//  Log Your Sesh, Quick Thought, and the most recent session.
+//  Redesigned home: four primary session buttons (Roll Up, Smoking,
+//  High Thoughts, End Session) over a live social feed. End Session is only
+//  enabled while a sesh is in progress; otherwise it's greyed out.
 //
 
 import SwiftUI
@@ -12,16 +13,30 @@ struct HomeView: View {
     @Environment(AppSession.self) private var session
     @Environment(SocialStore.self) private var social
     @Environment(StrainStore.self) private var strains
-    let onLog: () -> Void
-    let onQuickThought: () -> Void
-    var onStartSesh: () -> Void = {}
-    var onCompare: () -> Void = {}
 
-    @AppStorage("ht.onboarded.v1") private var onboarded = false
+    // Callbacks wired by RootView.
+    var onStartSesh: (StartActivity) -> Void = { _ in }
+    var onEndSesh: () -> Void = {}
+    var onHighThought: () -> Void = {}
+    var onOpenStash: () -> Void = {}
+    var onOpenLounge: () -> Void = {}
+    var onOpenStrains: () -> Void = {}
+    var onMenu: () -> Void = {}
+
     @State private var friendPeek: SeshUser?
-    @State private var showLounge = false
-    @State private var showStash = false
-    @State private var detailEntry: JournalEntry?
+
+    // Button color pairs (soft fill + deep tint), built from the existing palette.
+    private let rollFill = Palette.gold.opacity(0.16)
+    private let rollTint = Palette.goldDeep
+    private let smokeFill = Palette.green.opacity(0.16)
+    private let smokeTint = Palette.greenDeep
+    private let thoughtFill = Palette.purple.opacity(0.16)
+    private let thoughtTint = Palette.purple
+    private let endFill = Palette.moodAngry.opacity(0.14)
+    private let endTint = Palette.moodAngry
+
+    /// A sesh is in progress when there's a live sesh state.
+    private var isLive: Bool { session.hasActiveSesh }
 
     private var greeting: String {
         let h = Calendar.current.component(.hour, from: Date())
@@ -36,322 +51,203 @@ struct HomeView: View {
     var body: some View {
         ZStack(alignment: .top) {
             AppBackground()
-
             ScrollView {
-                VStack(spacing: 0) {
-                    hero
-                    // CURRENT STATUS card sits directly under the hero, above the
-                    // greeting/action card, when a status/sesh is live.
-                    if social.me.activity != .idle {
+                VStack(alignment: .leading, spacing: 0) {
+                    header
+                    if isLive {
                         CurrentStatusCard()
                             .padding(.horizontal, 18)
-                            .offset(y: -28)
-                            .padding(.bottom, -16)
+                            .padding(.bottom, 16)
                     }
-                    actionCard
-                        .padding(.horizontal, 18)
-                        .offset(y: social.me.activity != .idle ? 0 : -28)
-                        // pull following layout up so the offset doesn't leave a gap
-                        .padding(.bottom, social.me.activity != .idle ? 12 : -28)
-
-                    // ── Social: presence, broadcast, feed ──
-                    VStack(spacing: 18) {
-                        PresenceRow(onTapFriend: { friendPeek = $0 })
-                        BroadcastStrip()
-
-                        // Stash — your current supply + purchase log
-                        Button { showStash = true; Haptics.tap() } label: {
-                            DarkCard {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "shippingbox.fill").font(.system(size: 20)).foregroundStyle(Palette.green)
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("Your Stash").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
-                                        if session.stashRemaining.isEmpty {
-                                            Text("Log what you bought and how much").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-                                        } else {
-                                            let names = session.stashRemaining.prefix(2).map(\.strain).joined(separator: ", ")
-                                            Text("\(session.stashRemaining.count) in stock · \(names)").font(.system(size: 12)).foregroundStyle(Palette.textSecondary).lineLimit(1)
-                                        }
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.textSecondary)
-                                }
-                            }
-                        }.buttonStyle(.plain)
-
-                        ActivityFeedCard()
-
-                        // Lounge highlights entry
-                        Button { showLounge = true; Haptics.tap() } label: {
-                            DarkCard {
-                                HStack(spacing: 12) {
-                                    Text("🌎").font(.system(size: 22))
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("The Lounge").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
-                                        Text("Trending strains, discussions & community reviews").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.textSecondary)
-                                }
-                            }
-                        }.buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 18)
-                    .padding(.top, 20)
+                    buttonGrid
+                    feedSection
+                    footerTiles
                 }
-                // clear the floating tab bar so the last card is never covered
                 .padding(.bottom, 96)
             }
         }
         .sheet(item: $friendPeek) { f in
             FriendSheet(user: f).presentationDetents([.medium])
         }
-        .fullScreenCover(isPresented: $showLounge) { LoungeView() }
-        .sheet(isPresented: $showStash) { StashView().environment(session) }
-        .sheet(item: $detailEntry) { e in
-            LogSeshView(editing: e).environment(session).environment(strains)
-        }
     }
 
-    // MARK: Hero
+    // MARK: Header
 
-    private var hero: some View {
-        ZStack(alignment: .bottomTrailing) {
-            LinearGradient(colors: [Palette.heroTop, Palette.heroBottom],
-                           startPoint: .top, endPoint: .bottom)
-
-            // candle + smoke suggestion
-            Image(systemName: "flame.fill")
-                .font(.system(size: 30))
-                .foregroundStyle(Palette.gold.opacity(0.85))
-                .padding(.trailing, 60).padding(.bottom, 70)
-
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(Palette.text)
-                        .accessibilityLabel("Menu")
-                    Spacer()
-                    Image(systemName: "bell")
-                        .font(.system(size: 18))
-                        .foregroundStyle(Palette.text)
-                        .accessibilityLabel("Notifications")
-                }
-                .padding(.top, 8)
-
-                Spacer(minLength: 16)
-
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("The")
-                        .font(.system(size: 30, weight: .semibold, design: .serif))
-                        .foregroundStyle(Palette.text.opacity(0.9))
-                    Text("Sesh")
-                        .font(.system(size: 60, weight: .bold, design: .serif))
-                        .foregroundStyle(Palette.text)
-                        .tracking(1)
-                }
-                Text("Your cannabis companion.\nTrack, sesh & connect.")
-                    .font(.system(size: 15))
-                    .foregroundStyle(Palette.textSecondary)
-                    .padding(.top, 10)
-
-                Spacer(minLength: 28)
-            }
-            .padding(.horizontal, 22)
-        }
-        .frame(height: 320)
-        .clipped()
-    }
-
-    // MARK: Action card
-
-    private var actionCard: some View {
-        CreamCard(padding: 18) {
-            VStack(spacing: 14) {
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle().fill(Palette.cream).frame(width: 44, height: 44)
-                            .overlay(Circle().stroke(Palette.creamStroke, lineWidth: 1))
-                        Image(systemName: "leaf.fill").foregroundStyle(Palette.green)
-                    }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(greeting), \(session.userName)")
-                            .font(.system(size: 18, weight: .semibold, design: .serif))
-                            .foregroundStyle(Palette.onCream)
-                        Text("Take a breath. You're doing great.")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Palette.onCreamSoft)
-                    }
-                    Spacer()
-                }
-
-                Button(action: onStartSesh) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "play.circle.fill").font(.system(size: 17, weight: .semibold))
-                        Text("Start sesh").font(.system(size: 16, weight: .semibold))
-                    }
-                    .foregroundStyle(Palette.onGreen)
-                    .frame(maxWidth: .infinity).padding(.vertical, 15)
-                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.green))
-                }
-                .buttonStyle(.plain)
-
-                Button(action: onLog) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus").font(.system(size: 16, weight: .semibold))
-                        Text("Log your sesh").font(.system(size: 16, weight: .semibold))
-                    }
+    @ViewBuilder private var header: some View {
+        HStack(alignment: .top) {
+            Button(action: onMenu) {
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 20, weight: .medium))
                     .foregroundStyle(Palette.text)
-                    .frame(maxWidth: .infinity).padding(.vertical, 14)
-                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                }
-                .buttonStyle(.plain)
-
-                secondaryButton("Quick Thought", "square.and.pencil", action: onQuickThought)
-                Button(action: onCompare) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "rectangle.split.3x1").font(.system(size: 14, weight: .semibold))
-                        Text("Compare Strains").font(.system(size: 14, weight: .semibold))
-                    }
-                    .foregroundStyle(Palette.onCream)
-                    .frame(maxWidth: .infinity).padding(.vertical, 12)
-                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.cream.opacity(0.5)))
-                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.creamStroke, lineWidth: 1))
-                }
-                .buttonStyle(.plain)
-
-                if !onboarded {
-                    onboardingHint
-                }
-
-                if !session.entries.isEmpty {
-                    weekStrip
-                }
-
-                recentSession
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        if let e = session.entries.first { detailEntry = e; Haptics.tap() }
-                    }
             }
-        }
-    }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Menu")
 
-    // MARK: This-week strip + streak ring
-
-    private var weekStrip: some View {
-        HStack(spacing: 12) {
-            StreakRing(streak: session.currentStreak, goal: session.nextStreakMilestone)
-            VStack(spacing: 0) {
-                Text("\(session.sessionsThisWeek)")
-                    .font(.system(size: 20, weight: .bold)).foregroundStyle(Palette.onCream)
-                Text("this week").font(.system(size: 11)).foregroundStyle(Palette.onCreamSoft)
-            }
-            .frame(maxWidth: .infinity)
-            Rectangle().fill(Palette.creamStroke).frame(width: 1, height: 32)
-            VStack(spacing: 0) {
-                Text(session.avgRatingThisWeek > 0 ? Fmt.rating(session.avgRatingThisWeek) : "—")
-                    .font(.system(size: 20, weight: .bold)).foregroundStyle(Palette.onCream)
-                Text("avg high").font(.system(size: 11)).foregroundStyle(Palette.onCreamSoft)
-            }
-            .frame(maxWidth: .infinity)
-            Rectangle().fill(Palette.creamStroke).frame(width: 1, height: 32)
-            VStack(spacing: 0) {
-                Text(session.spentThisWeek > 0 ? Fmt.currency0(session.spentThisWeek) : "—")
-                    .font(.system(size: 20, weight: .bold)).foregroundStyle(Palette.onCream)
-                Text("spent").font(.system(size: 11)).foregroundStyle(Palette.onCreamSoft)
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.creamElevated))
-        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.creamStroke, lineWidth: 1))
-    }
-
-    private var onboardingHint: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "hand.wave.fill").font(.system(size: 20)).foregroundStyle(Palette.green)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Welcome to The Sesh").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.onCream)
-                Text("Log a sesh, capture a thought, and explore the Strain Library.")
-                    .font(.system(size: 12)).foregroundStyle(Palette.onCreamSoft)
+                Text("\(greeting), \(session.userName)")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Palette.textSecondary)
+                Text(isLive ? "You're seshing" : "What's the move?")
+                    .font(.system(size: 22, weight: .semibold, design: .serif))
+                    .foregroundStyle(Palette.text)
             }
-            Spacer(minLength: 4)
-            Button { withAnimation { onboarded = true } } label: {
-                Image(systemName: "xmark").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.onCreamSoft)
-            }.buttonStyle(.plain)
+            .padding(.leading, 10)
+
+            Spacer()
+
+            Image(systemName: "bell")
+                .font(.system(size: 20))
+                .foregroundStyle(Palette.textSecondary)
+                .accessibilityLabel("Notifications")
         }
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.creamElevated))
-        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.creamStroke, lineWidth: 1))
+        .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 16)
     }
 
-    private func secondaryButton(_ title: String, _ icon: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: icon).font(.system(size: 14))
-                Text(title).font(.system(size: 14, weight: .medium))
+    // MARK: Four primary buttons
+
+    @ViewBuilder private var buttonGrid: some View {
+        VStack(spacing: 14) {
+            HStack(spacing: 14) {
+                primaryButton(title: "Roll Up", icon: "flame.fill",
+                              fill: rollFill, tint: rollTint) {
+                    Haptics.tap(); onStartSesh(.rollingUp)
+                }
+                primaryButton(title: "Smoking", icon: "smoke.fill",
+                              fill: smokeFill, tint: smokeTint,
+                              highlighted: isLive, badge: isLive ? "active now" : nil) {
+                    Haptics.tap(); onStartSesh(.smoking)
+                }
             }
-            .foregroundStyle(Palette.onCream)
-            .frame(maxWidth: .infinity).padding(.vertical, 13)
-            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.creamElevated))
-            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.creamStroke, lineWidth: 1))
+            HStack(spacing: 14) {
+                primaryButton(title: "High Thoughts", icon: "brain",
+                              fill: thoughtFill, tint: thoughtTint) {
+                    Haptics.tap(); onHighThought()
+                }
+                endSessionButton
+            }
+        }
+        .padding(.horizontal, 18).padding(.bottom, 18)
+    }
+
+    @ViewBuilder private var endSessionButton: some View {
+        Button {
+            guard isLive else { return }
+            Haptics.warning(); onEndSesh()
+        } label: {
+            VStack(spacing: 6) {
+                Image(systemName: "stop.circle.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(isLive ? endTint : Palette.textTertiary)
+                Text("End Session")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(isLive ? endTint : Palette.textTertiary)
+                if !isLive {
+                    Text("no active sesh")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Palette.textTertiary)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 24).padding(.horizontal, 14)
+            .background(endSessionBackground)
+        }
+        .buttonStyle(.plain)
+        .disabled(!isLive)
+        .accessibilityLabel("End Session")
+        .accessibilityHint(isLive ? "Ends and saves your current sesh" : "No active sesh to end")
+    }
+
+    @ViewBuilder private var endSessionBackground: some View {
+        if isLive {
+            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(endFill)
+        } else {
+            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+                .foregroundStyle(Palette.stroke)
+                .opacity(0.6)
+        }
+    }
+
+    private func primaryButton(title: String, icon: String,
+                               fill: Color, tint: Color,
+                               highlighted: Bool = false,
+                               badge: String? = nil,
+                               action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: icon).font(.system(size: 32)).foregroundStyle(tint)
+                Text(title).font(.system(size: 16, weight: .medium)).foregroundStyle(tint)
+                if let badge {
+                    Text(badge).font(.system(size: 11)).foregroundStyle(tint.opacity(0.8))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 24).padding(.horizontal, 14)
+            .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(fill))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                    .stroke(Palette.green, lineWidth: highlighted ? 2 : 0)
+            )
         }
         .buttonStyle(.plain)
     }
 
-    private var recentSession: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("RECENT SESSION")
-                    .font(.system(size: 11, weight: .semibold))
-                    .tracking(0.5)
-                    .foregroundStyle(Palette.onCreamSoft)
-                Spacer()
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Palette.onCreamSoft)
-            }
-            .padding(.bottom, 10)
+    // MARK: Social feed
 
-            if let e = session.entries.first {
-                HStack(spacing: 12) {
-                    StoredImage(name: e.photoName, size: 50)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(e.strain)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Palette.onCream)
-                        Text(relativeDay(e.date) + " · " + timeString(e.date))
-                            .font(.system(size: 12))
-                            .foregroundStyle(Palette.onCreamSoft)
-                        Text(e.notes)
-                            .font(.system(size: 13))
-                            .foregroundStyle(Palette.onCream.opacity(0.85))
-                            .lineLimit(1)
-                    }
-                    Spacer()
-                    HStack(spacing: 4) {
-                        Image(systemName: "face.smiling").font(.system(size: 14)).foregroundStyle(Palette.gold)
-                        Text(String(format: "%.1f", e.rating))
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Palette.onCream)
-                    }
-                }
-            } else {
-                Text("No sessions yet — tap Log Your sesh to begin.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Palette.onCreamSoft)
+    @ViewBuilder private var feedSection: some View {
+        HStack {
+            Text("Around you")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Palette.textSecondary)
+            Spacer()
+            HStack(spacing: 5) {
+                Image(systemName: "flame.fill").font(.system(size: 12)).foregroundStyle(Palette.gold)
+                Text("\(session.currentStreak)-day streak")
+                    .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
             }
         }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.creamElevated))
-        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.creamStroke, lineWidth: 1))
+        .padding(.horizontal, 18).padding(.bottom, 10)
+
+        VStack(spacing: 14) {
+            PresenceRow(onTapFriend: { friendPeek = $0 })
+            BroadcastStrip()
+            ActivityFeedCard()
+        }
+        .padding(.horizontal, 18).padding(.bottom, 18)
+    }
+
+    // MARK: Footer tiles
+
+    @ViewBuilder private var footerTiles: some View {
+        HStack(spacing: 10) {
+            footerTile("Stash", "shippingbox.fill",
+                       subtitle: session.stashRemaining.isEmpty ? nil : "\(session.stashRemaining.count)",
+                       action: onOpenStash)
+            footerTile("Lounge", "globe.americas.fill", subtitle: nil, action: onOpenLounge)
+            footerTile("Strains", "leaf.fill", subtitle: nil, action: onOpenStrains)
+        }
+        .padding(.horizontal, 18)
+    }
+
+    private func footerTile(_ title: String, _ icon: String,
+                            subtitle: String?, action: @escaping () -> Void) -> some View {
+        Button(action: { Haptics.tap(); action() }) {
+            VStack(spacing: 3) {
+                Image(systemName: icon).font(.system(size: 18)).foregroundStyle(Palette.textSecondary)
+                Text(subtitle == nil ? title : "\(title) · \(subtitle!)")
+                    .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 }
 
-// MARK: - Streak ring
+// MARK: - Streak ring (kept; used elsewhere)
 
 struct StreakRing: View {
     let streak: Int
@@ -381,11 +277,9 @@ func relativeDay(_ date: Date) -> String {
     let cal = Calendar.current
     if cal.isDateInToday(date) { return "Today" }
     if cal.isDateInYesterday(date) { return "Yesterday" }
-    let f = DateFormatter(); f.dateFormat = "MMM d"
-    return f.string(from: date)
+    return Fmt.shortDate(date)
 }
 
 func timeString(_ date: Date) -> String {
-    let f = DateFormatter(); f.dateFormat = "h:mm a"
-    return f.string(from: date)
+    Fmt.time(date)
 }

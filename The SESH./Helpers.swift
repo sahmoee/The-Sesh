@@ -29,26 +29,42 @@ enum Haptics {
 // MARK: - Formatting
 
 enum Fmt {
+    // Cached formatters. DateFormatter/NumberFormatter allocation is expensive
+    // (hundreds of microseconds each); creating one per call in list rows or
+    // exports showed up as avoidable churn. These are created once and reused.
+    private static let currencyFull: NumberFormatter = {
+        let f = NumberFormatter(); f.numberStyle = .currency; f.maximumFractionDigits = 2; return f
+    }()
+    private static let currencyWhole: NumberFormatter = {
+        let f = NumberFormatter(); f.numberStyle = .currency; f.maximumFractionDigits = 0; return f
+    }()
+    private static let mediumDateFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "MMM d, yyyy"; return f
+    }()
+    private static let shortDateFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "MMM d"; return f
+    }()
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "h:mm a"; return f
+    }()
+    private static let monthNameFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "LLLL"; return f
+    }()
+
     static func currency(_ value: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.maximumFractionDigits = value.truncatingRemainder(dividingBy: 1) == 0 ? 0 : 2
+        let whole = value.truncatingRemainder(dividingBy: 1) == 0
+        let f = whole ? currencyWhole : currencyFull
         return f.string(from: value as NSNumber) ?? String(format: "$%.2f", value)
     }
     static func currency0(_ value: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.maximumFractionDigits = 0
-        return f.string(from: value as NSNumber) ?? String(format: "$%.0f", value)
+        currencyWhole.string(from: value as NSNumber) ?? String(format: "$%.0f", value)
     }
     static func rating(_ value: Double) -> String { String(format: "%.1f", value) }
 
-    static func mediumDate(_ date: Date) -> String {
-        let f = DateFormatter(); f.dateFormat = "MMM d, yyyy"; return f.string(from: date)
-    }
-    static func shortDate(_ date: Date) -> String {
-        let f = DateFormatter(); f.dateFormat = "MMM d"; return f.string(from: date)
-    }
+    static func mediumDate(_ date: Date) -> String { mediumDateFormatter.string(from: date) }
+    static func shortDate(_ date: Date) -> String { shortDateFormatter.string(from: date) }
+    static func time(_ date: Date) -> String { timeFormatter.string(from: date) }
+    static func monthName(_ date: Date) -> String { monthNameFormatter.string(from: date) }
 }
 
 // MARK: - Toast

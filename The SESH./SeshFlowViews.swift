@@ -215,9 +215,7 @@ struct CurrentStatusCard: View {
     }
 
     private func startedAtText() -> String {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return "Started at \(f.string(from: social.activityStartedAt))"
+        "Started at \(Fmt.time(social.activityStartedAt))"
     }
 
     private func elapsed(_ since: Date) -> String {

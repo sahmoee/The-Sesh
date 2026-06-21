@@ -132,7 +132,7 @@ struct JourneyMilestonesView: View {
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
 
                 let all = JourneyBuilder.build(session, social: social)
-                let earned = all.filter { $0.earned }.count
+                let earned = all.count(where: { $0.earned })
                 Text("\(earned) of \(all.count) milestones")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
                     .padding(.bottom, 10)
@@ -142,7 +142,7 @@ struct JourneyMilestonesView: View {
                         ForEach(JourneyGroupStyle.order, id: \.self) { group in
                             let items = all.filter { $0.group == group }
                             if !items.isEmpty {
-                                let got = items.filter { $0.earned }.count
+                                let got = items.count(where: { $0.earned })
                                 HStack(spacing: 8) {
                                     Image(systemName: JourneyGroupStyle.icon(group))
                                         .font(.system(size: 15)).foregroundStyle(JourneyGroupStyle.color(group))
@@ -549,10 +549,10 @@ enum SecretBadgeBuilder {
 
         let thoughts = s.thoughts.count
         // "Questions": thoughts tagged Questions or ending in "?"
-        let questions = s.thoughts.filter { $0.tag == .questions || $0.text.trimmingCharacters(in: .whitespaces).hasSuffix("?") }.count
-        let afterMidnight = s.entries.filter { hour($0) >= 0 && hour($0) < 4 }.count
-        let wakeBake = s.entries.filter { hour($0) < 9 || $0.sessionType == "Wake & Bake" }.count
-        let solo = s.entries.filter { ($0.companions?.isEmpty ?? true) }.count
+        let questions = s.thoughts.count(where: { $0.tag == .questions || $0.text.trimmingCharacters(in: .whitespaces).hasSuffix("?") })
+        let afterMidnight = s.entries.count(where: { hour($0) >= 0 && hour($0) < 4 })
+        let wakeBake = s.entries.count(where: { hour($0) < 9 || $0.sessionType == "Wake & Bake" })
+        let solo = s.entries.count(where: { ($0.companions?.isEmpty ?? true) })
         let cyphSessions = s.cyphsJoinedCount
         let uniqueStrains = s.uniqueStrains
 
@@ -602,7 +602,7 @@ struct SecretBadgesView: View {
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 6)
 
                 let all = SecretBadgeBuilder.build(session)
-                let found = all.filter { $0.earned }.count
+                let found = all.count(where: { $0.earned })
                 Text("\(found) of \(all.count) discovered")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 18).padding(.bottom, 12)
@@ -669,30 +669,30 @@ enum PersonalityEngine {
             (e.effects ?? []).contains { $0.caseInsensitiveCompare(effect) == .orderedSame }
         }
         func sessionFrac(_ type: String) -> Double {
-            frac(entries.filter { $0.sessionType == type }.count)
+            frac(entries.count(where: { $0.sessionType == type }))
         }
 
         var out: [PersonalityTrait] = []
 
         // Time of day
-        let lateNight = frac(entries.filter { hour($0) >= 21 || hour($0) < 3 }.count)
-        let morning = frac(entries.filter { hour($0) < 10 }.count)
+        let lateNight = frac(entries.count(where: { hour($0) >= 21 || hour($0) < 3 }))
+        let morning = frac(entries.count(where: { hour($0) < 10 }))
         if lateNight >= 0.4 { out.append(.init(id: "night_owl", title: "Night Owl", emoji: "🦉",
             blurb: "Most of your seshes happen after dark.", score: lateNight)) }
         if morning >= 0.3 { out.append(.init(id: "wake_bake", title: "Wake & Bake", emoji: "🍳",
             blurb: "You like to start the day with a sesh.", score: morning)) }
 
         // Social vs solo
-        let solo = frac(entries.filter { ($0.companions?.isEmpty ?? true) }.count)
+        let solo = frac(entries.count(where: { ($0.companions?.isEmpty ?? true) }))
         if solo >= 0.7 { out.append(.init(id: "solo", title: "Mostly Solo", emoji: "🧘",
             blurb: "You prefer your own company when you sesh.", score: solo)) }
         else if solo <= 0.4 { out.append(.init(id: "social", title: "Highly Social", emoji: "🎉",
             blurb: "You love seshing with friends.", score: 1 - solo)) }
 
         // Effects sought
-        let creative = frac(entries.filter { has($0, effect: "Creative") }.count)
-        let relaxed = frac(entries.filter { has($0, effect: "Relaxed") || has($0, effect: "Sleepy") }.count)
-        let focused = frac(entries.filter { has($0, effect: "Focused") }.count)
+        let creative = frac(entries.count(where: { has($0, effect: "Creative") }))
+        let relaxed = frac(entries.count(where: { has($0, effect: "Relaxed") || has($0, effect: "Sleepy") }))
+        let focused = frac(entries.count(where: { has($0, effect: "Focused") }))
         if creative >= 0.3 { out.append(.init(id: "creative", title: "Creative Smoker", emoji: "🎨",
             blurb: "You sesh to spark ideas.", score: creative)) }
         if relaxed >= 0.4 { out.append(.init(id: "relaxation", title: "Relaxation Seeker", emoji: "🌿",

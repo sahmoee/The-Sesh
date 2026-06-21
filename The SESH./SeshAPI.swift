@@ -50,12 +50,23 @@ enum APIError: Error {
 struct SeshAPI {
     private var base: URL? { URL(string: BuildConfig.workerURL) }
 
-    private var session: URLSession {
+    /// One shared session for the whole app. Creating a URLSession per request
+    /// (as before) prevents connection reuse/keep-alive and reallocates the
+    /// config each call. A single configured session is reused everywhere.
+    private static let sharedSession: URLSession = {
         let c = URLSessionConfiguration.default
         c.timeoutIntervalForRequest = 8
         c.waitsForConnectivity = false
         return URLSession(configuration: c)
-    }
+    }()
+    private var session: URLSession { Self.sharedSession }
+
+    /// Shared decoder (ISO-8601 dates) so each call doesn't allocate one.
+    private static let decoder: JSONDecoder = {
+        let d = JSONDecoder()
+        d.dateDecodingStrategy = .iso8601
+        return d
+    }()
 
     private func makeRequest(_ path: String, method: String = "GET",
                              identity: SeshIdentity?, body: Data? = nil) -> URLRequest? {
@@ -82,9 +93,7 @@ struct SeshAPI {
         do {
             let (data, resp) = try await session.data(for: req)
             guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            return try decoder.decode(SeshSnapshot.self, from: data)
+            return try Self.decoder.decode(SeshSnapshot.self, from: data)
         } catch {
             return nil
         }
@@ -95,9 +104,7 @@ struct SeshAPI {
         do {
             let (data, resp) = try await session.data(for: req)
             guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            return try decoder.decode([ChatMessage].self, from: data)
+            return try Self.decoder.decode([ChatMessage].self, from: data)
         } catch {
             return nil
         }
@@ -210,9 +217,7 @@ struct SeshAPI {
         do {
             let (data, resp) = try await session.data(for: req)
             guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            return try decoder.decode([ChatMessage].self, from: data)
+            return try Self.decoder.decode([ChatMessage].self, from: data)
         } catch { return nil }
     }
 }

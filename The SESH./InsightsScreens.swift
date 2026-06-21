@@ -233,7 +233,7 @@ struct BadgesView: View {
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
 
                 let all = BadgeBuilder.build(session)
-                let earnedCount = all.filter { $0.earned }.count
+                let earnedCount = all.count(where: { $0.earned })
                 Text("\(earnedCount) of \(all.count) earned")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
                     .padding(.bottom, 10)
@@ -247,7 +247,7 @@ struct BadgesView: View {
                         ForEach(groups, id: \.self) { group in
                             let items = all.filter { $0.group == group }
                             if !items.isEmpty {
-                                let got = items.filter { $0.earned }.count
+                                let got = items.count(where: { $0.earned })
                                 HStack(spacing: 8) {
                                     Image(systemName: BadgeGroupStyle.icon(group))
                                         .font(.system(size: 15)).foregroundStyle(BadgeGroupStyle.color(group))
@@ -503,7 +503,7 @@ struct StatsView: View {
     // Mood tab — bar-visualized
     private var mood: some View {
         let counts = Mood.allCases.filter { $0 != .other }.map { m in
-            (m, session.entries.filter { $0.mood == m }.count)
+            (m, session.entries.count(where: { $0.mood == m }))
         }
         let maxCount = max(1, counts.map(\.1).max() ?? 1)
         return DarkCard {
@@ -666,7 +666,7 @@ struct StrainDetailView: View {
         }
         let items = session.entries.filter { $0.strain.caseInsensitiveCompare(insight.name) == .orderedSame }
         func score(_ moods: [Mood]) -> Double {
-            let n = items.filter { moods.contains($0.mood ?? .other) }.count
+            let n = items.count(where: { moods.contains($0.mood ?? .other) })
             return items.isEmpty ? 0 : min(10, 3 + Double(n) / Double(items.count) * 7)
         }
         return [
@@ -873,7 +873,7 @@ struct EffectBar: View {
 }
 
 func dateMedium(_ date: Date) -> String {
-    let f = DateFormatter(); f.dateFormat = "MMM d, yyyy"; return f.string(from: date)
+    Fmt.mediumDate(date)
 }
 
 // MARK: - Tolerance & T-Break card (#2)

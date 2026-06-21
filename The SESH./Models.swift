@@ -365,6 +365,7 @@ enum ThoughtTag: String, CaseIterable, Identifiable, Codable {
     case deep = "Deep"
     case funny = "Funny"
     case questions = "Questions"
+    case rant = "Rant"
 
     var id: String { rawValue }
 }
@@ -424,6 +425,12 @@ struct StrainInsight: Identifiable {
 @MainActor
 @Observable
 final class AppSession {
+    // Shared coders reused across all persistence paths. Encoding/decoding
+    // happens on every data mutation (purchases, categories, live-sesh state),
+    // so allocating a fresh coder each time was needless churn.
+    @ObservationIgnored static let jsonEncoder = JSONEncoder()
+    @ObservationIgnored static let jsonDecoder = JSONDecoder()
+
     var entries: [JournalEntry] = []
     var thoughts: [HighThought] = []
 
@@ -470,9 +477,9 @@ final class AppSession {
 
         var le: [JournalEntry] = []; var lt: [HighThought] = []
         if let data = d.data(forKey: entriesKey),
-           let v = try? JSONDecoder().decode([JournalEntry].self, from: data) { le = v }
+           let v = try? Self.jsonDecoder.decode([JournalEntry].self, from: data) { le = v }
         if let data = d.data(forKey: thoughtsKey),
-           let v = try? JSONDecoder().decode([HighThought].self, from: data) { lt = v }
+           let v = try? Self.jsonDecoder.decode([HighThought].self, from: data) { lt = v }
         if !le.isEmpty || !lt.isEmpty {
             store.replaceAll(entries: le, thoughts: lt)
         }
@@ -490,11 +497,11 @@ final class AppSession {
     func mergeFromStorage() {
         let d = UserDefaults.standard
         if let data = d.data(forKey: entriesKey),
-           let incoming = try? JSONDecoder().decode([JournalEntry].self, from: data) {
+           let incoming = try? Self.jsonDecoder.decode([JournalEntry].self, from: data) {
             entries = Self.mergeByID(local: entries, incoming: incoming, id: { $0.id }, date: { $0.date })
         }
         if let data = d.data(forKey: thoughtsKey),
-           let incoming = try? JSONDecoder().decode([HighThought].self, from: data) {
+           let incoming = try? Self.jsonDecoder.decode([HighThought].self, from: data) {
             thoughts = Self.mergeByID(local: thoughts, incoming: incoming, id: { $0.id }, date: { $0.date })
         }
         if let name = d.string(forKey: nameKey), !name.isEmpty { userName = name }
@@ -597,9 +604,11 @@ final class AppSession {
     var thisMonthSpent: Double {
         let cal = Calendar.current
         let now = Date()
-        return entries.filter {
-            cal.isDate($0.date, equalTo: now, toGranularity: .month) && $0.price != nil
-        }.compactMap(\.price).reduce(0, +)
+        return entries.reduce(into: 0.0) { sum, e in
+            if let price = e.price, cal.isDate(e.date, equalTo: now, toGranularity: .month) {
+                sum += price
+            }
+        }
     }
 
     var totalSpent: Double {
@@ -637,14 +646,14 @@ final class AppSession {
         savePurchases()
     }
     private func savePurchases() {
-        if let data = try? JSONEncoder().encode(purchases) {
+        if let data = try? Self.jsonEncoder.encode(purchases) {
             UserDefaults.standard.set(data, forKey: purchasesKey)
             CloudSync.set(data, forKey: purchasesKey)
         }
     }
     private func loadPurchases() {
         if let data = UserDefaults.standard.data(forKey: purchasesKey),
-           let v = try? JSONDecoder().decode([Purchase].self, from: data) {
+           let v = try? Self.jsonDecoder.decode([Purchase].self, from: data) {
             purchases = v
         }
     }
@@ -691,14 +700,14 @@ final class AppSession {
     }
 
     private func saveCustomCategories() {
-        if let data = try? JSONEncoder().encode(customCategories) {
+        if let data = try? Self.jsonEncoder.encode(customCategories) {
             UserDefaults.standard.set(data, forKey: customCatsKey)
             CloudSync.set(data, forKey: customCatsKey)
         }
     }
     private func loadCustomCategories() {
         if let data = UserDefaults.standard.data(forKey: customCatsKey),
-           let v = try? JSONDecoder().decode([String].self, from: data) {
+           let v = try? Self.jsonDecoder.decode([String].self, from: data) {
             customCategories = v
         }
     }
@@ -732,7 +741,7 @@ final class AppSession {
 
     func saveLiveSesh(_ state: LiveSeshState) {
         liveSesh = state
-        if let data = try? JSONEncoder().encode(state) {
+        if let data = try? Self.jsonEncoder.encode(state) {
             UserDefaults.standard.set(data, forKey: liveSeshKey)
         }
     }
@@ -742,7 +751,7 @@ final class AppSession {
     }
     private func loadLiveSesh() {
         if let data = UserDefaults.standard.data(forKey: liveSeshKey),
-           let v = try? JSONDecoder().decode(LiveSeshState.self, from: data) {
+           let v = try? Self.jsonDecoder.decode(LiveSeshState.self, from: data) {
             liveSesh = v
         }
     }
@@ -775,26 +784,28 @@ final class AppSession {
     }
 
     var mostPurchasedStrain: String? {
-        let counts = Dictionary(grouping: entries, by: { normalized($0.strain) })
-            .mapValues(\.count)
+        var counts: [String: Int] = [:]
+        for e in entries { counts[normalized(e.strain), default: 0] += 1 }
         guard let key = counts.max(by: { $0.value < $1.value })?.key else { return nil }
         return entries.first { normalized($0.strain) == key }?.strain
     }
 
     /// Best strain for a given mood (used for "Most Relaxing" etc.).
     func topStrain(for mood: Mood) -> String? {
-        let filtered = entries.filter { $0.mood == mood }
-        let counts = Dictionary(grouping: filtered, by: { normalized($0.strain) })
-            .mapValues(\.count)
+        var counts: [String: Int] = [:]
+        for e in entries where e.mood == mood {
+            counts[normalized(e.strain), default: 0] += 1
+        }
         guard let key = counts.max(by: { $0.value < $1.value })?.key else { return nil }
         return entries.first { normalized($0.strain) == key }?.strain
     }
 
     var insights: [StrainInsight] {
         let groups = Dictionary(grouping: entries, by: { normalized($0.strain) })
-        return groups.map { _, items in
-            StrainInsight(
-                name: items.first!.strain,
+        return groups.compactMap { _, items -> StrainInsight? in
+            guard let first = items.first else { return nil }
+            return StrainInsight(
+                name: first.strain,
                 sessions: items.count,
                 averageRating: items.map(\.rating).reduce(0, +) / Double(items.count)
             )
@@ -823,7 +834,7 @@ final class AppSession {
         for w in stride(from: weeks - 1, through: 0, by: -1) {
             guard let weekStart = cal.date(byAdding: .weekOfYear, value: -w, to: now),
                   let interval = cal.dateInterval(of: .weekOfYear, for: weekStart) else { continue }
-            let count = entries.filter { interval.contains($0.date) }.count
+            let count = entries.count(where: { interval.contains($0.date) })
             let label = "\(cal.component(.month, from: interval.start))/\(cal.component(.day, from: interval.start))"
             result.append((label, count))
         }
@@ -1010,9 +1021,10 @@ final class AppSession {
         for (_, group) in Dictionary(grouping: entries, by: { $0.strain.lowercased() }) {
             guard group.count >= 3 else { continue }
             let sorted = group.sorted { $0.date < $1.date }
-            let from = sorted.first!.rating, to = sorted.last!.rating
+            guard let firstEntry = sorted.first, let lastEntry = sorted.last else { continue }
+            let from = firstEntry.rating, to = lastEntry.rating
             let delta = to - from
-            if delta > (best?.3 ?? 0) { best = (sorted.first!.strain, from, to, delta) }
+            if delta > (best?.3 ?? 0) { best = (firstEntry.strain, from, to, delta) }
         }
         guard let b = best else { return nil }
         return (b.0, b.1, b.2)
@@ -1075,7 +1087,7 @@ final class AppSession {
         let monthName = topMonth.flatMap { m -> String? in
             var c = DateComponents(); c.year = year; c.month = m
             guard let d = cal.date(from: c) else { return nil }
-            let f = DateFormatter(); f.dateFormat = "LLLL"; return f.string(from: d)
+            return Fmt.monthName(d)
         }
 
         // Thought of the year: the longest one (proxy for most substantial)
@@ -1103,7 +1115,7 @@ final class AppSession {
         let cal = Calendar.current
         return cal.dateInterval(of: .weekOfYear, for: Date())?.start ?? cal.startOfDay(for: Date())
     }
-    var sessionsThisWeek: Int { entries.filter { $0.date >= weekStart }.count }
+    var sessionsThisWeek: Int { entries.count(where: { $0.date >= weekStart }) }
     var avgRatingThisWeek: Double {
         let r = entries.filter { $0.date >= weekStart }.map(\.rating)
         return r.isEmpty ? 0 : r.reduce(0, +) / Double(r.count)
@@ -1134,7 +1146,7 @@ final class AppSession {
     }
 
     var recentTransactions: [JournalEntry] {
-        entries.filter { $0.price != nil }.prefix(6).map { $0 }
+        Array(entries.lazy.filter { $0.price != nil }.prefix(6))
     }
 
     private func normalized(_ s: String) -> String {

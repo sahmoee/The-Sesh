@@ -167,7 +167,7 @@ extension AppSession {
     func effectLevel(strain name: String, effect: String) -> EffectLevel {
         let logged = entries(forStrain: name)
         guard !logged.isEmpty else { return .none }
-        let hits = logged.filter { ($0.effects ?? []).contains(effect) }.count
+        let hits = logged.count(where: { ($0.effects ?? []).contains(effect) })
         let ratio = Double(hits) / Double(logged.count)
         if ratio >= 0.6 { return .high }
         if ratio >= 0.3 { return .medium }
