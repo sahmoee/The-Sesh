@@ -74,7 +74,12 @@ struct StoredImage: View {
     let name: String?
     var size: CGFloat = 56
     var corner: CGFloat = Radius.sm
+    /// When set, resolve through StrainImageStore (user photo -> remote -> art)
+    /// instead of only the local PhotoStore. The procedural fallback is seeded
+    /// from this id so each strain has a stable look.
+    var strainID: String? = nil
 
+    @Environment(StrainImageStore.self) private var strainImages
     @State private var image: UIImage?
 
     var body: some View {
@@ -84,15 +89,31 @@ struct StoredImage: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                BudThumb(size: size)
+                BudThumb(size: size, seed: budSeed)
             }
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
-        .task(id: name) { await load() }
+        .task(id: taskKey) { await load() }
+    }
+
+    /// Re-run loading when either the photo name or the strain id changes.
+    private var taskKey: String { "\(name ?? "")|\(strainID ?? "")" }
+
+    /// Stable BudThumb seed: prefer the strain id, else the photo name, else 0.
+    private var budSeed: Int {
+        if let strainID, !strainID.isEmpty { return abs(strainID.hashValue % 60) }
+        if let name, !name.isEmpty { return abs(name.hashValue % 60) }
+        return 0
     }
 
     private func load() async {
+        // Strain-aware path: let the store resolve the best image.
+        if let strainID, !strainID.isEmpty {
+            image = await strainImages.image(strainID: strainID)
+            return
+        }
+        // Legacy path: local PhotoStore only.
         guard let name, !name.isEmpty else { image = nil; return }
         let loaded = await Task.detached(priority: .utility) { PhotoStore.load(name) }.value
         await MainActor.run { image = loaded }
@@ -189,6 +210,84 @@ struct PhotoField: View {
                    let saved = PhotoStore.save(img) {
                     PhotoStore.delete(photoName)
                     await MainActor.run { photoName = saved }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Strain photo (tap to add)
+
+/// A strain's hero image with a "tap to add a photo" affordance. Shows the
+/// resolved image (user photo -> remote -> procedural art) and lets the user
+/// attach their own real photo, which is stored per-strain in StrainImageStore
+/// and always takes priority. If the image is a CC-licensed remote photo, its
+/// attribution line is shown beneath.
+struct StrainPhotoButton: View {
+    let strain: StrainProfile
+    var size: CGFloat = 84
+
+    @Environment(StrainImageStore.self) private var strainImages
+    @State private var showDialog = false
+    @State private var showCamera = false
+    @State private var pickerItem: PhotosPickerItem?
+    /// Bumped after a change to force the inner StoredImage to reload.
+    @State private var reloadToken = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button { showDialog = true } label: {
+                ZStack(alignment: .bottomTrailing) {
+                    StoredImage(name: strain.photoName, size: size,
+                                corner: Radius.md, strainID: strain.id)
+                        .id(reloadToken)
+                    // Small camera chip so it's clearly tappable.
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Palette.onGreen)
+                        .padding(6)
+                        .background(Circle().fill(Palette.green))
+                        .overlay(Circle().stroke(Palette.card, lineWidth: 2))
+                        .offset(x: 4, y: 4)
+                }
+            }
+            .buttonStyle(.plain)
+
+            if let credit = strainImages.attribution(strainID: strain.id) {
+                Text(credit)
+                    .font(.system(size: 9))
+                    .foregroundStyle(Palette.textTertiary)
+                    .lineLimit(1)
+                    .frame(width: size, alignment: .leading)
+            }
+        }
+        .confirmationDialog("Strain Photo", isPresented: $showDialog, titleVisibility: .hidden) {
+            Button("Take Photo") { showCamera = true }
+            PhotosPicker("Choose from Library", selection: $pickerItem, matching: .images)
+            if strainImages.hasUserPhoto(strainID: strain.id) {
+                Button("Remove My Photo", role: .destructive) {
+                    strainImages.removeUserPhoto(strainID: strain.id)
+                    reloadToken += 1
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPicker { img in
+                strainImages.setUserPhoto(img, strainID: strain.id)
+                reloadToken += 1
+            }
+            .ignoresSafeArea()
+        }
+        .onChange(of: pickerItem) { _, newItem in
+            guard let newItem else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self),
+                   let img = UIImage(data: data) {
+                    await MainActor.run {
+                        strainImages.setUserPhoto(img, strainID: strain.id)
+                        reloadToken += 1
+                    }
                 }
             }
         }

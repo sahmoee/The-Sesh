@@ -108,11 +108,19 @@ struct ProfileView: View {
     @ViewBuilder private var settingsMenu: some View {
         VStack(spacing: 0) {
             NavigationLink { ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                menuRow("square.and.pencil", "Edit Profile")
+            }.buttonStyle(.plain)
+            rowDivider
+            NavigationLink { ProfileSettingsView().environment(session).navigationBarBackButtonHidden(true) } label: {
                 menuRow("gearshape", "Settings")
             }.buttonStyle(.plain)
             rowDivider
             NavigationLink { ExportView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                menuRow("square.and.arrow.up", "Export & Backup")
+                menuRow("square.and.arrow.up", "Export Data")
+            }.buttonStyle(.plain)
+            rowDivider
+            NavigationLink { ExportView().environment(session).navigationBarBackButtonHidden(true) } label: {
+                menuRow("arrow.clockwise", "Backup & Restore")
             }.buttonStyle(.plain)
             rowDivider
             NavigationLink { AboutView().navigationBarBackButtonHidden(true) } label: {
@@ -158,12 +166,16 @@ struct ProfileSettingsView: View {
     @State private var name = ""
     @State private var showResetConfirm = false
     @State private var iCloudOn = CloudSync.isEnabled
+    /// Friend-notifications toggle. Backed by the same UserDefaults key the
+    /// NotificationManager reads, so flipping it here enables/disables friend
+    /// status, invite, and chat notifications.
+    @AppStorage(DefaultsKey.notifEnabled) private var notificationsOn = true
 
     var body: some View {
         ZStack {
             AppBackground()
             VStack(spacing: 0) {
-                ScreenHeader(title: "Settings", onBack: { dismiss() })
+                ScreenHeader(title: "Edit Profile", onBack: { dismiss() })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
                 ScrollView {
                     VStack(spacing: 18) {
@@ -184,6 +196,11 @@ struct ProfileSettingsView: View {
 
                         // iCloud sync
                         iCloudSection
+
+                        Divider().overlay(Palette.stroke).padding(.vertical, 4)
+
+                        // Friend notifications
+                        notificationsSection
 
                         Divider().overlay(Palette.stroke).padding(.vertical, 4)
 
@@ -290,6 +307,25 @@ struct ProfileSettingsView: View {
                 if newValue { session.save() }   // push current data up when re-enabled
                 Haptics.selection()
             }
+            .padding(14)
+            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+        }
+    }
+
+    // Friend notifications on/off.
+    private var notificationsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            FieldLabel(text: "Notifications")
+            Toggle(isOn: $notificationsOn) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Friend notifications").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                    Text("Get notified when friends change their status, invite you to a sesh, or send a message.")
+                        .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+                }
+            }
+            .tint(Palette.green)
+            .onChange(of: notificationsOn) { _, _ in Haptics.selection() }
             .padding(14)
             .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
             .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
@@ -448,58 +484,61 @@ struct AboutView: View {
     var body: some View {
         ZStack {
             AppBackground()
-            VStack(spacing: 0) {
-                ScreenHeader(title: "About The Sesh", onBack: { dismiss() })
-                    .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        DarkCard {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Image(systemName: "leaf.fill").font(.system(size: 28)).foregroundStyle(Palette.green)
-                                Text("The Sesh")
-                                    .font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.text)
-                                Text("Your cannabis companion. Track your sessions, sesh together in Cyphers, go live, and chat with the community.")
-                                    .font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
-                                Text(BuildConfig.displayLabel)
-                                    .font(.system(size: 12)).foregroundStyle(Palette.textTertiary).padding(.top, 4)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    DarkCard {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Image(systemName: "leaf.fill").font(.system(size: 28)).foregroundStyle(Palette.green)
+                            Text("The Sesh")
+                                .font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.text)
+                            Text("Your cannabis companion. Track your sessions, sesh together in Cyphers, go live, and chat with the community.")
+                                .font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
+                            Text(BuildConfig.displayLabel)
+                                .font(.system(size: 12)).foregroundStyle(Palette.textTertiary).padding(.top, 4)
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
 
-                        Text("CHANGELOG").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+                    Text("CHANGELOG").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
 
-                        ForEach(AppChangelog.versions) { version in
-                            DarkCard {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    HStack(spacing: 8) {
-                                        Text("v\(version.version)").font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.text)
-                                        if version.isLatest {
-                                            Text("LATEST").font(.system(size: 9, weight: .bold)).foregroundStyle(Palette.onGreen)
-                                                .padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(Palette.green))
-                                        }
-                                        Spacer()
-                                        Text(version.buildLabel).font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
+                    ForEach(AppChangelog.versions) { version in
+                        DarkCard {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 8) {
+                                    Text("v\(version.version)").font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.text)
+                                    if version.isLatest {
+                                        Text("LATEST").font(.system(size: 9, weight: .bold)).foregroundStyle(Palette.onGreen)
+                                            .padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(Palette.green))
                                     }
-                                    ForEach(version.entries) { entry in
-                                        HStack(alignment: .top, spacing: 12) {
-                                            Image(systemName: entry.icon).font(.system(size: 14)).foregroundStyle(entry.tint).frame(width: 24)
-                                            VStack(alignment: .leading, spacing: 2) {
-                                                Text(entry.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
-                                                Text(entry.detail).font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-                                            }
+                                    Spacer()
+                                    Text(version.buildLabel).font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
+                                }
+                                ForEach(version.entries) { entry in
+                                    HStack(alignment: .top, spacing: 12) {
+                                        Image(systemName: entry.icon).font(.system(size: 14)).foregroundStyle(entry.tint).frame(width: 24)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(entry.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
+                                            Text(entry.detail).font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                    .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 28)
                 }
+                .padding(.horizontal, 18).padding(.top, 8)
+                // Clear the home indicator / bottom safe area so the last card is
+                // always fully visible and tappable when scrolled to the end.
+                .padding(.bottom, 24)
             }
+            // Pin the header above the scrolling content so it stays in place and
+            // the back button is always reachable while the list scrolls beneath.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                ScreenHeader(title: "About The Sesh", onBack: { dismiss() })
+                    .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
+                    .background(AppBackground())
+            }
+            .scrollIndicators(.visible)
         }
-        // Remove the phantom system nav bar on this pushed screen so only the
-        // custom ScreenHeader shows (matches the other Profile sub-screens). This
-        // is what fixes the top being pushed down / content clipped.
-        .toolbar(.hidden, for: .navigationBar)
     }
 }

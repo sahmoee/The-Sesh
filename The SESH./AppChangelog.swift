@@ -46,20 +46,20 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.4.0",
+            version: "25.5.0",
             buildLabel: "June 2026",
-            headline: "Never miss your friends.",
+            headline: "Strains get a face.",
             isLatest: true,
             entries: [
-                ChangelogEntry(icon: "bell.badge.fill", tint: Palette.greenBright,
-                               title: "Friend notifications",
-                               detail: "Get notified when friends change their status, send you a message, or invite you to a sesh."),
-                ChangelogEntry(icon: "lock.iphone", tint: Palette.green,
-                               title: "On your lock screen",
-                               detail: "Friend activity reaches your lock screen when the app is in the background."),
-                ChangelogEntry(icon: "tray.full.fill", tint: Palette.gold,
-                               title: "Notification inbox",
-                               detail: "Tap the bell on Home to see your full notification history."),
+                ChangelogEntry(icon: "photo.on.rectangle.angled", tint: Palette.green,
+                               title: "Strain images",
+                               detail: "Strains now show a photo where one's available, with distinct artwork for the rest."),
+                ChangelogEntry(icon: "camera.fill", tint: Palette.gold,
+                               title: "Add your own",
+                               detail: "Tap a strain's image to attach your own photo — it becomes that strain's picture for you."),
+                ChangelogEntry(icon: "bell.badge", tint: Palette.greenBright,
+                               title: "Notification control",
+                               detail: "Turn friend notifications on or off anytime in Settings."),
             ]),
         ChangelogVersion(
             version: "25.0.0",
