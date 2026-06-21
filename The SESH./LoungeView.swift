@@ -48,7 +48,7 @@ struct LoungeView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var section = "Trending"
 
-    private let sections = ["Trending", "Discussions", "Strain Rooms", "Polls", "Reviews"]
+    private let sections = ["Trending", "Discussions", "Reviews"]
 
     var body: some View {
         ZStack {
@@ -62,8 +62,6 @@ struct LoungeView: View {
                         switch section {
                         case "Trending":     trending
                         case "Discussions":  discussions
-                        case "Strain Rooms": strainRooms
-                        case "Polls":        polls
                         default:             reviews
                         }
                         Color.clear.frame(height: 40)
@@ -129,52 +127,6 @@ struct LoungeView: View {
                             Text(d.author).font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
                             Label("\(d.replies)", systemImage: "bubble.right").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    private var strainRooms: some View {
-        VStack(spacing: 12) {
-            ForEach(["Gelato", "Blue Dream", "Permanent Marker", "Runtz", "Wedding Cake", "Granddaddy Purple"], id: \.self) { name in
-                DarkCard(padding: 14) {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                                .fill(LinearGradient(colors: [Palette.greenDeep, Palette.green], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                .frame(width: 44, height: 44)
-                            Image(systemName: "leaf.fill").foregroundStyle(Palette.onGreen)
-                        }
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(name).font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
-                            Text("Room · join the discussion").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
-                    }
-                }
-            }
-        }
-    }
-
-    private var polls: some View {
-        VStack(spacing: 12) {
-            ForEach(seedPolls) { poll in
-                DarkCard {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(poll.question).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
-                        ForEach(poll.options) { opt in
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Text(opt.label).font(.system(size: 13)).foregroundStyle(Palette.text)
-                                    Spacer()
-                                    Text("\(Int(opt.share * 100))%").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.textSecondary)
-                                }
-                                GeometryFreeBar(fraction: opt.share)
-                            }
-                        }
-                        Text("\(poll.votes) votes").font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
                     }
                 }
             }

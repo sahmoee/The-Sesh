@@ -224,7 +224,6 @@ struct HomeView: View {
                        subtitle: session.stashRemaining.isEmpty ? nil : "\(session.stashRemaining.count)",
                        action: onOpenStash)
             footerTile("Lounge", "globe.americas.fill", subtitle: nil, action: onOpenLounge)
-            footerTile("Strains", "leaf.fill", subtitle: nil, action: onOpenStrains)
         }
         .padding(.horizontal, 18)
     }

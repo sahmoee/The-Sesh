@@ -101,10 +101,6 @@ final class SocialStore {
         await refresh()
     }
 
-    func report(user: SeshUser?, messageID: String?, reason: String) async -> Bool {
-        await api.report(userID: user?.id, messageID: messageID, reason: reason, identity: identity)
-    }
-
     // MARK: Pagination
 
     /// Whether a room appears to have older messages to load.

@@ -725,7 +725,6 @@ struct FriendSheet: View {
     @Environment(\.dismiss) private var dismiss
     let user: SeshUser
     @State private var showBlockConfirm = false
-    @State private var showReport = false
 
     var body: some View {
         ZStack {
@@ -758,20 +757,12 @@ struct FriendSheet: View {
                 }
 
                 // Safety actions
-                HStack(spacing: 12) {
-                    Button { showReport = true } label: {
-                        Label("Report", systemImage: "flag")
-                            .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.textSecondary)
-                            .frame(maxWidth: .infinity).padding(.vertical, 11)
-                            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                    }.buttonStyle(.plain)
-                    Button(role: .destructive) { showBlockConfirm = true } label: {
-                        Label("Block", systemImage: "hand.raised")
-                            .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.moodAngry)
-                            .frame(maxWidth: .infinity).padding(.vertical, 11)
-                            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                    }.buttonStyle(.plain)
-                }
+                Button(role: .destructive) { showBlockConfirm = true } label: {
+                    Label("Block", systemImage: "hand.raised")
+                        .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.moodAngry)
+                        .frame(maxWidth: .infinity).padding(.vertical, 11)
+                        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+                }.buttonStyle(.plain)
                 .padding(.horizontal, 18)
 
                 Spacer()
@@ -785,9 +776,6 @@ struct FriendSheet: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("You won't see their activity, cyphers, or messages. You can unblock them later.")
-        }
-        .sheet(isPresented: $showReport) {
-            ReportSheet(user: user).presentationDetents([.medium])
         }
     }
 
@@ -1005,68 +993,6 @@ private struct FriendRow: View {
             HStack(spacing: 5) {
                 Circle().fill(Palette.textTertiary.opacity(0.5)).frame(width: 6, height: 6)
                 Text("Offline · \(seshAgo(friend.lastSeen))").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-            }
-        }
-    }
-}
-
-// MARK: - Report sheet
-
-struct ReportSheet: View {
-    @Environment(SocialStore.self) private var social
-    @Environment(\.dismiss) private var dismiss
-    let user: SeshUser
-    @State private var reason = ""
-    @State private var sent = false
-
-    private let reasons = ["Spam", "Harassment", "Inappropriate content", "Impersonation", "Other"]
-
-    var body: some View {
-        ZStack {
-            AppBackground()
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text("Report \(user.displayName)").font(.system(size: 20, weight: .bold, design: .serif)).foregroundStyle(Palette.text)
-                    Spacer()
-                    Button { dismiss() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.textTertiary) }
-                        .buttonStyle(.plain).accessibilityLabel("Close")
-                }
-                .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 12)
-
-                if sent {
-                    VStack(spacing: 12) {
-                        Image(systemName: "checkmark.circle.fill").font(.system(size: 44)).foregroundStyle(Palette.greenBright)
-                        Text("Report submitted").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.text)
-                        Text("Thanks — our team will review it.").font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
-                    }
-                    .frame(maxWidth: .infinity).padding(.top, 30)
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("WHY ARE YOU REPORTING?").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
-                            FlowLayout(spacing: 8) {
-                                ForEach(reasons, id: \.self) { r in
-                                    let on = reason == r
-                                    Button { reason = r; Haptics.selection() } label: {
-                                        Text(r).font(.system(size: 13, weight: .medium))
-                                            .foregroundStyle(on ? Palette.onGreen : Palette.text)
-                                            .padding(.horizontal, 14).padding(.vertical, 8)
-                                            .background(Capsule().fill(on ? Palette.green : Palette.field))
-                                            .overlay(Capsule().stroke(on ? Color.clear : Palette.stroke, lineWidth: 1))
-                                    }.buttonStyle(.plain)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 20).padding(.top, 4)
-                    }
-                    PrimaryButton(title: "Submit Report", icon: "flag.fill") {
-                        Task { _ = await social.report(user: user, messageID: nil, reason: reason.isEmpty ? "Other" : reason) }
-                        Haptics.success(); withAnimation { sent = true }
-                        Task { try? await Task.sleep(for: .seconds(1.4)); dismiss() }
-                    }
-                    .padding(.horizontal, 20).padding(.bottom, 18)
-                    .disabled(reason.isEmpty)
-                }
             }
         }
     }

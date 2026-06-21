@@ -18,6 +18,10 @@ struct StrainLibraryView: View {
     @State private var typeFilter: StrainType?
     @State private var showAdd = false
     @State private var editingStrain: StrainProfile?
+    /// Seed for the randomized Featured / Popular picks. Set once per appearance
+    /// so the picks are stable while you browse, but reshuffle each time you open
+    /// the tab (until real community data drives a true ranking).
+    @State private var shuffleSeed: UInt64 = 0
 
     private var results: [StrainProfile] {
         let base = strains.filtered(by: typeFilter)
@@ -50,6 +54,10 @@ struct StrainLibraryView: View {
                 floatingAddButton
             }
             .toolbar(.hidden, for: .navigationBar)
+            .onAppear {
+                // Reshuffle Featured / Popular each time the tab is opened.
+                shuffleSeed = UInt64.random(in: 1...UInt64.max)
+            }
         }
         .sheet(isPresented: $showAdd) {
             StrainEditorView().environment(strains)
@@ -254,16 +262,16 @@ struct StrainLibraryView: View {
 
     private func featuredStrain(from all: [StrainProfile]) -> StrainProfile? {
         guard !all.isEmpty else { return nil }
-        // Stable daily-ish pick: index by day-of-year.
-        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
-        return all[day % all.count]
+        // Seeded random pick — stable within an appearance, reshuffled on each open.
+        var rng = SeededRNG(seed: shuffleSeed)
+        return all.randomElement(using: &rng)
     }
     private func popularStrains(from all: [StrainProfile]) -> [StrainProfile] {
-        // A stable pseudo-popular set (well-known names if present, else first few).
-        let faves = ["Blue Dream", "Wedding Cake", "Runtz", "Permanent Marker", "Gelato"]
-        let picked = faves.compactMap { name in all.first { $0.name.caseInsensitiveCompare(name) == .orderedSame } }
-        if picked.count >= 4 { return Array(picked.prefix(4)) }
-        return Array(all.prefix(4))
+        // Randomized until real community submissions drive a true ranking.
+        // Seeded shuffle so the list is stable while browsing but reshuffles on open.
+        guard !all.isEmpty else { return [] }
+        var rng = SeededRNG(seed: shuffleSeed &+ 1)
+        return Array(all.shuffled(using: &rng).prefix(4))
     }
     /// Deterministic synthetic community rating like "4.6 (2,463)".
     private func communityRating(_ s: StrainProfile) -> String {
@@ -875,5 +883,22 @@ struct StrainFunFactCard: View {
         .padding(14)
         .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.card))
         .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.gold.opacity(0.25), lineWidth: 1))
+    }
+}
+
+// MARK: - Seeded RNG
+
+/// A tiny deterministic random generator (SplitMix64) so seeded shuffles are
+/// stable for a given seed. Used to keep Featured / Popular picks steady while
+/// browsing, reshuffling only when the tab is re-opened.
+struct SeededRNG: RandomNumberGenerator {
+    private var state: UInt64
+    init(seed: UInt64) { state = seed == 0 ? 0x9E3779B97F4A7C15 : seed }
+    mutating func next() -> UInt64 {
+        state &+= 0x9E3779B97F4A7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+        z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+        return z ^ (z >> 31)
     }
 }

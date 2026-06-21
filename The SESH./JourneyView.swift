@@ -93,7 +93,7 @@ struct JourneyView: View {
     }
 
     @ViewBuilder private var socialHubSection: some View {
-        Text("Sesh Together")
+        Text("Community")
             .font(.system(size: 17, weight: .semibold))
             .foregroundStyle(Palette.onCream)
 
@@ -122,20 +122,17 @@ struct JourneyView: View {
                     exploreRow("play.circle.fill", "Start sesh", "Begin a live session")
                 }
             }.buttonStyle(.plain)
+            NavigationLink { CyphersView().navigationBarBackButtonHidden(true) } label: {
+                exploreRow("dot.radiowaves.left.and.right", "Cyphers", "Host or join a shared session")
+            }.buttonStyle(.plain)
             NavigationLink { FriendsView().navigationBarBackButtonHidden(true) } label: {
                 exploreRow("person.2.fill", "Friends", "Add friends and see who's around")
             }.buttonStyle(.plain)
             NavigationLink { FriendActivityView().navigationBarBackButtonHidden(true) } label: {
                 exploreRow("sparkles", "Activity", "See what your friends are up to")
             }.buttonStyle(.plain)
-            NavigationLink { CyphersView().navigationBarBackButtonHidden(true) } label: {
-                exploreRow("dot.radiowaves.left.and.right", "Cyphers", "Host or join a shared session")
-            }.buttonStyle(.plain)
-            NavigationLink { LiveChatView().navigationBarBackButtonHidden(true) } label: {
-                exploreRow("bubble.left.and.bubble.right.fill", "Live Chat", "Hop into the live room right now")
-            }.buttonStyle(.plain)
             NavigationLink { ChatRoomsView().navigationBarBackButtonHidden(true) } label: {
-                exploreRow("bubble.left.and.bubble.right", "Chat Rooms", "Jump into the conversation")
+                exploreRow("bubble.left.and.bubble.right.fill", "Chat", "Jump into the conversation")
             }.buttonStyle(.plain)
         }
     }

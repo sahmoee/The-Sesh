@@ -456,61 +456,58 @@ struct AboutView: View {
     var body: some View {
         ZStack {
             AppBackground()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    DarkCard {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Image(systemName: "leaf.fill").font(.system(size: 28)).foregroundStyle(Palette.green)
-                            Text("The Sesh")
-                                .font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.text)
-                            Text("Your cannabis companion. Track your sessions, sesh together in Cyphers, go live, and chat with the community.")
-                                .font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
-                            Text(BuildConfig.displayLabel)
-                                .font(.system(size: 12)).foregroundStyle(Palette.textTertiary).padding(.top, 4)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
-                    Text("CHANGELOG").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
-
-                    ForEach(AppChangelog.versions) { version in
+            VStack(spacing: 0) {
+                ScreenHeader(title: "About The Sesh", onBack: { dismiss() })
+                    .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
                         DarkCard {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack(spacing: 8) {
-                                    Text("v\(version.version)").font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.text)
-                                    if version.isLatest {
-                                        Text("LATEST").font(.system(size: 9, weight: .bold)).foregroundStyle(Palette.onGreen)
-                                            .padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(Palette.green))
+                            VStack(alignment: .leading, spacing: 10) {
+                                Image(systemName: "leaf.fill").font(.system(size: 28)).foregroundStyle(Palette.green)
+                                Text("The Sesh")
+                                    .font(.system(size: 18, weight: .semibold, design: .serif)).foregroundStyle(Palette.text)
+                                Text("Your cannabis companion. Track your sessions, sesh together in Cyphers, go live, and chat with the community.")
+                                    .font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
+                                Text(BuildConfig.displayLabel)
+                                    .font(.system(size: 12)).foregroundStyle(Palette.textTertiary).padding(.top, 4)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        Text("CHANGELOG").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+
+                        ForEach(AppChangelog.versions) { version in
+                            DarkCard {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack(spacing: 8) {
+                                        Text("v\(version.version)").font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.text)
+                                        if version.isLatest {
+                                            Text("LATEST").font(.system(size: 9, weight: .bold)).foregroundStyle(Palette.onGreen)
+                                                .padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(Palette.green))
+                                        }
+                                        Spacer()
+                                        Text(version.buildLabel).font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
                                     }
-                                    Spacer()
-                                    Text(version.buildLabel).font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
-                                }
-                                ForEach(version.entries) { entry in
-                                    HStack(alignment: .top, spacing: 12) {
-                                        Image(systemName: entry.icon).font(.system(size: 14)).foregroundStyle(entry.tint).frame(width: 24)
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(entry.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
-                                            Text(entry.detail).font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+                                    ForEach(version.entries) { entry in
+                                        HStack(alignment: .top, spacing: 12) {
+                                            Image(systemName: entry.icon).font(.system(size: 14)).foregroundStyle(entry.tint).frame(width: 24)
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(entry.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
+                                                Text(entry.detail).font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                    .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 28)
                 }
-                .padding(.horizontal, 18).padding(.top, 8)
-                // Clear the home indicator / bottom safe area so the last card is
-                // always fully visible and tappable when scrolled to the end.
-                .padding(.bottom, 24)
             }
-            // Pin the header above the scrolling content so it stays in place and
-            // the back button is always reachable while the list scrolls beneath.
-            .safeAreaInset(edge: .top, spacing: 0) {
-                ScreenHeader(title: "About The Sesh", onBack: { dismiss() })
-                    .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
-                    .background(AppBackground())
-            }
-            .scrollIndicators(.visible)
         }
+        // Remove the phantom system nav bar on this pushed screen so only the
+        // custom ScreenHeader shows (matches the other Profile sub-screens). This
+        // is what fixes the top being pushed down / content clipped.
+        .toolbar(.hidden, for: .navigationBar)
     }
 }

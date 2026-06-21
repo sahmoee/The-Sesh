@@ -9,14 +9,14 @@
 import SwiftUI
 
 enum Tab: Int, CaseIterable {
-    // Order defines tab-bar order: Home · Log · Cyphs · Strains · Me
+    // Order defines tab-bar order: Home · Log · Social · Strains · Me
     case home, log, journey, library, profile
 
     var title: String {
         switch self {
         case .home:     return "Home"
         case .log:      return "Log"
-        case .journey:  return "Cyphs"
+        case .journey:  return "Social"
         case .library:  return "Strains"
         case .profile:  return "Me"
         }

@@ -198,12 +198,6 @@ struct SeshAPI {
         await post("/api/unblock", identity: identity, ["userID": userID])
     }
 
-    /// Report a user or a message for moderation.
-    func report(userID: String?, messageID: String?, reason: String, identity: SeshIdentity?) async -> Bool {
-        await post("/api/report", identity: identity,
-                   ["userID": userID ?? "", "messageID": messageID ?? "", "reason": reason])
-    }
-
     /// Fetch a page of older messages before a given timestamp (pagination).
     func fetchMessages(roomID: String, before: Date?, limit: Int, identity: SeshIdentity?) async -> [ChatMessage]? {
         var path = "/api/rooms/\(roomID)/messages?limit=\(limit)"

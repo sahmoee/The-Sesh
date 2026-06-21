@@ -46,17 +46,20 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.1.0",
+            version: "25.2.0",
             buildLabel: "June 2026",
-            headline: "Presence, polished.",
+            headline: "Fresher discovery, tidier social.",
             isLatest: true,
             entries: [
-                ChangelogEntry(icon: "moon.fill", tint: Palette.textSecondary,
-                               title: "Quieter when you're away",
-                               detail: "When you're not in a sesh, friends now see you as Away instead of a default status."),
-                ChangelogEntry(icon: "bolt.horizontal.fill", tint: Palette.greenBright,
-                               title: "Live status that keeps up",
-                               detail: "Your sesh on the lock screen and Dynamic Island updates as you move through each stage."),
+                ChangelogEntry(icon: "shuffle", tint: Palette.greenBright,
+                               title: "Fresh picks every visit",
+                               detail: "Featured Strain and Popular This Week now shuffle each time you open the Strains tab."),
+                ChangelogEntry(icon: "person.2.fill", tint: Palette.green,
+                               title: "A simpler Social tab",
+                               detail: "The Cyphs tab is now Social — community, Cyphers, friends, and chat in one cleaner place."),
+                ChangelogEntry(icon: "globe.americas.fill", tint: Palette.gold,
+                               title: "Streamlined Lounge",
+                               detail: "Focused on Trending, Discussions, and Reviews."),
             ]),
         ChangelogVersion(
             version: "25.0.0",
@@ -342,8 +345,8 @@ enum AppChangelog {
             isLatest: false,
             entries: [
                 ChangelogEntry(icon: "hand.raised.fill", tint: Palette.green,
-                               title: "Block & report",
-                               detail: "Block anyone to hide their activity, cyphers, and messages, or report them for moderation — right from their profile."),
+                               title: "Block anyone",
+                               detail: "Block anyone to hide their activity, cyphers, and messages — right from their profile. You can unblock them later."),
                 ChangelogEntry(icon: "clock.arrow.circlepath", tint: Palette.gold,
                                title: "Full chat history",
                                detail: "Chat rooms now keep more history and let you load earlier messages."),
