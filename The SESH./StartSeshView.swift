@@ -243,6 +243,11 @@ struct StartSeshView: View {
     private func beginSesh() {
         startedAt = Date(); elapsed = 0; stage = .pickingStrain
         phase = .live; Haptics.success()
+        // Notify any invited friends (Worker pushes them).
+        if !invited.isEmpty {
+            social.inviteFriends(named: Array(invited),
+                                 detail: strainName.isEmpty ? nil : strainName)
+        }
         LiveSeshActivityController.start(strain: strainName, stageRaw: stage.rawValue, startedAt: startedAt)
         persistLive()
     }

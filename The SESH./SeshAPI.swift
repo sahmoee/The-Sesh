@@ -148,6 +148,13 @@ struct SeshAPI {
         await post("/api/activity", identity: identity, ["activity": activity.rawValue, "detail": detail ?? ""])
     }
 
+    /// Invite friends to a sesh / cypher. The Worker is responsible for turning
+    /// this into a push to each invited friend's device.
+    func postInvite(handles: [String], detail: String?, identity: SeshIdentity?) async {
+        await post("/api/invite", identity: identity,
+                   ["handles": handles, "detail": detail ?? ""])
+    }
+
     /// Broadcast a one-off milestone (e.g. a new roll record) so friends get a
     /// push. `kind` lets the Worker pick the right wording/emoji.
     func postMilestone(kind: String, detail: String?, identity: SeshIdentity?) async {
@@ -196,6 +203,12 @@ struct SeshAPI {
     }
     func unblock(userID: String, identity: SeshIdentity?) async -> Bool {
         await post("/api/unblock", identity: identity, ["userID": userID])
+    }
+
+    /// Report a user or a message for moderation.
+    func report(userID: String?, messageID: String?, reason: String, identity: SeshIdentity?) async -> Bool {
+        await post("/api/report", identity: identity,
+                   ["userID": userID ?? "", "messageID": messageID ?? "", "reason": reason])
     }
 
     /// Fetch a page of older messages before a given timestamp (pagination).

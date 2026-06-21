@@ -34,6 +34,9 @@ final class SocialStore {
     var online = false           // did the Worker respond?
     var loading = false
 
+    /// Set by the app at launch so polled friend events become notifications.
+    weak var notifications: NotificationManager?
+
     private let api = SeshAPI()
     private var pollTask: Task<Void, Never>?
     private var openRoomID: String?     // room whose chat we're actively polling
@@ -99,6 +102,10 @@ final class SocialStore {
         blockedIDs.remove(userID)
         _ = await api.unblock(userID: userID, identity: identity)
         await refresh()
+    }
+
+    func report(user: SeshUser?, messageID: String?, reason: String) async -> Bool {
+        await api.report(userID: user?.id, messageID: messageID, reason: reason, identity: identity)
     }
 
     // MARK: Pagination
@@ -212,11 +219,39 @@ final class SocialStore {
     func stopPolling() { pollTask?.cancel(); pollTask = nil }
 
     private func apply(_ s: SeshSnapshot) {
+        // Capture prior unread-per-room to detect new incoming messages.
+        let priorUnread = Dictionary(uniqueKeysWithValues: rooms.map { ($0.id, $0.unread) })
+
         friends = s.friends
         cyphers = s.cyphers
         rooms = s.rooms
         liveStreams = s.live
         feed = s.feed
+
+        // Turn any newly-arrived friend events into notifications (banner when
+        // foregrounded, lock-screen when backgrounded, always into the inbox).
+        let events = s.feed
+        let myHandle = me.handle
+        let openRoom = openRoomID
+        // New chat messages: rooms whose unread count grew and that aren't open.
+        var chatNotes: [(title: String, body: String, id: String)] = []
+        for room in s.rooms {
+            let before = priorUnread[room.id] ?? 0
+            if room.unread > before, room.id != openRoom {
+                chatNotes.append((title: room.name,
+                                  body: room.lastMessage ?? "New message",
+                                  id: "chat-\(room.id)-\(room.lastMessageAt?.timeIntervalSince1970 ?? 0)"))
+            }
+        }
+
+        if let notifications {
+            Task { @MainActor in
+                notifications.ingestFeed(events, myHandle: myHandle)
+                for n in chatNotes {
+                    notifications.notify(kind: .chat, title: n.title, body: n.body, id: n.id)
+                }
+            }
+        }
     }
 
     // MARK: Activity / presence
@@ -244,6 +279,17 @@ final class SocialStore {
                                   detail: detail, at: Date())
         feed.insert(event, at: 0)
         Task { await api.postMilestone(kind: kind, detail: detail, identity: identity) }
+    }
+
+    /// Invite friends (by display name) to a sesh. Resolves names to handles and
+    /// tells the Worker, which pushes each invited friend. Pass the sesh detail
+    /// (e.g. strain) for the notification body.
+    func inviteFriends(named names: [String], detail: String? = nil) {
+        let handles = friends
+            .filter { names.contains($0.displayName) }
+            .map(\.handle)
+        guard !handles.isEmpty else { return }
+        Task { await api.postInvite(handles: handles, detail: detail, identity: identity) }
     }
 
     /// Friends currently doing something (for the presence row).

@@ -22,6 +22,7 @@ struct HomeView: View {
     var onOpenLounge: () -> Void = {}
     var onOpenStrains: () -> Void = {}
     var onMenu: () -> Void = {}
+    var onOpenInbox: () -> Void = {}
 
     @State private var friendPeek: SeshUser?
 
@@ -95,10 +96,7 @@ struct HomeView: View {
 
             Spacer()
 
-            Image(systemName: "bell")
-                .font(.system(size: 20))
-                .foregroundStyle(Palette.textSecondary)
-                .accessibilityLabel("Notifications")
+            NotificationBell(tint: Palette.textSecondary, action: onOpenInbox)
         }
         .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 16)
     }
@@ -224,6 +222,7 @@ struct HomeView: View {
                        subtitle: session.stashRemaining.isEmpty ? nil : "\(session.stashRemaining.count)",
                        action: onOpenStash)
             footerTile("Lounge", "globe.americas.fill", subtitle: nil, action: onOpenLounge)
+            footerTile("Strains", "leaf.fill", subtitle: nil, action: onOpenStrains)
         }
         .padding(.horizontal, 18)
     }

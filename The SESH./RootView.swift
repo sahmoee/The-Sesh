@@ -9,14 +9,14 @@
 import SwiftUI
 
 enum Tab: Int, CaseIterable {
-    // Order defines tab-bar order: Home · Log · Social · Strains · Me
+    // Order defines tab-bar order: Home · Log · Cyphs · Strains · Me
     case home, log, journey, library, profile
 
     var title: String {
         switch self {
         case .home:     return "Home"
         case .log:      return "Log"
-        case .journey:  return "Social"
+        case .journey:  return "Cyphs"
         case .library:  return "Strains"
         case .profile:  return "Me"
         }
@@ -47,6 +47,7 @@ struct RootView: View {
         }
     }()
     @State private var showLog = false
+    @State private var showInbox = false
     @State private var showQuickThought = false
     /// Pre-selected tag for the thought composer (e.g. .rant from High Thoughts).
     @State private var quickThoughtTag: ThoughtTag? = nil
@@ -139,6 +140,10 @@ struct RootView: View {
         .id(theme.choice)
         .preferredColorScheme(theme.choice.isDark ? .dark : .light)
         .toast($toastMessage)
+        .notificationBanner(onTap: { _ in showInbox = true })
+        .sheet(isPresented: $showInbox) {
+            NavigationStack { NotificationInboxView() }
+        }
         .task {
             if AppChangelog.shouldShowWhatsNew { showWhatsNew = true }
         }
@@ -209,7 +214,8 @@ struct RootView: View {
                     onOpenStash: { showStash = true },
                     onOpenLounge: { showLounge = true },
                     onOpenStrains: { selection = .library },
-                    onMenu: { showActivityChooser = true }
+                    onMenu: { showActivityChooser = true },
+                    onOpenInbox: { showInbox = true }
                 )
             case .log:  JournalView()
             case .library:
