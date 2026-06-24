@@ -206,11 +206,6 @@ struct ProfileSettingsView: View {
 
                         Divider().overlay(Palette.stroke).padding(.vertical, 4)
 
-                        // Icon / art style (illustrations vs SF Symbols)
-                        iconStylePicker
-
-                        Divider().overlay(Palette.stroke).padding(.vertical, 4)
-
                         // Danger zone: reset everything (also "logs out")
                         VStack(alignment: .leading, spacing: 8) {
                             FieldLabel(text: "Reset")
@@ -386,62 +381,6 @@ struct ProfileSettingsView: View {
                 }
             }
         }
-    }
-
-    /// Picks the icon/art style (vintage illustrations, midnight illustrations,
-    /// or SF Symbols) — independent of the color theme above.
-    private var iconStylePicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            FieldLabel(text: "Icon Style")
-            Text("How actions and avatars are drawn.")
-                .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-            VStack(spacing: 8) {
-                ForEach(IconStyle.allCases) { style in
-                    Button {
-                        theme.iconStyle = style; Haptics.selection()
-                    } label: {
-                        HStack(spacing: 12) {
-                            iconStylePreview(style)
-                            Text(style.label)
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundStyle(Palette.text)
-                            Spacer()
-                            if theme.iconStyle == style {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 16)).foregroundStyle(Palette.greenBright)
-                            } else {
-                                Image(systemName: "circle")
-                                    .font(.system(size: 16)).foregroundStyle(Palette.textTertiary)
-                            }
-                        }
-                        .padding(12)
-                        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
-                            .stroke(theme.iconStyle == style ? Palette.greenBright : Palette.stroke,
-                                    lineWidth: theme.iconStyle == style ? 2 : 1))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
-    /// A tiny three-icon preview of a given icon style.
-    @ViewBuilder private func iconStylePreview(_ style: IconStyle) -> some View {
-        HStack(spacing: 4) {
-            ForEach([SeshIcon.rollUp, .bongRip, .leaf], id: \.self) { icon in
-                if style.usesSymbols {
-                    Image(systemName: IconStyle.symbolName(icon))
-                        .font(.system(size: 14)).foregroundStyle(Palette.greenBright)
-                        .frame(width: 22, height: 22)
-                } else {
-                    let name = style.assetName(for: icon)
-                    let resolved = UIImage(named: name) != nil ? name : IconStyle.baseAsset(icon)
-                    Image(resolved).resizable().scaledToFit().frame(width: 22, height: 22)
-                }
-            }
-        }
-        .frame(width: 86, alignment: .leading)
     }
 }
 

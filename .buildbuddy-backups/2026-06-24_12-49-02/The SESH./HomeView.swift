@@ -35,8 +35,6 @@ struct HomeView: View {
     private let thoughtTint = Palette.purple
     private let endFill = Palette.moodAngry.opacity(0.14)
     private let endTint = Palette.moodAngry
-    private let bongFill = Palette.greenBright.opacity(0.14)
-    private let bongTint = Palette.greenBright
 
     /// A sesh is in progress when there's a live sesh state.
     private var isLive: Bool { session.hasActiveSesh }
@@ -109,67 +107,56 @@ struct HomeView: View {
         VStack(spacing: 14) {
             HStack(spacing: 14) {
                 illustratedTile(title: "Roll Up", subtitle: "Spark something special",
-                                icon: .rollUp, fill: rollFill, tint: rollTint) {
+                                asset: "roll_up_tile", fill: rollFill, tint: rollTint) {
                     Haptics.tap(); onStartSesh(.rollingUp)
                 }
-                illustratedTile(title: "Smoking", subtitle: "Blunt or joint",
-                                icon: .smoking, fill: smokeFill, tint: smokeTint,
+                illustratedTile(title: "Smoking", subtitle: "Pass it this way",
+                                asset: "smoking_tile", fill: smokeFill, tint: smokeTint,
                                 highlighted: isLive, badge: isLive ? "active now" : nil) {
                     Haptics.tap(); onStartSesh(.smoking)
                 }
             }
             HStack(spacing: 14) {
                 illustratedTile(title: "High Thoughts", subtitle: "Let it flow",
-                                icon: .highThoughts, fill: thoughtFill, tint: thoughtTint) {
+                                asset: "high_thoughts_tile", fill: thoughtFill, tint: thoughtTint) {
                     Haptics.tap(); onHighThought()
                 }
-                bongOrEndTile
+                endSessionButton
             }
         }
         .padding(.horizontal, 18).padding(.bottom, 18)
     }
 
-    /// Fourth tile: a Bong Rip start action when idle; becomes End Session while a
-    /// sesh is live so ending stays one tap away. (When the dedicated Session
-    /// screen ships, End Session moves there and this can be Bong Rip always.)
-    @ViewBuilder private var bongOrEndTile: some View {
-        if isLive {
-            illustratedTile(
-                title: "End Session",
-                subtitle: "See you later, \(session.userName)",
-                icon: .bongRip,
-                fill: endFill,
-                tint: endTint
-            ) {
-                Haptics.warning(); onEndSesh()
-            }
-            .accessibilityLabel("End Session")
-            .accessibilityHint("Ends and saves your current sesh")
-        } else {
-            illustratedTile(
-                title: "Bong Rip",
-                subtitle: "Take a rip",
-                icon: .bongRip,
-                fill: bongFill,
-                tint: bongTint
-            ) {
-                Haptics.tap(); onStartSesh(.hittingBong)
-            }
-            .accessibilityLabel("Bong Rip")
-            .accessibilityHint("Starts a bong rip sesh")
+    @ViewBuilder private var endSessionButton: some View {
+        illustratedTile(
+            title: "End Session",
+            subtitle: isLive ? "See you later, \(session.userName)" : "no active sesh",
+            asset: "end_session_tile",
+            fill: isLive ? endFill : Palette.field,
+            tint: endTint,
+            dashed: !isLive,
+            dimmed: !isLive
+        ) {
+            guard isLive else { return }
+            Haptics.warning(); onEndSesh()
         }
+        .disabled(!isLive)
+        .accessibilityLabel("End Session")
+        .accessibilityHint(isLive ? "Ends and saves your current sesh" : "No active sesh to end")
     }
 
-    /// Shared illustrated-tile builder. Renders the icon through SeshIconView so
-    /// it follows the user's icon style (vintage / midnight / SF Symbols).
-    private func illustratedTile(title: String, subtitle: String?, icon: SeshIcon,
+    /// Shared illustrated-tile builder. `asset` is an Asset Catalog image name.
+    private func illustratedTile(title: String, subtitle: String?, asset: String,
                                  fill: Color, tint: Color,
                                  highlighted: Bool = false, badge: String? = nil,
                                  dashed: Bool = false, dimmed: Bool = false,
                                  action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 8) {
-                SeshIconView(icon: icon, size: 96, symbolColor: tint)
+                Image(asset)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 96)
                     .opacity(dimmed ? 0.5 : 1)
                     .shadow(color: Color.black.opacity(0.35), radius: 6, y: 3)
                 Text(title)

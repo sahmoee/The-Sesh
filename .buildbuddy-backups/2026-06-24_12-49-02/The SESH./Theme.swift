@@ -188,30 +188,18 @@ final class ThemeManager {
             CloudSync.set(choice.rawValue, forKey: key)
         }
     }
-    /// Icon/art style — separate from the color theme. Controls whether actions
-    /// and avatars draw as illustrations (vintage/midnight) or SF Symbols.
-    var iconStyle: IconStyle {
-        didSet { CloudSync.set(iconStyle.rawValue, forKey: iconKey) }
-    }
     private let key = "sesh.theme.v1"
-    private let iconKey = "sesh.iconStyle.v1"
 
     init() {
-        CloudSync.pullIntoDefaults(keys: ["sesh.theme.v1", "sesh.iconStyle.v1"])
+        CloudSync.pullIntoDefaults(keys: ["sesh.theme.v1"])
         let saved = UserDefaults.standard.string(forKey: "sesh.theme.v1")
         let initial = ThemeChoice(rawValue: saved ?? "apothecary") ?? .apothecary
         self.choice = initial
-        let savedIcon = UserDefaults.standard.string(forKey: "sesh.iconStyle.v1")
-        self.iconStyle = IconStyle(rawValue: savedIcon ?? "apothecary") ?? .apothecary
         ActiveTheme.current = initial.palette
-        CloudSync.startObserving(keys: ["sesh.theme.v1", "sesh.iconStyle.v1"]) { [weak self] in
+        CloudSync.startObserving(keys: ["sesh.theme.v1"]) { [weak self] in
             if let saved = UserDefaults.standard.string(forKey: "sesh.theme.v1"),
                let c = ThemeChoice(rawValue: saved), c != self?.choice {
                 self?.choice = c
-            }
-            if let savedIcon = UserDefaults.standard.string(forKey: "sesh.iconStyle.v1"),
-               let s = IconStyle(rawValue: savedIcon), s != self?.iconStyle {
-                self?.iconStyle = s
             }
         }
     }
