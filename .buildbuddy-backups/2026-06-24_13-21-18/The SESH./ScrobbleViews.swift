@@ -157,16 +157,16 @@ struct ScrobbleSettingsSection: View {
                 .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
                 .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
             }
-            // --- Listen (music hub: vibes + playlists) ---
+            // --- Playlists ---
             NavigationLink {
-                ListenView()
+                PlaylistsView()
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "music.note.list").font(.system(size: 16)).frame(width: 22)
                         .foregroundStyle(Palette.greenBright)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Listen").font(.system(size: 15, weight: .medium)).foregroundStyle(Palette.text)
-                        Text("Vibes and playlists — export to Spotify or Apple Music")
+                        Text("Your Playlists").font(.system(size: 15, weight: .medium)).foregroundStyle(Palette.text)
+                        Text("Build playlists and export to Spotify or Apple Music")
                             .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
                     }
                     Spacer()
