@@ -124,190 +124,100 @@ struct PlaylistDetailView: View {
     let playlistID: String
     @Environment(PlaylistStore.self) private var store
     @Environment(SpotifyAuth.self) private var spotify
-    @Environment(\.openURL) private var openURL
     @Environment(\.dismiss) private var dismiss
     @State private var showSearch = false
-    @State private var statusMessage: String?
-    @State private var working = false
-    /// Optional subtitle, e.g. "Based on your Blue Dream sessions".
-    var subtitle: String? = nil
+    @State private var showExportSheet = false
+    @State private var exportMessage: String?
 
     private var playlist: SeshPlaylist? { store.playlist(playlistID) }
 
     var body: some View {
         VStack(spacing: 0) {
-            topBar
+            ScreenHeader(title: playlist?.name ?? "Playlist", onBack: { dismiss() })
             if let pl = playlist {
-                ScrollView {
-                    VStack(spacing: 18) {
-                        cover(pl)
-                        titleBlock(pl)
-                        playButtons(pl)
-                        trackList(pl)
-                        Color.clear.frame(height: 20)
+                List {
+                    Section {
+                        Toggle(isOn: Binding(
+                            get: { pl.autoCollect },
+                            set: { store.setAutoCollect(pl.id, $0) })) {
+                            Label("Auto-collect now playing", systemImage: "dot.radiowaves.left.and.right")
+                                .font(.system(size: 14))
+                        }
+                        .tint(Palette.greenBright)
+                        .listRowBackground(Palette.card)
                     }
-                    .padding(.horizontal, 20)
+                    Section("Songs") {
+                        if pl.tracks.isEmpty {
+                            Text("No songs yet. Add some, or turn on auto-collect.")
+                                .font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
+                                .listRowBackground(Palette.card)
+                        }
+                        ForEach(pl.tracks) { t in
+                            TrackRow(track: t)
+                                .listRowBackground(Palette.card)
+                        }
+                        .onDelete { idx in
+                            for i in idx { store.removeTrack(pl.tracks[i].id, from: pl.id) }
+                        }
+                        .onMove { from, to in store.moveTrack(in: pl.id, from: from, to: to) }
+                    }
                 }
+                .scrollContentBackground(.hidden)
+                .environment(\.editMode, .constant(.active))
+
+                // Action bar
+                HStack(spacing: 10) {
+                    Button { showSearch = true } label: {
+                        Label("Add songs", systemImage: "plus")
+                            .font(.system(size: 14, weight: .semibold))
+                            .frame(maxWidth: .infinity).padding(.vertical, 12)
+                            .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.field))
+                            .foregroundStyle(Palette.text)
+                    }
+                    Button { showExportSheet = true } label: {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                            .font(.system(size: 14, weight: .semibold))
+                            .frame(maxWidth: .infinity).padding(.vertical, 12)
+                            .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.greenBright))
+                            .foregroundStyle(Palette.onGreen)
+                    }
+                    .disabled(pl.tracks.isEmpty)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 18).padding(.vertical, 12)
             }
         }
         .background(AppBackground())
         .sheet(isPresented: $showSearch) { TrackSearchView(playlistID: playlistID) }
-        .alert("Playlist", isPresented: Binding(get: { statusMessage != nil }, set: { if !$0 { statusMessage = nil } })) {
-            Button("OK") { statusMessage = nil }
-        } message: { Text(statusMessage ?? "") }
-    }
-
-    private var topBar: some View {
-        HStack {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
+        .confirmationDialog("Export playlist", isPresented: $showExportSheet, titleVisibility: .visible) {
+            Button("Export to Apple Music") { runExport(.appleMusic) }
+            Button(spotify.isConnected ? "Export to Spotify" : "Connect Spotify to export") {
+                spotify.isConnected ? runExport(.spotify) : spotify.connect()
             }
-            .buttonStyle(.plain)
-            Spacer()
-            Menu {
-                Button { showSearch = true } label: { Label("Add songs", systemImage: "plus") }
-                if let pl = playlist {
-                    Button(role: .destructive) { store.delete(pl.id); dismiss() } label: {
-                        Label("Delete playlist", systemImage: "trash")
-                    }
-                }
-            } label: {
-                Image(systemName: "ellipsis").font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
-            }
+            Button("Cancel", role: .cancel) {}
         }
-        .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 8)
+        .alert("Export", isPresented: Binding(get: { exportMessage != nil }, set: { if !$0 { exportMessage = nil } })) {
+            Button("OK") { exportMessage = nil }
+        } message: { Text(exportMessage ?? "") }
     }
 
-    private func cover(_ pl: SeshPlaylist) -> some View {
-        ZStack {
-            // Use the first track's artwork as the cover, else a gradient.
-            if let art = pl.tracks.first?.artworkURL, let url = URL(string: art) {
-                AsyncImage(url: url) { i in i.resizable().scaledToFill() } placeholder: { coverGradient }
-            } else {
-                coverGradient
-            }
-            LinearGradient(colors: [.black.opacity(0.1), .black.opacity(0.55)], startPoint: .top, endPoint: .bottom)
-            Text(pl.name)
-                .font(.system(size: 26, weight: .bold))
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-                .shadow(color: .black.opacity(0.6), radius: 4)
-                .padding(12)
-        }
-        .frame(width: 220, height: 220)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Palette.greenBright.opacity(0.5), lineWidth: 1))
-    }
-    private var coverGradient: some View {
-        LinearGradient(colors: [Palette.greenDeep, Palette.purple.opacity(0.8), Palette.bgBottom],
-                       startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-
-    private func titleBlock(_ pl: SeshPlaylist) -> some View {
-        VStack(spacing: 6) {
-            Text(pl.name).font(.system(size: 26, weight: .bold)).foregroundStyle(Palette.text)
-            if let subtitle { Text(subtitle).font(.system(size: 14)).foregroundStyle(Palette.textSecondary) }
-            Text("\(pl.tracks.count) \(pl.tracks.count == 1 ? "song" : "songs") · \(estimatedMinutes(pl)) min")
-                .font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
-        }
-    }
-
-    private func playButtons(_ pl: SeshPlaylist) -> some View {
-        VStack(spacing: 12) {
-            Button { playOn(.spotify, pl) } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "music.note.tv.fill").font(.system(size: 16))
-                    Text("Play on Spotify").font(.system(size: 16, weight: .bold))
-                }
-                .foregroundStyle(Palette.onGreen)
-                .frame(maxWidth: .infinity).padding(.vertical, 16)
-                .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.greenBright))
-            }
-            Button { playOn(.appleMusic, pl) } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "music.note").font(.system(size: 16))
-                    Text("Play on Apple Music").font(.system(size: 16, weight: .bold))
-                }
-                .foregroundStyle(Palette.text)
-                .frame(maxWidth: .infinity).padding(.vertical, 16)
-                .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-                .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-            }
-            if working { ProgressView().padding(.top, 2) }
-        }
-        .buttonStyle(.plain)
-        .disabled(working || pl.tracks.isEmpty)
-    }
-
-    private func trackList(_ pl: SeshPlaylist) -> some View {
-        VStack(spacing: 0) {
-            if pl.tracks.isEmpty {
-                Text("No songs yet. Add some with the menu above.")
-                    .font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
-                    .frame(maxWidth: .infinity).padding(.vertical, 24)
-            }
-            ForEach(pl.tracks) { t in
-                HStack(spacing: 12) {
-                    trackArt(t)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(t.title).font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).lineLimit(1)
-                        Text(t.artist).font(.system(size: 13)).foregroundStyle(Palette.textSecondary).lineLimit(1)
-                    }
-                    Spacer()
-                    Menu {
-                        Button(role: .destructive) { store.removeTrack(t.id, from: pl.id) } label: {
-                            Label("Remove", systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis").font(.system(size: 16)).foregroundStyle(Palette.textSecondary)
-                            .frame(width: 30, height: 30)
-                    }
-                }
-                .padding(.vertical, 8)
-            }
-        }
-    }
-
-    @ViewBuilder private func trackArt(_ t: PlaylistTrack) -> some View {
-        if let s = t.artworkURL, let url = URL(string: s) {
-            AsyncImage(url: url) { i in i.resizable().scaledToFill() } placeholder: { trackPh }
-                .frame(width: 52, height: 52).clipShape(RoundedRectangle(cornerRadius: 8))
-        } else { trackPh.frame(width: 52, height: 52) }
-    }
-    private var trackPh: some View {
-        ZStack { RoundedRectangle(cornerRadius: 8).fill(Palette.field)
-            Image(systemName: "music.note").foregroundStyle(Palette.textTertiary) }
-    }
-
-    // Export to the target, then open that app.
-    private func playOn(_ target: ExportTarget, _ pl: SeshPlaylist) {
-        if target == .spotify && !spotify.isConnected { spotify.connect(); return }
-        working = true
+    private func runExport(_ target: ExportTarget) {
         Task {
             let result = await store.export(playlistID, to: target)
-            working = false
             switch result {
-            case .success(_, _, let url):
-                if target == .spotify {
-                    if let url, let u = URL(string: url) { openURL(u) }
-                    else { statusMessage = "Exported to Spotify." }
-                } else {
-                    // Apple Music creates a library playlist; open the Music app.
-                    if let u = URL(string: "music://") { openURL(u) }
-                    else { statusMessage = "Added to your Apple Music library." }
-                }
+            case .success(let added, let total, _):
+                exportMessage = added == total
+                    ? "Added all \(total) songs."
+                    : "Added \(added) of \(total) songs (some weren't found)."
                 Haptics.success()
             case .failure(let msg):
-                statusMessage = msg; Haptics.warning()
+                exportMessage = msg
+                Haptics.warning()
             }
         }
     }
-
-    private func estimatedMinutes(_ pl: SeshPlaylist) -> Int {
-        // Rough estimate: average song ~3.5 min.
-        max(1, Int((Double(pl.tracks.count) * 3.5).rounded()))
-    }
 }
+
 struct TrackRow: View {
     let track: PlaylistTrack
     var body: some View {

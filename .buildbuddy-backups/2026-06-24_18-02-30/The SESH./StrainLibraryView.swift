@@ -440,26 +440,6 @@ struct StrainCatalogDetailView: View {
                             }
                         }
 
-                        // Listen — the strain's soundtrack (mood playlists)
-                        NavigationLink {
-                            StrainSoundtrackView(strain: shown)
-                                .navigationBarBackButtonHidden(true)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "music.note.list").font(.system(size: 18)).foregroundStyle(Palette.greenBright).frame(width: 26)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Listen").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
-                                    Text("Your soundtrack for \(shown.name)").font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
-                            }
-                            .padding(14)
-                            .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-                            .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                        }
-                        .buttonStyle(.plain)
-
                         // Genetics & origin (from SeedFinder data)
                         if shown.breeder != nil || shown.lineage != nil || shown.floweringTime != nil {
                             DarkCard {

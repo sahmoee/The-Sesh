@@ -46,23 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.13.0",
-            buildLabel: "June 2026",
-            headline: "Soundtracks for every strain.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "music.note.list", tint: Palette.greenBright,
-                               title: "Strain soundtracks",
-                               detail: "Each strain has a Listen section with mood playlists for the songs you play with it."),
-                ChangelogEntry(icon: "play.circle", tint: Palette.gold,
-                               title: "Redesigned playlists",
-                               detail: "A bigger, cleaner playlist screen with Play on Spotify and Apple Music."),
-            ]),
-        ChangelogVersion(
             version: "25.12.0",
             buildLabel: "June 2026",
             headline: "A cleaner sesh, start to finish.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "play.circle", tint: Palette.greenBright,
                                title: "Start a Session",
