@@ -190,8 +190,11 @@ struct RootView: View {
         }
         .fullScreenCover(isPresented: $showLounge) { LoungeView() }
         .fullScreenCover(isPresented: $showStartSesh, onDismiss: { onStartSeshDismiss() }) {
-            StartSessionView()
+            StartSeshView(initialActivity: chosenActivity, endImmediately: endSeshFromWidget)
                 .environment(session).environment(strains).environment(social)
+                .onDisappear {
+                    if session.entries.count > entryCountBefore { toastMessage = "Sesh saved to Journal" }
+                }
                 .onAppear { entryCountBefore = session.entries.count }
         }
         .confirmationDialog(inProgressMessage, isPresented: $showInProgressWarning, titleVisibility: .visible) {

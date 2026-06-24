@@ -28,8 +28,6 @@ struct SessionActiveView: View {
     @State private var now = Date()
     @State private var showSongSearch = false
     @State private var selectedType: SessionType?
-    @State private var showSummary = false
-    @State private var summaryData: SummaryData?
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var live: LiveSeshState? { session.liveSesh }
@@ -46,25 +44,6 @@ struct SessionActiveView: View {
         .onReceive(ticker) { now = $0 }
         .onAppear { selectedType = live?.sessionType }
         .sheet(isPresented: $showSongSearch) { songSearchSheet }
-        .fullScreenCover(isPresented: $showSummary, onDismiss: { dismiss() }) {
-            if let d = summaryData {
-                SessionSummaryView(
-                    strainName: d.strainName,
-                    method: d.method,
-                    startedAt: d.startedAt,
-                    durationSeconds: d.durationSeconds,
-                    moodLabel: d.moodLabel)
-            }
-        }
-    }
-
-    /// Snapshot of the ended sesh, handed to the summary screen.
-    struct SummaryData {
-        let strainName: String
-        let method: String
-        let startedAt: Date
-        let durationSeconds: Int
-        let moodLabel: String
     }
 
     // MARK: Content
@@ -306,28 +285,8 @@ struct SessionActiveView: View {
 
     private func endSession() {
         Haptics.warning()
-        // Capture the live state for the summary, then clear live + present summary.
-        if let live = session.liveSesh {
-            summaryData = SummaryData(
-                strainName: live.strainName,
-                method: live.rollMethod.isEmpty ? "Joint" : live.rollMethod,
-                startedAt: live.startedAt,
-                durationSeconds: Int(Date().timeIntervalSince(live.startedAt)),
-                moodLabel: selectedType.map { displayMood(for: $0) } ?? "Relaxed")
-        }
         onEnd()
-        session.liveSesh = nil
-        showSummary = true
-    }
-
-    /// Map an internal SessionType to a friendly mood label for the summary.
-    private func displayMood(for type: SessionType) -> String {
-        switch type {
-        case .relaxing: return "Relaxed"
-        case .creative: return "Creative"
-        case .funny:    return "Happy"
-        default:        return "Relaxed"
-        }
+        dismiss()
     }
 
     private func updateSessionType(_ type: SessionType) {
@@ -359,7 +318,7 @@ struct SessionSongSearch: View {
     var body: some View {
         // Ensure a "Session Soundtrack" playlist exists to receive picks.
         let target = ensureSessionPlaylist()
-        AddSongScreen(playlistID: target)
+        TrackSearchView(playlistID: target)
     }
 
     private func ensureSessionPlaylist() -> String {
