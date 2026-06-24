@@ -196,11 +196,6 @@ struct ProfileSettingsView: View {
 
                         Divider().overlay(Palette.stroke).padding(.vertical, 4)
 
-                        // Now-playing scrobbler (Apple Music + Spotify)
-                        ScrobbleSettingsSection()
-
-                        Divider().overlay(Palette.stroke).padding(.vertical, 4)
-
                         // Appearance / theme switcher
                         themePicker
 

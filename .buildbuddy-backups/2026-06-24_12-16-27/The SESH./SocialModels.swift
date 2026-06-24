@@ -92,7 +92,6 @@ struct SeshUser: Codable, Identifiable, Hashable {
     var lastSeen: Date
     var streak: Int             // current daily streak
     var isFriend: Bool
-    var nowPlaying: NowPlaying? = nil // currently-playing track, if the user shares it
 
     var initials: String {
         let parts = displayName.split(separator: " ")

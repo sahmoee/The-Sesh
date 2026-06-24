@@ -92,14 +92,7 @@ final class PlaylistStore {
 
     func moveTrack(in playlistID: String, from source: IndexSet, to destination: Int) {
         guard let i = playlists.firstIndex(where: { $0.id == playlistID }) else { return }
-        // Foundation-only move (the move(fromOffsets:toOffset:) helper requires
-        // SwiftUI; PlaylistStore stays UI-framework-free).
-        var tracks = playlists[i].tracks
-        let moving = source.sorted().map { tracks[$0] }
-        for index in source.sorted(by: >) { tracks.remove(at: index) }
-        let insertAt = min(max(0, destination - source.filter { $0 < destination }.count), tracks.count)
-        tracks.insert(contentsOf: moving, at: insertAt)
-        playlists[i].tracks = tracks
+        playlists[i].tracks.move(fromOffsets: source, toOffset: destination)
         save()
     }
 
@@ -173,14 +166,9 @@ final class PlaylistStore {
     }
 
     private static func spotifyID(from url: String) -> String? {
-        // https://open.spotify.com/playlist/{id}?si=...
-        // Split into explicit steps so the type-checker doesn't churn on a long
-        // optional-chained expression.
-        let parts = url.split(separator: "/")
-        guard let last = parts.last else { return nil }
-        let beforeQuery = last.split(separator: "?").first
-        guard let id = beforeQuery else { return nil }
-        return String(id)
+        // https://open.spotify.com/playlist/{id}
+        url.split(separator: "/").last.map(String.init)?
+            .split(separator: "?").first.map(String.init)
     }
 
     // MARK: Persistence

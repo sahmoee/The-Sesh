@@ -743,13 +743,6 @@ struct FriendSheet: View {
                 .padding(.horizontal, 16).padding(.vertical, 10)
                 .background(Capsule().fill(Palette.field))
 
-                // Friend's currently-playing track, if they share it.
-                if let np = user.nowPlaying, np.isCurrent() {
-                    NowPlayingLine(np: np)
-                        .padding(.horizontal, 16).padding(.vertical, 8)
-                        .background(Capsule().fill(Palette.field.opacity(0.6)))
-                }
-
                 HStack(spacing: 24) {
                     stat("\(user.streak)", "day streak")
                     stat(seshAgo(user.lastSeen), "last seen")

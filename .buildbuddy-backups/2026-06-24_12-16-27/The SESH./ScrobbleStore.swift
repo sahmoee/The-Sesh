@@ -121,10 +121,8 @@ final class ScrobbleStore {
         spotifyPoll?.cancel()
         spotifyPoll = Task { [weak self] in
             while !Task.isCancelled {
-                // Re-acquire self each iteration; if it's gone, stop. Binding to a
-                // fresh local avoids the Swift 6 captured-var-across-await warning.
-                guard let store = self else { return }
-                await store.pollSpotifyOnce()
+                guard let self else { return }
+                await self.pollSpotifyOnce()
                 try? await Task.sleep(for: .seconds(Double(seconds)))
             }
         }

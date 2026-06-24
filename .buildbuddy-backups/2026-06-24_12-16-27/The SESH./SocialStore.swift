@@ -46,10 +46,6 @@ final class SocialStore {
         SeshIdentity(userID: me.id, handle: me.handle, name: me.displayName, code: friendCode)
     }
 
-    /// Public read-only view of the current identity, for sibling stores
-    /// (e.g. the scrobbler / Spotify auth) that call the same Worker.
-    var identitySnapshot: SeshIdentity { identity }
-
     /// A short, shareable friend code derived from the user's stable id.
     /// e.g. "SESH-7K9F". Must be deterministic across launches, so it uses a
     /// fixed hash of the id STRING — Swift's Hashable.hashValue is seeded per
@@ -292,23 +288,6 @@ final class SocialStore {
             .map(\.handle)
         guard !handles.isEmpty else { return }
         Task { await api.postInvite(handles: handles, detail: detail, identity: identity) }
-    }
-
-    /// Update the current user's now-playing track and broadcast it to friends.
-    /// De-dupes: only posts when the track actually changed, so re-reads of the
-    /// same song don't spam the Worker.
-    func setNowPlaying(_ np: NowPlaying) {
-        if me.nowPlaying?.title == np.title && me.nowPlaying?.artist == np.artist
-            && me.nowPlaying?.source == np.source { me.nowPlaying = np; return }
-        me.nowPlaying = np
-        Task { await api.postNowPlaying(np, identity: identity) }
-    }
-
-    /// Clear the current user's now-playing (stopped / source disabled).
-    func clearNowPlaying() {
-        guard me.nowPlaying != nil else { return }
-        me.nowPlaying = nil
-        Task { await api.clearNowPlaying(identity: identity) }
     }
 
     /// Broadcast a milestone (new roll record, etc.) so friends get a push.

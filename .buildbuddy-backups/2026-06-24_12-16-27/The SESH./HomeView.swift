@@ -220,7 +220,6 @@ struct HomeView: View {
         .padding(.horizontal, 18).padding(.bottom, 10)
 
         VStack(spacing: 14) {
-            NowPlayingCard()
             PresenceRow(onTapFriend: { friendPeek = $0 })
             BroadcastStrip()
             ActivityFeedCard()
