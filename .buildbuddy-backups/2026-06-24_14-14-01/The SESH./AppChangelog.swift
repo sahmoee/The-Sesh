@@ -46,26 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.11.0",
-            buildLabel: "June 2026",
-            headline: "A new shape, and a Listen tab.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "music.note", tint: Palette.greenBright,
-                               title: "Listen tab",
-                               detail: "Your Vibes and playlists now live in their own tab."),
-                ChangelogEntry(icon: "rectangle.3.group", tint: Palette.gold,
-                               title: "Refreshed tabs",
-                               detail: "Sessions replaces Log, Listen takes the place of Strains, and Strains opens from Home."),
-                ChangelogEntry(icon: "link", tint: Palette.purple,
-                               title: "Connected Apps and How It Works",
-                               detail: "Manage your music connections, and see how The Sesh learns your vibe."),
-            ]),
-        ChangelogVersion(
             version: "25.10.0",
             buildLabel: "June 2026",
             headline: "Build your sesh soundtrack.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "music.note.list", tint: Palette.greenBright,
                                title: "Playlists",

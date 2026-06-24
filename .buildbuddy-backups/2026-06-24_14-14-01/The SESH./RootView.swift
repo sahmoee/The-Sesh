@@ -9,24 +9,24 @@
 import SwiftUI
 
 enum Tab: Int, CaseIterable {
-    // Order defines tab-bar order: Home · Sessions · Cyphs · Listen · Profile
-    case home, sessions, journey, listen, profile
+    // Order defines tab-bar order: Home · Log · Cyphs · Strains · Me
+    case home, log, journey, library, profile
 
     var title: String {
         switch self {
         case .home:     return "Home"
-        case .sessions: return "Sessions"
+        case .log:      return "Log"
         case .journey:  return "Cyphs"
-        case .listen:   return "Listen"
-        case .profile:  return "Profile"
+        case .library:  return "Strains"
+        case .profile:  return "Me"
         }
     }
     var symbol: String {
         switch self {
         case .home:     return "house"
-        case .sessions: return "doc.text"
+        case .log:      return "doc.text"
         case .journey:  return "smoke"
-        case .listen:   return "music.note"
+        case .library:  return "leaf"
         case .profile:  return "person.crop.circle"
         }
     }
@@ -63,7 +63,6 @@ struct RootView: View {
     @State private var showHighThoughtChooser = false
     @State private var showLounge = false
     @State private var showStash = false
-    @State private var showStrains = false
     @State private var showStartSesh = false
     @State private var showActivityChooser = false
     @State private var chosenActivity: StartActivity? = nil
@@ -134,7 +133,7 @@ struct RootView: View {
             endSeshFromWidget = true
             showStartSesh = true
         case .logSesh:
-            selection = .sessions
+            selection = .log
         case .quickThought:
             showQuickThought = true
         }
@@ -177,16 +176,6 @@ struct RootView: View {
         }
         .sheet(isPresented: $showStash) {
             StashView().environment(session)
-        }
-        .sheet(isPresented: $showStrains) {
-            NavigationStack {
-                StrainLibraryView(onLog: { strain in
-                    logPrefill = strain
-                    showStrains = false
-                    showLog = true
-                })
-            }
-            .environment(session).environment(strains)
         }
         .fullScreenCover(isPresented: $showLounge) { LoungeView() }
         .fullScreenCover(isPresented: $showStartSesh, onDismiss: { onStartSeshDismiss() }) {
@@ -236,13 +225,18 @@ struct RootView: View {
                     onHighThought: { showHighThoughtChooser = true },
                     onOpenStash: { showStash = true },
                     onOpenLounge: { showLounge = true },
-                    onOpenStrains: { showStrains = true },
+                    onOpenStrains: { selection = .library },
                     onMenu: { showActivityChooser = true },
                     onOpenInbox: { showInbox = true }
                 )
             }
-            tabView(.sessions) { JournalView() }
-            tabView(.listen) { ListenView() }
+            tabView(.log) { JournalView() }
+            tabView(.library) {
+                StrainLibraryView(onLog: { strain in
+                    logPrefill = strain
+                    showLog = true
+                })
+            }
             tabView(.journey) { JourneyView() }
             tabView(.profile) { ProfileView() }
         }

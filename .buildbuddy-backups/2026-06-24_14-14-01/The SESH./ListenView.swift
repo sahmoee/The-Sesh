@@ -14,6 +14,7 @@ import SwiftUI
 struct ListenView: View {
     @Environment(PlaylistStore.self) private var playlists
     @Environment(ThemeManager.self) private var theme
+    @Environment(\.dismiss) private var dismiss
 
     /// The four vibes shown as tiles, each tied to an asset + a playlist name.
     private let vibes: [Vibe] = [
@@ -24,42 +25,27 @@ struct ListenView: View {
     ]
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                ListenHeader()
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        yourVibes
-                        recentPlaylists
-                        Color.clear.frame(height: 20)
-                    }
-                    .padding(18)
+        VStack(spacing: 0) {
+            ScreenHeader(title: "Listen", onBack: { dismiss() })
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    yourVibes
+                    recentPlaylists
+                    Color.clear.frame(height: 20)
                 }
+                .padding(18)
             }
-            .background(AppBackground())
         }
+        .background(AppBackground())
     }
 
     // MARK: Your Vibes
 
     private var yourVibes: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Your Vibes")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Palette.text)
-                Spacer()
-                NavigationLink {
-                    HowItWorksView()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "info.circle").font(.system(size: 12))
-                        Text("How it works").font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundStyle(Palette.greenBright)
-                }
-                .buttonStyle(.plain)
-            }
+            Text("Your Vibes")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(Palette.text)
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                 ForEach(vibes) { vibe in
                     NavigationLink {
@@ -179,20 +165,4 @@ private struct Vibe: Identifiable {
     let asset: String     // base asset name (mood_*)
     let symbol: String    // SF Symbol fallback
     let tint: Tint
-}
-
-/// Tab-root header for Listen (a title, no back button).
-private struct ListenHeader: View {
-    var body: some View {
-        HStack {
-            Text("Listen")
-                .font(.system(size: 26, weight: .bold, design: .serif))
-                .foregroundStyle(Palette.text)
-            Spacer()
-            Image(systemName: "music.note")
-                .font(.system(size: 18))
-                .foregroundStyle(Palette.greenBright)
-        }
-        .padding(.horizontal, 18).padding(.top, 14).padding(.bottom, 6)
-    }
 }

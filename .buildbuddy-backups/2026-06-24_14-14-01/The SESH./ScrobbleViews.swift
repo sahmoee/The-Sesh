@@ -157,37 +157,16 @@ struct ScrobbleSettingsSection: View {
                 .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
                 .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
             }
-            // --- Playlists (Listen lives in the tab bar now) ---
+            // --- Listen (music hub: vibes + playlists) ---
             NavigationLink {
-                PlaylistsView()
+                ListenView()
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "music.note.list").font(.system(size: 16)).frame(width: 22)
                         .foregroundStyle(Palette.greenBright)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Your Playlists").font(.system(size: 15, weight: .medium)).foregroundStyle(Palette.text)
-                        Text("Build playlists and export to Spotify or Apple Music")
-                            .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
-                }
-                .padding(.horizontal, 14).padding(.vertical, 12)
-                .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-                .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-
-            // --- Connected Apps ---
-            NavigationLink {
-                ConnectedAppsView()
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "link").font(.system(size: 16)).frame(width: 22)
-                        .foregroundStyle(Palette.greenBright)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Connected Apps").font(.system(size: 15, weight: .medium)).foregroundStyle(Palette.text)
-                        Text("Manage Spotify and Apple Music connections")
+                        Text("Listen").font(.system(size: 15, weight: .medium)).foregroundStyle(Palette.text)
+                        Text("Vibes and playlists — export to Spotify or Apple Music")
                             .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
                     }
                     Spacer()
