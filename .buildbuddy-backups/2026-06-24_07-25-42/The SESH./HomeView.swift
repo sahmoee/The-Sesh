@@ -106,19 +106,19 @@ struct HomeView: View {
     @ViewBuilder private var buttonGrid: some View {
         VStack(spacing: 14) {
             HStack(spacing: 14) {
-                illustratedTile(title: "Roll Up", subtitle: "Spark something special",
-                                asset: "roll_up_tile", fill: rollFill, tint: rollTint) {
+                primaryButton(title: "Roll Up", icon: "flame.fill",
+                              fill: rollFill, tint: rollTint) {
                     Haptics.tap(); onStartSesh(.rollingUp)
                 }
-                illustratedTile(title: "Smoking", subtitle: "Pass it this way",
-                                asset: "smoking_tile", fill: smokeFill, tint: smokeTint,
-                                highlighted: isLive, badge: isLive ? "active now" : nil) {
+                primaryButton(title: "Smoking", icon: "smoke.fill",
+                              fill: smokeFill, tint: smokeTint,
+                              highlighted: isLive, badge: isLive ? "active now" : nil) {
                     Haptics.tap(); onStartSesh(.smoking)
                 }
             }
             HStack(spacing: 14) {
-                illustratedTile(title: "High Thoughts", subtitle: "Let it flow",
-                                asset: "high_thoughts_tile", fill: thoughtFill, tint: thoughtTint) {
+                primaryButton(title: "High Thoughts", icon: "brain",
+                              fill: thoughtFill, tint: thoughtTint) {
                     Haptics.tap(); onHighThought()
                 }
                 endSessionButton
@@ -128,79 +128,66 @@ struct HomeView: View {
     }
 
     @ViewBuilder private var endSessionButton: some View {
-        illustratedTile(
-            title: "End Session",
-            subtitle: isLive ? "See you later, \(session.userName)" : "no active sesh",
-            asset: "end_session_tile",
-            fill: isLive ? endFill : Palette.field,
-            tint: endTint,
-            dashed: !isLive,
-            dimmed: !isLive
-        ) {
+        Button {
             guard isLive else { return }
             Haptics.warning(); onEndSesh()
+        } label: {
+            VStack(spacing: 6) {
+                Image(systemName: "stop.circle.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(isLive ? endTint : Palette.textTertiary)
+                Text("End Session")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(isLive ? endTint : Palette.textTertiary)
+                if !isLive {
+                    Text("no active sesh")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Palette.textTertiary)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 24).padding(.horizontal, 14)
+            .background(endSessionBackground)
         }
+        .buttonStyle(.plain)
         .disabled(!isLive)
         .accessibilityLabel("End Session")
         .accessibilityHint(isLive ? "Ends and saves your current sesh" : "No active sesh to end")
     }
 
-    /// Shared illustrated-tile builder. `asset` is an Asset Catalog image name.
-    private func illustratedTile(title: String, subtitle: String?, asset: String,
-                                 fill: Color, tint: Color,
-                                 highlighted: Bool = false, badge: String? = nil,
-                                 dashed: Bool = false, dimmed: Bool = false,
-                                 action: @escaping () -> Void) -> some View {
+    @ViewBuilder private var endSessionBackground: some View {
+        if isLive {
+            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(endFill)
+        } else {
+            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+                .foregroundStyle(Palette.stroke)
+                .opacity(0.6)
+        }
+    }
+
+    private func primaryButton(title: String, icon: String,
+                               fill: Color, tint: Color,
+                               highlighted: Bool = false,
+                               badge: String? = nil,
+                               action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Image(asset)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 96)
-                    .opacity(dimmed ? 0.5 : 1)
-                    .shadow(color: Color.black.opacity(0.35), radius: 6, y: 3)
-                Text(title)
-                    .font(.system(size: 21, weight: .semibold, design: .serif))
-                    .foregroundStyle(dimmed ? Palette.textTertiary : Palette.text)
+            VStack(spacing: 6) {
+                Image(systemName: icon).font(.system(size: 32)).foregroundStyle(tint)
+                Text(title).font(.system(size: 16, weight: .medium)).foregroundStyle(tint)
                 if let badge {
-                    Text(badge)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(tint)
-                } else if let subtitle {
-                    Text(subtitle)
-                        .font(.system(size: 12))
-                        .foregroundStyle(dimmed ? Palette.textTertiary : Palette.textSecondary)
-                        .lineLimit(1)
+                    Text(badge).font(.system(size: 11)).foregroundStyle(tint.opacity(0.8))
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 20).padding(.horizontal, 12)
-            .background(tileBackground(fill: fill, dashed: dashed))
+            .padding(.vertical, 24).padding(.horizontal, 14)
+            .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(fill))
             .overlay(
                 RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                    .stroke(Palette.greenBright, lineWidth: highlighted ? 2 : 0)
+                    .stroke(Palette.green, lineWidth: highlighted ? 2 : 0)
             )
         }
         .buttonStyle(.plain)
-    }
-
-    @ViewBuilder private func tileBackground(fill: Color, dashed: Bool) -> some View {
-        if dashed {
-            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                .fill(fill)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                        .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
-                        .foregroundStyle(Palette.stroke)
-                )
-        } else {
-            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                .fill(fill)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                        .stroke(Palette.stroke.opacity(0.5), lineWidth: 1)
-                )
-        }
     }
 
     // MARK: Social feed

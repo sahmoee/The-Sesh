@@ -16,16 +16,6 @@ struct AppBackground: View {
         LinearGradient(colors: [Palette.bgTop, Palette.bgBottom],
                        startPoint: .top, endPoint: .bottom)
             .ignoresSafeArea()
-            .overlay(
-                // Real vintage leaf texture, very faint, sitting behind all content.
-                Image("leaf_texture")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-                    .opacity(0.06)
-                    .blendMode(.softLight)
-                    .allowsHitTesting(false)
-            )
             .overlay(BotanicalOverlay().ignoresSafeArea().allowsHitTesting(false))
     }
 }

@@ -46,23 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.8.0",
-            buildLabel: "June 2026",
-            headline: "A whole new look.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "paintbrush.fill", tint: Palette.gold,
-                               title: "The Apothecary redesign",
-                               detail: "A warm, hand-illustrated vintage look is now the default. The home screen has rich new artwork for every action."),
-                ChangelogEntry(icon: "leaf.fill", tint: Palette.greenBright,
-                               title: "More themes",
-                               detail: "Prefer the old style? Olive, Navy, Elevated, and Rasta are all still there in Settings."),
-            ]),
-        ChangelogVersion(
             version: "25.7.0",
             buildLabel: "June 2026",
             headline: "Navigation that remembers you.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "house.fill", tint: Palette.green,
                                title: "Tabs remember your place",

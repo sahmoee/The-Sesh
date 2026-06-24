@@ -475,7 +475,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 46;
+				MARKETING_VERSION = 47;
 				OTHER_SWIFT_FLAGS = "-Xfrontend -warn-long-function-bodies=500 -Xfrontend -warn-long-expression-type-checking=500";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sowens.The-SESH-";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -516,7 +516,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 46;
+				MARKETING_VERSION = 47;
 				OTHER_SWIFT_FLAGS = "-Xfrontend -warn-long-function-bodies=500 -Xfrontend -warn-long-expression-type-checking=500";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sowens.The-SESH-";
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -102,26 +102,6 @@ extension ThemePalette {
         moodAngry: Color(hex: "D52B1E"), moodMeh: Color(hex: "F2C53D"), moodNeutral: Color(hex: "F2C53D"),
         moodGood: Color(hex: "3FB23F"), moodGreat: Color(hex: "2E8B2E"))
 
-    /// "Apothecary": the dark vintage-dispensary mockup. Deep near-black olive
-    /// base, warm cream type, antique gold, burnt-orange energy, leaf green.
-    /// Tuned to match the illustrated tile assets (transparent vintage art).
-    static let apothecary = ThemePalette(
-        bgTop: Color(hex: "171C14"), bgBottom: Color(hex: "0E120C"),
-        heroTop: Color(hex: "1B2117"), heroBottom: Color(hex: "0A0D08"),
-        card: Color(hex: "202A1B"), cardElevated: Color(hex: "2A3624"),
-        field: Color(hex: "171C14"), stroke: Color(hex: "3A472D"), strokeSoft: Color(hex: "2A3624"),
-        // warm dark panels stand in for the "cream" surface slots
-        cream: Color(hex: "1E2616"), creamElevated: Color(hex: "27331D"), creamStroke: Color(hex: "3E4E2C"),
-        onCream: Color(hex: "F1E4C9"), onCreamSoft: Color(hex: "B6A985"),
-        text: Color(hex: "F1E4C9"), textSecondary: Color(hex: "B6A985"), textTertiary: Color(hex: "877A52"),
-        green: Color(hex: "5C6B3F"), greenBright: Color(hex: "86A957"), greenDeep: Color(hex: "3A472D"),
-        onGreen: Color(hex: "F4F1E6"),
-        gold: Color(hex: "B99045"), goldSoft: Color(hex: "D0AE6A"), goldDeep: Color(hex: "5B4827"), goldRing: Color(hex: "C49A4E"),
-        purple: Color(hex: "372B42"), purpleStroke: Color(hex: "574868"),
-        ratingPill: Color(hex: "202A1B"), tabBar: Color(hex: "0C0F09"),
-        moodAngry: Color(hex: "C46A2D"), moodMeh: Color(hex: "B99045"), moodNeutral: Color(hex: "B99045"),
-        moodGood: Color(hex: "9BAE5C"), moodGreat: Color(hex: "86A957"))
-
     /// The "Elevated" moodboard: warm cream canvas, sage & forest greens, a
     /// lavender highlight, golden-amber gold, and a terracotta accent.
     /// Calming. Personal. Elevated. — a light theme.
@@ -153,24 +133,22 @@ extension ThemePalette {
 // MARK: - Theme selection
 
 enum ThemeChoice: String, CaseIterable, Identifiable {
-    case olive, navy, apothecary, elevated, rasta
+    case olive, navy, elevated, rasta
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .olive:      return "Olive"
-        case .navy:       return "Navy"
-        case .apothecary: return "Apothecary"
-        case .elevated:   return "Elevated"
-        case .rasta:      return "Rasta"
+        case .olive:    return "Olive"
+        case .navy:     return "Navy"
+        case .elevated: return "Elevated"
+        case .rasta:    return "Rasta"
         }
     }
     var palette: ThemePalette {
         switch self {
-        case .olive:      return .olive
-        case .navy:       return .navy
-        case .apothecary: return .apothecary
-        case .elevated:   return .elevated
-        case .rasta:      return .rasta
+        case .olive:    return .olive
+        case .navy:     return .navy
+        case .elevated: return .elevated
+        case .rasta:    return .rasta
         }
     }
     /// Elevated is a light theme; the others are dark.
@@ -193,7 +171,7 @@ final class ThemeManager {
     init() {
         CloudSync.pullIntoDefaults(keys: ["sesh.theme.v1"])
         let saved = UserDefaults.standard.string(forKey: "sesh.theme.v1")
-        let initial = ThemeChoice(rawValue: saved ?? "apothecary") ?? .apothecary
+        let initial = ThemeChoice(rawValue: saved ?? "olive") ?? .olive
         self.choice = initial
         ActiveTheme.current = initial.palette
         CloudSync.startObserving(keys: ["sesh.theme.v1"]) { [weak self] in
@@ -206,9 +184,9 @@ final class ThemeManager {
 }
 
 /// Global active palette, read by the static `Palette` façade. Defaults to
-/// apothecary until the ThemeManager initializes (it always does at launch).
+/// olive until the ThemeManager initializes (it always does at launch).
 enum ActiveTheme {
-    static var current: ThemePalette = .apothecary
+    static var current: ThemePalette = .olive
 }
 
 // MARK: - Palette façade (unchanged call sites everywhere)
