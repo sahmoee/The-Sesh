@@ -143,20 +143,20 @@ struct SessionActiveView: View {
     }
 
     @ViewBuilder private func strainImageCircle(_ live: LiveSeshState) -> some View {
-        // Use the canonical strain-aware resolver: user photo -> remote -> a
-        // stable procedural bud thumbnail. When we can match the strain, pass its
-        // id so the fallback art is seeded per-strain; otherwise show a gradient.
-        if let strain = matchedStrain(live) {
-            StoredImage(name: strain.photoName, size: 218, corner: 109, strainID: strain.id)
-        } else {
-            ZStack {
+        // Use the matched strain's user photo if present; otherwise a gradient.
+        let photoName = matchedStrain(live)?.photoName
+        let art = StrainImageStore.load(photoName)
+        ZStack {
+            if let art {
+                Image(uiImage: art).resizable().scaledToFill()
+            } else {
                 LinearGradient(colors: [Palette.green.opacity(0.5), Palette.greenDeep],
                                startPoint: .top, endPoint: .bottom)
                 Image(systemName: "leaf.fill").font(.system(size: 48)).foregroundStyle(Palette.greenBright.opacity(0.6))
             }
-            .frame(width: 218, height: 218)
-            .clipShape(Circle())
         }
+        .frame(width: 218, height: 218)
+        .clipShape(Circle())
     }
 
     // MARK: Feeling / session-type chips
