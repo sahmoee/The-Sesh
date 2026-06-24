@@ -462,6 +462,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "The Sesh shows the song you're currently playing so you can share it with friends.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "The SESH uses your camera so you can snap a photo of your strain or sesh to add to your journal.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "The SESH lets you add photos from your library to your sesh and strain entries.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
@@ -503,6 +504,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "The Sesh shows the song you're currently playing so you can share it with friends.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "The SESH uses your camera so you can snap a photo of your strain or sesh to add to your journal.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "The SESH lets you add photos from your library to your sesh and strain entries.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;

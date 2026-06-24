@@ -17,9 +17,6 @@ struct SeshApp: App {
     @State private var auth = AuthManager()
     @State private var strainImages = StrainImageStore()
     @State private var notifications = NotificationManager()
-    @State private var scrobbler = ScrobbleStore()
-    @State private var spotify = SpotifyAuth()
-    @State private var playlists = PlaylistStore()
     @AppStorage("sesh.skippedSignIn") private var skippedSignIn = false
     @AppStorage("sesh.onboarded.v2") private var onboarded = false
 
@@ -42,23 +39,11 @@ struct SeshApp: App {
             .environment(auth)
             .environment(strainImages)
             .environment(notifications)
-            .environment(scrobbler)
-            .environment(spotify)
-            .environment(playlists)
             .task {
                 // Let the social layer push friend events into the notifier.
                 social.notifications = notifications
                 social.configure(userID: auth.userID, displayName: session.userName)
                 await social.bootstrap()
-                // Wire the scrobbler to the social layer and start any enabled
-                // music sources (Apple Music on-device and/or Spotify polling).
-                scrobbler.social = social
-                scrobbler.playlists = playlists
-                scrobbler.configure(identity: social.identitySnapshot)
-                spotify.configure(identity: social.identitySnapshot)
-                playlists.spotify = spotify
-                playlists.configure(identity: social.identitySnapshot)
-                scrobbler.start()
                 // Load the strain-image manifest from the Worker (fetch-on-demand;
                 // nothing bundled). Falls back to procedural art if unreachable.
                 if let base = URL(string: BuildConfig.workerURL) {

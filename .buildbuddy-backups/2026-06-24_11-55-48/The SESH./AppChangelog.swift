@@ -46,36 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.10.0",
-            buildLabel: "June 2026",
-            headline: "Build your sesh soundtrack.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "music.note.list", tint: Palette.greenBright,
-                               title: "Playlists",
-                               detail: "Build playlists in the app, collect the songs you play automatically, and add tracks by hand."),
-                ChangelogEntry(icon: "square.and.arrow.up", tint: Palette.gold,
-                               title: "Export anywhere",
-                               detail: "Send your playlists to Spotify or Apple Music in a tap."),
-            ]),
-        ChangelogVersion(
-            version: "25.9.0",
-            buildLabel: "June 2026",
-            headline: "Share your soundtrack.",
-            isLatest: false,
-            entries: [
-                ChangelogEntry(icon: "waveform", tint: Palette.greenBright,
-                               title: "Now Playing",
-                               detail: "Share the song you are listening to from Apple Music or Spotify. See what your friends are playing too."),
-                ChangelogEntry(icon: "slider.horizontal.3", tint: Palette.gold,
-                               title: "You are in control",
-                               detail: "Choose your sources and when to share in Settings: always, only during a sesh, or manually."),
-            ]),
-        ChangelogVersion(
             version: "25.8.0",
             buildLabel: "June 2026",
             headline: "A whole new look.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "paintbrush.fill", tint: Palette.gold,
                                title: "The Apothecary redesign",

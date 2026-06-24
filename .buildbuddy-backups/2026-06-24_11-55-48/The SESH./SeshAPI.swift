@@ -19,13 +19,6 @@ struct SeshSnapshot: Codable {
     var feed: [ActivityEvent]
 }
 
-/// Result of a Spotify playlist export (from the Worker).
-struct SpotifyExportResponse: Codable {
-    var added: Int          // how many tracks were matched + added
-    var total: Int          // how many were requested
-    var url: String?        // open.spotify.com playlist URL
-}
-
 /// The caller's identity, sent with every request.
 struct SeshIdentity {
     var userID: String
@@ -153,96 +146,6 @@ struct SeshAPI {
 
     func postActivity(_ activity: SeshActivity, detail: String?, identity: SeshIdentity?) async {
         await post("/api/activity", identity: identity, ["activity": activity.rawValue, "detail": detail ?? ""])
-    }
-
-    // MARK: Scrobbler (now-playing)
-
-    /// Broadcast the current user's now-playing track.
-    func postNowPlaying(_ np: NowPlaying, identity: SeshIdentity?) async {
-        await post("/api/nowplaying", identity: identity, [
-            "title": np.title, "artist": np.artist, "album": np.album ?? "",
-            "artworkURL": np.artworkURL ?? "", "source": np.source.rawValue,
-            "isPlaying": np.isPlaying])
-    }
-
-    /// Clear the current user's now-playing.
-    func clearNowPlaying(identity: SeshIdentity?) async {
-        await post("/api/nowplaying/clear", identity: identity, [:])
-    }
-
-    /// Fetch the user's Spotify now-playing via the Worker (which holds the
-    /// refresh token and talks to Spotify). Returns nil if nothing is playing.
-    func spotifyNowPlaying(identity: SeshIdentity?) async -> NowPlaying? {
-        guard let req = makeRequest("/api/spotify/now-playing", identity: identity) else { return nil }
-        do {
-            let (data, resp) = try await session.data(for: req)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
-            return try Self.decoder.decode(NowPlaying.self, from: data)
-        } catch {
-            return nil
-        }
-    }
-
-    /// Exchange a Spotify authorization code for tokens (server-side secret swap).
-    func spotifyExchange(code: String, verifier: String, redirectURI: String,
-                         identity: SeshIdentity?) async -> Bool {
-        await post("/api/spotify/exchange", identity: identity,
-                   ["code": code, "verifier": verifier, "redirectURI": redirectURI])
-    }
-
-    /// Unlink Spotify (Worker deletes the stored refresh token).
-    func spotifyDisconnect(identity: SeshIdentity?) async -> Bool {
-        await post("/api/spotify/disconnect", identity: identity, [:])
-    }
-
-    // MARK: Spotify search + playlist export (Worker holds the token)
-
-    /// Search Spotify's catalog for tracks (via the Worker).
-    func spotifySearch(query: String, identity: SeshIdentity?) async -> [PlaylistTrack] {
-        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        guard let req = makeRequest("/api/spotify/search?q=\(encoded)", identity: identity) else { return [] }
-        do {
-            let (data, resp) = try await session.data(for: req)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return [] }
-            return try Self.decoder.decode([PlaylistTrack].self, from: data)
-        } catch {
-            return []
-        }
-    }
-
-    /// Create (or update) a Spotify playlist with the given tracks. The Worker
-    /// matches each track (ISRC first), creates the playlist on the user's
-    /// account, adds the matches, and returns the playlist URL + counts.
-    func spotifyExportPlaylist(name: String, tracks: [PlaylistTrack], existingID: String?,
-                               identity: SeshIdentity?) async -> ExportResult {
-        let trackPayload: [[String: Any]] = tracks.map { t in
-            [ "title": t.title, "artist": t.artist, "album": t.album ?? "",
-              "isrc": t.isrc ?? "", "spotifyURI": t.spotifyURI ?? "" ]
-        }
-        var body: [String: Any] = ["name": name, "tracks": trackPayload]
-        if let existingID { body["existingID"] = existingID }
-        guard let data = try? JSONSerialization.data(withJSONObject: enrich(body, identity)),
-              let req = makeRequest("/api/spotify/playlist", method: "POST", identity: identity, body: data) else {
-            return .failure("Couldn't reach Spotify.")
-        }
-        do {
-            let (respData, resp) = try await session.data(for: req)
-            let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
-            guard code == 200 else { return .failure("Spotify export failed (\(code)).") }
-            let decoded = try Self.decoder.decode(SpotifyExportResponse.self, from: respData)
-            return .success(addedCount: decoded.added, total: decoded.total, url: decoded.url)
-        } catch {
-            return .failure("Spotify export failed.")
-        }
-    }
-
-    /// Merge identity fields into a JSON body (mirrors what post() does).
-    private func enrich(_ body: [String: Any], _ identity: SeshIdentity?) -> [String: Any] {
-        var b = body
-        if let id = identity {
-            b["userID"] = id.userID; b["handle"] = id.handle; b["name"] = id.name; b["code"] = id.code
-        }
-        return b
     }
 
     /// Invite friends to a sesh / cypher. The Worker is responsible for turning

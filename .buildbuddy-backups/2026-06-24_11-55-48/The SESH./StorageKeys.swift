@@ -74,18 +74,6 @@ enum DefaultsKey {
 
     // Strain images: user-attached photos keyed by strain id
     static let strainUserPhotos = "sesh.strain.userPhotos.v1"
-
-    // Scrobbler (now-playing) settings + Spotify auth
-    static let scrobbleApple       = "sesh.scrobble.apple.v1"        // Apple Music source on
-    static let scrobbleSpotify     = "sesh.scrobble.spotify.v1"      // Spotify source on
-    static let scrobbleAlways      = "sesh.scrobble.always.v1"       // broadcast whenever playing
-    static let scrobbleDuringSesh  = "sesh.scrobble.duringSesh.v1"   // broadcast only during a sesh
-    static let scrobbleManualOnly  = "sesh.scrobble.manualOnly.v1"   // never auto-broadcast
-    static let spotifyRefreshToken = "sesh.spotify.refresh.v1"       // Spotify refresh token (Keychain-backed in prod)
-    static let spotifyConnected    = "sesh.spotify.connected.v1"     // has the user linked Spotify
-
-    // User-built playlists (persisted locally; exported to Spotify/Apple on demand)
-    static let playlists           = "sesh.playlists.v1"
 }
 
 /// Shared contract between the app and the widget extension (#10).
