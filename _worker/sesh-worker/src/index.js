@@ -14,7 +14,7 @@
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type,x-sesh-user,x-sesh-handle,x-sesh-name",
+  "Access-Control-Allow-Headers": "Content-Type,x-sesh-user,x-sesh-handle,x-sesh-name,x-sesh-code",
 };
 
 const json = (data, status = 200) =>
@@ -230,6 +230,7 @@ async function touchUser(env, id, fields) {
     code: fields.code || prev.code || "",
     friends: prev.friends || [],
     pushTokens: prev.pushTokens || [],
+    nowPlaying: fields.nowPlaying !== undefined ? fields.nowPlaying : (prev.nowPlaying || null),
   };
   await kvPut(env, "users", users);
   return users[id];
@@ -292,7 +293,10 @@ async function buildSnapshot(env, me) {
     .filter((u) => !blocked.has(u.id))
     .map((u) => {
       const stale = tnow - Date.parse(u.lastSeen) > PRESENCE_WINDOW_MS;
-      return { ...u, activity: stale ? "idle" : u.activity };
+      // Stale users show as idle and we drop their now-playing so the app
+      // doesn't display a track for someone who isn't currently around.
+      return { ...u, activity: stale ? "idle" : u.activity,
+               nowPlaying: stale ? null : (u.nowPlaying || null) };
     });
 
   // Feed = explicit events + derived presence, newest first, de-duped.
@@ -306,6 +310,205 @@ async function buildSnapshot(env, me) {
 
   return { friends, cyphers, rooms, live, feed };
 }
+
+// ---- Spotify (OAuth token storage + Web API) ------------------------------
+//
+// The app links a user's Spotify account with Authorization Code + PKCE. The
+// app does the user-facing authorize step and sends us the `code` + PKCE
+// `verifier`; we swap them for tokens here (the client secret stays server-side)
+// and store the refresh token keyed by userID. We then mint short-lived access
+// tokens on demand for now-playing, search, and playlist export.
+//
+// Secrets (wrangler secret put):
+//   SPOTIFY_CLIENT_ID
+//   SPOTIFY_CLIENT_SECRET
+// Refresh tokens live in KV under `sp_refresh_<userID>`.
+
+const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
+const SPOTIFY_API = "https://api.spotify.com/v1";
+
+async function spotifyStoreRefresh(env, userID, refreshToken) {
+  if (!refreshToken) return;
+  await kvPut(env, `sp_refresh_${userID}`, { refreshToken, at: now() });
+}
+async function spotifyGetRefresh(env, userID) {
+  const rec = await kvGet(env, `sp_refresh_${userID}`, null);
+  return rec && rec.refreshToken ? rec.refreshToken : null;
+}
+async function spotifyClearRefresh(env, userID) {
+  if (!env.SESH) return;
+  await env.SESH.delete(`sp_refresh_${userID}`);
+}
+
+/** Exchange an authorization code (PKCE) for tokens; store the refresh token. */
+async function spotifyExchangeCode(env, userID, code, verifier, redirectURI) {
+  if (!env.SPOTIFY_CLIENT_ID) return false;
+  const params = new URLSearchParams({
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: redirectURI,
+    client_id: env.SPOTIFY_CLIENT_ID,
+    code_verifier: verifier,
+  });
+  // PKCE token exchange. Sending the secret as well (Basic) is harmless and lets
+  // the same app work whether or not it was registered as "public".
+  const headers = { "Content-Type": "application/x-www-form-urlencoded" };
+  if (env.SPOTIFY_CLIENT_SECRET) {
+    headers["Authorization"] =
+      "Basic " + btoa(`${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`);
+  }
+  const resp = await fetch(SPOTIFY_TOKEN_URL, { method: "POST", headers, body: params });
+  if (!resp.ok) return false;
+  const data = await resp.json();
+  if (data.refresh_token) {
+    await spotifyStoreRefresh(env, userID, data.refresh_token);
+    return true;
+  }
+  return false;
+}
+
+/** Get a fresh access token for a user from their stored refresh token. */
+async function spotifyAccessToken(env, userID) {
+  const refresh = await spotifyGetRefresh(env, userID);
+  if (!refresh || !env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) return null;
+  const params = new URLSearchParams({
+    grant_type: "refresh_token",
+    refresh_token: refresh,
+    client_id: env.SPOTIFY_CLIENT_ID,
+  });
+  const resp = await fetch(SPOTIFY_TOKEN_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": "Basic " + btoa(`${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`),
+    },
+    body: params,
+  });
+  if (!resp.ok) return null;
+  const data = await resp.json();
+  // Spotify may return a rotated refresh token; persist it if so.
+  if (data.refresh_token) await spotifyStoreRefresh(env, userID, data.refresh_token);
+  return data.access_token || null;
+}
+
+/** Normalize a Spotify track object into the app's PlaylistTrack/NowPlaying shape. */
+function spotifyTrackToJSON(track, source) {
+  if (!track) return null;
+  const artist = (track.artists || []).map((a) => a.name).join(", ");
+  const img = track.album && track.album.images && track.album.images[0];
+  return {
+    title: track.name || "Unknown",
+    artist: artist || "Unknown artist",
+    album: track.album ? track.album.name : null,
+    artworkURL: img ? img.url : null,
+    source: source || "spotify",
+    isrc: track.external_ids ? track.external_ids.isrc || null : null,
+    spotifyURI: track.uri || null,
+  };
+}
+
+/** Fetch the user's currently-playing track. Returns NowPlaying JSON or null. */
+async function spotifyNowPlaying(env, userID) {
+  const token = await spotifyAccessToken(env, userID);
+  if (!token) return null;
+  const resp = await fetch(`${SPOTIFY_API}/me/player/currently-playing`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (resp.status === 204 || !resp.ok) return null;
+  const data = await resp.json();
+  if (!data || !data.item) return null;
+  const np = spotifyTrackToJSON(data.item, "spotify");
+  if (!np) return null;
+  np.isPlaying = !!data.is_playing;
+  np.updatedAt = now();
+  return np;
+}
+
+/** Search the Spotify catalog. Returns an array of PlaylistTrack JSON. */
+async function spotifySearch(env, userID, query) {
+  const token = await spotifyAccessToken(env, userID);
+  if (!token) return [];
+  const url = `${SPOTIFY_API}/search?type=track&limit=20&q=${encodeURIComponent(query)}`;
+  const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!resp.ok) return [];
+  const data = await resp.json();
+  const items = (data.tracks && data.tracks.items) || [];
+  return items.map((t) => spotifyTrackToJSON(t, "spotify")).filter(Boolean);
+}
+
+/** Resolve one app track to a Spotify URI (use given URI, else ISRC, else text). */
+async function spotifyResolveURI(env, token, track) {
+  if (track.spotifyURI) return track.spotifyURI;
+  // ISRC is the most accurate.
+  if (track.isrc) {
+    const u = `${SPOTIFY_API}/search?type=track&limit=1&q=${encodeURIComponent("isrc:" + track.isrc)}`;
+    const r = await fetch(u, { headers: { Authorization: `Bearer ${token}` } });
+    if (r.ok) {
+      const d = await r.json();
+      const hit = d.tracks && d.tracks.items && d.tracks.items[0];
+      if (hit && hit.uri) return hit.uri;
+    }
+  }
+  // Title + artist fallback.
+  const q = `${track.title} ${track.artist}`;
+  const u2 = `${SPOTIFY_API}/search?type=track&limit=1&q=${encodeURIComponent(q)}`;
+  const r2 = await fetch(u2, { headers: { Authorization: `Bearer ${token}` } });
+  if (r2.ok) {
+    const d2 = await r2.json();
+    const hit2 = d2.tracks && d2.tracks.items && d2.tracks.items[0];
+    if (hit2 && hit2.uri) return hit2.uri;
+  }
+  return null;
+}
+
+/** Create (or reuse) a playlist on the user's account and add the tracks. */
+async function spotifyExportPlaylist(env, userID, name, tracks, existingID) {
+  const token = await spotifyAccessToken(env, userID);
+  if (!token) return { error: "not linked" };
+
+  // Resolve tracks to URIs.
+  const uris = [];
+  for (const t of tracks) {
+    const uri = await spotifyResolveURI(env, token, t);
+    if (uri) uris.push(uri);
+  }
+  if (uris.length === 0) return { added: 0, total: tracks.length, url: null };
+
+  // Need the Spotify user id to create a playlist under their account.
+  const meResp = await fetch(`${SPOTIFY_API}/me`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!meResp.ok) return { error: "me failed" };
+  const meData = await meResp.json();
+  const spUserID = meData.id;
+
+  // Reuse an existing playlist if one was passed, else create a new one.
+  let playlistID = existingID || null;
+  let playlistURL = null;
+  if (!playlistID) {
+    const createResp = await fetch(`${SPOTIFY_API}/users/${spUserID}/playlists`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name || "The Sesh Playlist", description: "Made in The Sesh", public: false }),
+    });
+    if (!createResp.ok) return { error: "create failed" };
+    const created = await createResp.json();
+    playlistID = created.id;
+    playlistURL = created.external_urls ? created.external_urls.spotify : null;
+  } else {
+    playlistURL = `https://open.spotify.com/playlist/${playlistID}`;
+  }
+
+  // Add tracks in batches of 100 (Spotify's per-request cap).
+  for (let i = 0; i < uris.length; i += 100) {
+    const batch = uris.slice(i, i + 100);
+    await fetch(`${SPOTIFY_API}/playlists/${playlistID}/tracks`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ uris: batch }),
+    });
+  }
+  return { added: uris.length, total: tracks.length, url: playlistURL };
+}
+
 
 // ---- Handlers -------------------------------------------------------------
 
@@ -330,6 +533,44 @@ async function handlePost(env, path, body, request) {
       await notifyFriendsOfActivity(env, me, body.activity, body.detail || null);
     }
     return json({ ok: true });
+  }
+
+  // ---- Scrobbler now-playing ----
+  if (path === "/api/nowplaying") {
+    const np = {
+      title: String(body.title || "Unknown"),
+      artist: String(body.artist || "Unknown artist"),
+      album: body.album || null,
+      artworkURL: body.artworkURL || null,
+      source: body.source || "apple",
+      isPlaying: body.isPlaying !== false,
+      updatedAt: now(),
+    };
+    await touchUser(env, me.userID, { handle: me.handle, name: me.name, code: me.code, nowPlaying: np });
+    return json({ ok: true });
+  }
+  if (path === "/api/nowplaying/clear") {
+    await touchUser(env, me.userID, { handle: me.handle, name: me.name, code: me.code, nowPlaying: null });
+    return json({ ok: true });
+  }
+
+  // ---- Spotify account link + playlist export ----
+  if (path === "/api/spotify/exchange") {
+    const ok = await spotifyExchangeCode(
+      env, me.userID, String(body.code || ""), String(body.verifier || ""),
+      String(body.redirectURI || ""));
+    return json({ ok });
+  }
+  if (path === "/api/spotify/disconnect") {
+    await spotifyClearRefresh(env, me.userID);
+    return json({ ok: true });
+  }
+  if (path === "/api/spotify/playlist") {
+    const tracks = Array.isArray(body.tracks) ? body.tracks : [];
+    const result = await spotifyExportPlaylist(
+      env, me.userID, String(body.name || "The Sesh Playlist"), tracks, body.existingID || null);
+    if (result && result.error) return json({ error: result.error }, 400);
+    return json(result);
   }
 
   // one-off milestone (roll record, streak, champion) -> friends get a push
@@ -529,6 +770,22 @@ export default {
         userID: request.headers.get("x-sesh-user") || url.searchParams.get("uid") || "anon",
       };
       return json(await buildSnapshot(env, me));
+    }
+
+    // Spotify now-playing for the signed-in user (Worker holds the token).
+    if (request.method === "GET" && path === "/api/spotify/now-playing") {
+      const uid = request.headers.get("x-sesh-user") || url.searchParams.get("uid") || "anon";
+      const np = await spotifyNowPlaying(env, uid);
+      if (!np) return new Response(null, { status: 204, headers: CORS });
+      return json(np);
+    }
+
+    // Spotify catalog search (for adding songs to a playlist).
+    if (request.method === "GET" && path === "/api/spotify/search") {
+      const uid = request.headers.get("x-sesh-user") || url.searchParams.get("uid") || "anon";
+      const q = url.searchParams.get("q") || "";
+      if (!q) return json([]);
+      return json(await spotifySearch(env, uid, q));
     }
 
     // messages in a room: tagged isMe, blocked senders hidden, paginated.

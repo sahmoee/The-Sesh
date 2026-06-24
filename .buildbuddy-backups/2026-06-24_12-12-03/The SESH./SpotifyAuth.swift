@@ -124,20 +124,10 @@ final class SpotifyAuth: NSObject {
 
 extension SpotifyAuth: ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        // Prefer the active scene's key window. If none is found, build an anchor
-        // from a connected window scene (init() without a scene is deprecated in
-        // iOS 26); only fall back to a bare window if there's truly no scene.
-        if let keyWindow = UIApplication.shared.connectedScenes
-            .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
-            .first {
-            return keyWindow
-        }
-        if let scene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first {
-            return UIWindow(windowScene: scene)
-        }
-        return ASPresentationAnchor()
+        // The key window for presenting the auth sheet.
+        UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
+            .first ?? ASPresentationAnchor()
     }
 }
 

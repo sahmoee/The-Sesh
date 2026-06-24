@@ -2,15 +2,17 @@ name = "sesh-worker"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
 
-# KV namespace backing presence, cyphers, live, chat, and the feed.
-# Create it once with:
-#   wrangler kv:namespace create SESH
-# then paste the returned id below.
+# KV namespace backing presence, cyphers, live, chat, the feed, now-playing,
+# and Spotify refresh tokens (sp_refresh_<userID>).
 [[kv_namespaces]]
 binding = "SESH"
 id = "2354f50ae4ff44f49b767f4dca8d82f3"
 
 # Push (APNs). Non-secret var here; the .p8/Key ID/Team ID are secrets set via
 # `wrangler secret put APNS_KEY_P8 / APNS_KEY_ID / APNS_TEAM_ID`.
+#
+# Spotify (playlist export + now-playing) needs two more secrets, set via:
+#   wrangler secret put 8a8abdcb0adc479991a94d0a8aa3626a
+#   wrangler secret put a3d2ef09cc694e6392b4d4711b00dbc4
 [vars]
 APNS_BUNDLE_ID = "com.sowens.The-SESH-"
