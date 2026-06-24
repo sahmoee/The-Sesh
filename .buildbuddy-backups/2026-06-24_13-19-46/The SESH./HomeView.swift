@@ -25,7 +25,6 @@ struct HomeView: View {
     var onOpenInbox: () -> Void = {}
 
     @State private var friendPeek: SeshUser?
-    @State private var showSessionScreen = false
 
     // Button color pairs (soft fill + deep tint), built from the existing palette.
     private let rollFill = Palette.gold.opacity(0.16)
@@ -59,12 +58,9 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     header
                     if isLive {
-                        Button { showSessionScreen = true } label: {
-                            CurrentStatusCard()
-                                .padding(.horizontal, 18)
-                                .padding(.bottom, 16)
-                        }
-                        .buttonStyle(.plain)
+                        CurrentStatusCard()
+                            .padding(.horizontal, 18)
+                            .padding(.bottom, 16)
                     }
                     buttonGrid
                     feedSection
@@ -75,9 +71,6 @@ struct HomeView: View {
         }
         .sheet(item: $friendPeek) { f in
             FriendSheet(user: f).presentationDetents([.medium])
-        }
-        .fullScreenCover(isPresented: $showSessionScreen) {
-            SessionActiveView(onEnd: { onEndSesh() })
         }
     }
 
