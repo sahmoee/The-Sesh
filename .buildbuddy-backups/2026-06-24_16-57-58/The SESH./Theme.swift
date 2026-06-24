@@ -102,29 +102,6 @@ extension ThemePalette {
         moodAngry: Color(hex: "D52B1E"), moodMeh: Color(hex: "F2C53D"), moodNeutral: Color(hex: "F2C53D"),
         moodGood: Color(hex: "3FB23F"), moodGreat: Color(hex: "2E8B2E"))
 
-    /// "Midnight": the dark neon mockup look. Near-black surfaces with a vivid
-    /// neon-green primary action and an electric-purple secondary accent. Pairs
-    /// with the Midnight icon style for a fully neon appearance.
-    static let midnight = ThemePalette(
-        bgTop: Color(hex: "0C0E12"), bgBottom: Color(hex: "070809"),
-        heroTop: Color(hex: "0E1114"), heroBottom: Color(hex: "060708"),
-        card: Color(hex: "12161B"), cardElevated: Color(hex: "181D24"),
-        field: Color(hex: "0E1216"), stroke: Color(hex: "242B33"), strokeSoft: Color(hex: "1A2027"),
-        // "cream" surfaces become dark elevated panels in this theme
-        cream: Color(hex: "141A20"), creamElevated: Color(hex: "1A2128"), creamStroke: Color(hex: "2A323C"),
-        onCream: Color(hex: "EAF2EC"), onCreamSoft: Color(hex: "9BA6AB"),
-        text: Color(hex: "ECF2EE"), textSecondary: Color(hex: "9AA6A2"), textTertiary: Color(hex: "626E6A"),
-        // Neon green primary
-        green: Color(hex: "4ADE80"), greenBright: Color(hex: "7CE577"), greenDeep: Color(hex: "2BA85A"),
-        onGreen: Color(hex: "07140C"),
-        // Gold slot kept subtle/warm so streak + rating accents still read
-        gold: Color(hex: "C9A24B"), goldSoft: Color(hex: "D8B968"), goldDeep: Color(hex: "8A6E33"), goldRing: Color(hex: "B8924A"),
-        // Electric purple accent
-        purple: Color(hex: "8B5CF6"), purpleStroke: Color(hex: "A78BFA"),
-        ratingPill: Color(hex: "141A20"), tabBar: Color(hex: "08090B"),
-        moodAngry: Color(hex: "F0623E"), moodMeh: Color(hex: "C9A24B"), moodNeutral: Color(hex: "A78BFA"),
-        moodGood: Color(hex: "4ADE80"), moodGreat: Color(hex: "7CE577"))
-
     /// "Apothecary": the dark vintage-dispensary mockup. Deep near-black olive
     /// base, warm cream type, antique gold, burnt-orange energy, leaf green.
     /// Tuned to match the illustrated tile assets (transparent vintage art).
@@ -176,7 +153,7 @@ extension ThemePalette {
 // MARK: - Theme selection
 
 enum ThemeChoice: String, CaseIterable, Identifiable {
-    case olive, navy, apothecary, elevated, rasta, midnight
+    case olive, navy, apothecary, elevated, rasta
     var id: String { rawValue }
     var label: String {
         switch self {
@@ -185,7 +162,6 @@ enum ThemeChoice: String, CaseIterable, Identifiable {
         case .apothecary: return "Apothecary"
         case .elevated:   return "Elevated"
         case .rasta:      return "Rasta"
-        case .midnight:   return "Midnight"
         }
     }
     var palette: ThemePalette {
@@ -195,7 +171,6 @@ enum ThemeChoice: String, CaseIterable, Identifiable {
         case .apothecary: return .apothecary
         case .elevated:   return .elevated
         case .rasta:      return .rasta
-        case .midnight:   return .midnight
         }
     }
     /// Elevated is a light theme; the others are dark.
