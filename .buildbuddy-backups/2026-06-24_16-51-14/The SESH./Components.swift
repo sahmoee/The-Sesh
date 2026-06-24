@@ -253,44 +253,14 @@ struct RatingSlider: View {
 /// (smoking / bong / rolling), otherwise the activity emoji. One source of truth
 /// so every surface shows the same thing.
 struct ActivityGlyph: View {
-    @Environment(ThemeManager.self) private var theme
     let activity: SeshActivity
     var size: CGFloat = 18
 
     var body: some View {
-        switch theme.iconStyle {
-        case .sfSymbols:
-            // Symbols mode: use an SF Symbol for the illustrated activities,
-            // emoji for the rest.
-            if let symbol = symbolName {
-                Image(systemName: symbol)
-                    .font(.system(size: size * 0.9))
-                    .foregroundStyle(Palette.greenBright)
-                    .frame(width: size, height: size)
-            } else {
-                Text(activity.emoji).font(.system(size: size * 0.9))
-            }
-        case .apothecary, .midnight:
-            if let name = activity.iconName {
-                // In Midnight, prefer a _midnight feed asset when it exists, else
-                // fall back to the base illustrated icon so nothing goes blank.
-                let midnightName = name + "_midnight"
-                let resolved = (theme.iconStyle == .midnight && UIImage(named: midnightName) != nil)
-                    ? midnightName : name
-                Image(resolved).resizable().scaledToFit().frame(width: size, height: size)
-            } else {
-                Text(activity.emoji).font(.system(size: size * 0.9))
-            }
-        }
-    }
-
-    /// SF Symbol equivalents for the illustrated activities (Symbols icon style).
-    private var symbolName: String? {
-        switch activity {
-        case .smoking:     return "smoke.fill"
-        case .hittingBong: return "humidity.fill"
-        case .rollingUp:   return "flame.fill"
-        default:           return nil
+        if let name = activity.iconName {
+            Image(name).resizable().scaledToFit().frame(width: size, height: size)
+        } else {
+            Text(activity.emoji).font(.system(size: size * 0.9))
         }
     }
 }
