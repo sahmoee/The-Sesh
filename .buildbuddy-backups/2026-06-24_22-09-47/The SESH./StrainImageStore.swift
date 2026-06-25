@@ -119,26 +119,8 @@ final class StrainImageStore {
             }
         }
 
-        // 3. Bundled bud photo, deterministically assigned per strain so each
-        //    strain always shows the same photo until the user sets their own.
-        if let img = Self.bundledBud(for: strainID) {
-            store(img, for: strainID)
-            return img
-        }
-
-        // 4. No image -> caller draws BudThumb.
+        // 3. No image -> caller draws BudThumb.
         return nil
-    }
-
-    /// Number of bundled bud photos (bud_01 ... bud_NN).
-    static let bundledBudCount = 30
-
-    /// Pick a stable bundled bud photo for a strain id. Same id -> same photo.
-    static func bundledBud(for strainID: String) -> UIImage? {
-        guard bundledBudCount > 0 else { return nil }
-        let idx = abs(strainID.hashValue % bundledBudCount) + 1
-        let name = String(format: "bud_%02d", idx)
-        return UIImage(named: name)
     }
 
     /// Resolve a manifest URL string, allowing either absolute URLs or paths

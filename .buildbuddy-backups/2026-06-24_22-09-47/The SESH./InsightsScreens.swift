@@ -705,8 +705,7 @@ struct StrainDetailView: View {
         DarkCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 12) {
-                    StoredImage(name: profile?.photoName, size: 64, corner: Radius.md,
-                                strainID: profile?.id ?? insight.name)
+                    BudThumb(size: 64, seed: seed)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(insight.name).font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
                         HStack(spacing: 16) {

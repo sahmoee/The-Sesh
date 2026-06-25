@@ -46,20 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.16.0",
-            buildLabel: "June 2026",
-            headline: "Every strain gets a look.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "photo.stack", tint: Palette.greenBright,
-                               title: "Strain photos",
-                               detail: "Strains now show a real bud photo until you add your own. Each strain keeps the same photo every time."),
-            ]),
-        ChangelogVersion(
             version: "25.15.0",
             buildLabel: "June 2026",
             headline: "Goals, prompts, jokes, and quicker seshes.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "target", tint: Palette.greenBright,
                                title: "Goals",

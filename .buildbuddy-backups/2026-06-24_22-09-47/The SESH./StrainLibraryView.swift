@@ -238,7 +238,7 @@ struct StrainLibraryView: View {
     private func popularRow(index idx: Int, strain s: StrainProfile) -> some View {
         HStack(spacing: 12) {
             Text("\(idx + 1)").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.gold).frame(width: 20)
-            StoredImage(name: s.photoName, size: 40, corner: Radius.sm, strainID: s.id)
+            BudThumb(size: 40, seed: abs(s.id.hashValue % 60))
             VStack(alignment: .leading, spacing: 1) {
                 Text(s.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
                 Text(s.type.rawValue).font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
