@@ -29,19 +29,19 @@ enum SeshMood: String, CaseIterable, Identifiable {
 // MARK: - Consumption method (matches the mockup grid)
 
 enum SeshMethod: String, CaseIterable, Identifiable {
-    case blunt = "Blunt"
     case joint = "Joint"
     case bowl = "Bowl"
     case vape = "Vape"
     case dab = "Dab"
+    case other = "Other"
     var id: String { rawValue }
     var symbol: String {
         switch self {
-        case .blunt: return "smoke.fill"
         case .joint: return "pencil"
         case .bowl:  return "cup.and.saucer.fill"
         case .vape:  return "wand.and.rays"
         case .dab:   return "drop.fill"
+        case .other: return "ellipsis"
         }
     }
 }
