@@ -62,11 +62,9 @@ struct StrainProfile: Codable, Identifiable, Hashable {
     var breeder: String?        // seed bank / origin, e.g. "DNA Genetics"
     var lineage: String?        // genetic heritage, e.g. "OG Kush x Sour Diesel"
     var floweringTime: String?  // e.g. "56-63 days"
-    /// OpenTHC variety ID (universally-unique), for cross-system interop/dedup.
-    var openthcID: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, name, type, thc, cbd, effects, flavors, terpenes, aka, summary, sources, isCustom, photoName, breeder, lineage, floweringTime, openthcID
+        case id, name, type, thc, cbd, effects, flavors, terpenes, aka, summary, sources, isCustom, photoName, breeder, lineage, floweringTime
     }
 
     init(from decoder: Decoder) throws {
@@ -87,19 +85,16 @@ struct StrainProfile: Codable, Identifiable, Hashable {
         breeder = try? c.decodeIfPresent(String.self, forKey: .breeder)
         lineage = try? c.decodeIfPresent(String.self, forKey: .lineage)
         floweringTime = try? c.decodeIfPresent(String.self, forKey: .floweringTime)
-        openthcID = try? c.decodeIfPresent(String.self, forKey: .openthcID)
     }
 
     init(id: String, name: String, type: StrainType, thc: Double? = nil, cbd: Double? = nil,
          effects: [StrainTrait] = [], flavors: [StrainTrait] = [], terpenes: [StrainTrait] = [],
          aka: [String] = [], summary: String? = nil, sources: [String] = [], isCustom: Bool = false,
-         photoName: String? = nil, breeder: String? = nil, lineage: String? = nil, floweringTime: String? = nil,
-         openthcID: String? = nil) {
+         photoName: String? = nil, breeder: String? = nil, lineage: String? = nil, floweringTime: String? = nil) {
         self.id = id; self.name = name; self.type = type; self.thc = thc; self.cbd = cbd
         self.effects = effects; self.flavors = flavors; self.terpenes = terpenes
         self.aka = aka; self.summary = summary; self.sources = sources; self.isCustom = isCustom
         self.photoName = photoName; self.breeder = breeder; self.lineage = lineage; self.floweringTime = floweringTime
-        self.openthcID = openthcID
     }
 
     /// All names this strain can be matched against (lowercased).
