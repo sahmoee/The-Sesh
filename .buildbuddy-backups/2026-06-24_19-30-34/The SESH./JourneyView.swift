@@ -14,7 +14,6 @@ struct JourneyView: View {
     @Environment(StrainStore.self) private var strains
     @State private var friendPeek: SeshUser?
     @State private var showStartSesh = false
-    @State private var showStoryTime = false
     /// Top-level segment: social Community vs personal Journey stats.
     @State private var segment = "Community"
 
@@ -47,9 +46,6 @@ struct JourneyView: View {
         }
         .sheet(item: $friendPeek) { f in
             FriendSheet(user: f).presentationDetents([.medium])
-        }
-        .sheet(isPresented: $showStoryTime) {
-            CommunityPromptView()
         }
         .fullScreenCover(isPresented: $showStartSesh) {
             StartSeshView()
@@ -123,10 +119,6 @@ struct JourneyView: View {
         }
 
         VStack(spacing: 12) {
-            Button { showStoryTime = true } label: {
-                exploreRow("text.bubble.fill", "Story Time", "Answer a community prompt")
-            }.buttonStyle(.plain)
-
             Button { showStartSesh = true } label: {
                 if let live = session.liveSesh {
                     exploreRow("play.circle.fill", "Resume sesh",

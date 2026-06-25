@@ -16,12 +16,6 @@
 import SwiftUI
 import Combine
 
-/// Quick action to perform when the active session screen opens (driven by the
-/// home quick-action tiles while a sesh is live).
-enum SessionQuickAction {
-    case none, addSong, mood, end
-}
-
 struct SessionActiveView: View {
     @Environment(AppSession.self) private var session
     @Environment(StrainStore.self) private var strains
@@ -30,8 +24,6 @@ struct SessionActiveView: View {
 
     /// Called when the user ends the session (parent handles save flow).
     var onEnd: () -> Void = {}
-    /// An action to trigger as soon as the screen appears.
-    var initialAction: SessionQuickAction = .none
 
     @State private var now = Date()
     @State private var showSongSearch = false
@@ -52,15 +44,7 @@ struct SessionActiveView: View {
             }
         }
         .onReceive(ticker) { now = $0 }
-        .onAppear {
-            selectedType = live?.sessionType
-            // Honor a quick action passed from the home tiles.
-            switch initialAction {
-            case .addSong: DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showSongSearch = true }
-            case .end:     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { endSession() }
-            case .mood, .none: break
-            }
-        }
+        .onAppear { selectedType = live?.sessionType }
         .sheet(isPresented: $showSongSearch) { songSearchSheet }
         .fullScreenCover(isPresented: $showSummary, onDismiss: { dismiss() }) {
             if let d = summaryData {

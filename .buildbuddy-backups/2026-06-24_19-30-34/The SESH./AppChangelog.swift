@@ -46,26 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.15.0",
-            buildLabel: "June 2026",
-            headline: "Goals, prompts, jokes, and quicker seshes.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "target", tint: Palette.greenBright,
-                               title: "Goals",
-                               detail: "Set goals like smoke less or spend less and track them against your real data."),
-                ChangelogEntry(icon: "text.bubble.fill", tint: Palette.purple,
-                               title: "Story Time",
-                               detail: "Answer randomized community prompts across many categories."),
-                ChangelogEntry(icon: "bolt.fill", tint: Palette.gold,
-                               title: "Live quick actions",
-                               detail: "While seshing, the home tiles become Add Song, Update Mood, and End Session. A collapsible feed and one-tap Smoke Again round it out."),
-            ]),
-        ChangelogVersion(
             version: "25.14.0",
             buildLabel: "June 2026",
             headline: "One sesh at a time, fully in your control.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "play.circle", tint: Palette.greenBright,
                                title: "Apple Music controls",

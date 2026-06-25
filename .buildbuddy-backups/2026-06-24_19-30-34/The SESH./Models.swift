@@ -656,30 +656,6 @@ final class AppSession {
            let v = try? Self.jsonDecoder.decode([Purchase].self, from: data) {
             purchases = v
         }
-        loadGoals()
-    }
-
-    // MARK: Goals (#goals — "smoke less", "spend less", etc.)
-
-    var goals: [SeshGoal] = []
-    private let goalsKey = "ht.goals.v1"
-
-    func addGoal(_ g: SeshGoal) { goals.insert(g, at: 0); saveGoals() }
-    func updateGoal(_ g: SeshGoal) {
-        if let i = goals.firstIndex(where: { $0.id == g.id }) { goals[i] = g; saveGoals() }
-    }
-    func deleteGoal(_ g: SeshGoal) { goals.removeAll { $0.id == g.id }; saveGoals() }
-    private func saveGoals() {
-        if let data = try? Self.jsonEncoder.encode(goals) {
-            UserDefaults.standard.set(data, forKey: goalsKey)
-            CloudSync.set(data, forKey: goalsKey)
-        }
-    }
-    private func loadGoals() {
-        if let data = UserDefaults.standard.data(forKey: goalsKey),
-           let v = try? Self.jsonDecoder.decode([SeshGoal].self, from: data) {
-            goals = v
-        }
     }
 
     // MARK: Custom categories (#custom categories)

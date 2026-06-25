@@ -26,8 +26,6 @@ struct HomeView: View {
 
     @State private var friendPeek: SeshUser?
     @State private var showSessionScreen = false
-    @State private var feedCollapsed = false
-    @State private var quickAction: SessionQuickAction = .none
 
     // Button color pairs (soft fill + deep tint), built from the existing palette.
     private let rollFill = Palette.gold.opacity(0.16)
@@ -78,8 +76,8 @@ struct HomeView: View {
         .sheet(item: $friendPeek) { f in
             FriendSheet(user: f).presentationDetents([.medium])
         }
-        .fullScreenCover(isPresented: $showSessionScreen, onDismiss: { quickAction = .none }) {
-            SessionActiveView(onEnd: { onEndSesh() }, initialAction: quickAction)
+        .fullScreenCover(isPresented: $showSessionScreen) {
+            SessionActiveView(onEnd: { onEndSesh() })
         }
     }
 
@@ -115,65 +113,27 @@ struct HomeView: View {
     // MARK: Four primary buttons
 
     @ViewBuilder private var buttonGrid: some View {
-        if isLive {
-            liveQuickActions
-        } else {
-            VStack(spacing: 14) {
-                HStack(spacing: 14) {
-                    illustratedTile(title: "Roll Up", subtitle: "Spark something special",
-                                    icon: .rollUp, fill: rollFill, tint: rollTint) {
-                        Haptics.tap(); onStartSesh(.rollingUp)
-                    }
-                    illustratedTile(title: "Smoking", subtitle: "Blunt or joint",
-                                    icon: .smoking, fill: smokeFill, tint: smokeTint,
-                                    highlighted: isLive, badge: isLive ? "active now" : nil) {
-                        Haptics.tap(); onStartSesh(.smoking)
-                    }
-                }
-                HStack(spacing: 14) {
-                    illustratedTile(title: "High Thoughts", subtitle: "Let it flow",
-                                    icon: .highThoughts, fill: thoughtFill, tint: thoughtTint) {
-                        Haptics.tap(); onHighThought()
-                    }
-                    bongOrEndTile
-                }
-            }
-            .padding(.horizontal, 18).padding(.bottom, 18)
-        }
-    }
-
-    /// While a sesh is active, the start tiles are replaced by quick actions for
-    /// the live sesh: Add Song, Update Mood, and End Session (End lives only here
-    /// and on the active screen). Tapping these opens the active screen, which
-    /// hosts the song search, mood chips, and the end-and-summary flow.
-    @ViewBuilder private var liveQuickActions: some View {
         VStack(spacing: 14) {
             HStack(spacing: 14) {
-                quickActionTile("Add Song", "music.note", Palette.greenBright) {
-                    quickAction = .addSong; showSessionScreen = true
+                illustratedTile(title: "Roll Up", subtitle: "Spark something special",
+                                icon: .rollUp, fill: rollFill, tint: rollTint) {
+                    Haptics.tap(); onStartSesh(.rollingUp)
                 }
-                quickActionTile("Update Mood", "face.smiling", Palette.gold) {
-                    quickAction = .mood; showSessionScreen = true
+                illustratedTile(title: "Smoking", subtitle: "Blunt or joint",
+                                icon: .smoking, fill: smokeFill, tint: smokeTint,
+                                highlighted: isLive, badge: isLive ? "active now" : nil) {
+                    Haptics.tap(); onStartSesh(.smoking)
                 }
             }
-            quickActionTile("End Session", "stop.circle", Palette.moodAngry, wide: true) {
-                quickAction = .end; showSessionScreen = true
+            HStack(spacing: 14) {
+                illustratedTile(title: "High Thoughts", subtitle: "Let it flow",
+                                icon: .highThoughts, fill: thoughtFill, tint: thoughtTint) {
+                    Haptics.tap(); onHighThought()
+                }
+                bongOrEndTile
             }
         }
         .padding(.horizontal, 18).padding(.bottom, 18)
-    }
-
-    private func quickActionTile(_ title: String, _ icon: String, _ tint: Color, wide: Bool = false, action: @escaping () -> Void) -> some View {
-        Button { Haptics.tap(); action() } label: {
-            HStack(spacing: 10) {
-                Image(systemName: icon).font(.system(size: 20)).foregroundStyle(tint)
-                Text(title).font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
-            }
-            .frame(maxWidth: .infinity).padding(.vertical, wide ? 18 : 22)
-            .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-            .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(tint.opacity(0.4), lineWidth: 1))
-        }
-        .buttonStyle(.plain)
     }
 
     /// Fourth tile: a Bong Rip start action when idle. While a sesh is live it
@@ -266,36 +226,26 @@ struct HomeView: View {
     // MARK: Social feed
 
     @ViewBuilder private var feedSection: some View {
-        Button { withAnimation(.easeInOut(duration: 0.2)) { feedCollapsed.toggle() } } label: {
-            HStack {
-                Text("Around you")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Palette.textSecondary)
-                Image(systemName: feedCollapsed ? "chevron.right" : "chevron.down")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Palette.textTertiary)
-                Spacer()
-                HStack(spacing: 5) {
-                    Image(systemName: "flame.fill").font(.system(size: 12)).foregroundStyle(Palette.gold)
-                    Text("\(session.currentStreak)-day streak")
-                        .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
-                }
+        HStack {
+            Text("Around you")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Palette.textSecondary)
+            Spacer()
+            HStack(spacing: 5) {
+                Image(systemName: "flame.fill").font(.system(size: 12)).foregroundStyle(Palette.gold)
+                Text("\(session.currentStreak)-day streak")
+                    .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
             }
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
         .padding(.horizontal, 18).padding(.bottom, 10)
 
-        if !feedCollapsed {
-            VStack(spacing: 14) {
-                NowPlayingCard()
-                PresenceRow(onTapFriend: { friendPeek = $0 })
-                BroadcastStrip()
-                ActivityFeedCard()
-            }
-            .padding(.horizontal, 18).padding(.bottom, 18)
-            .transition(.opacity.combined(with: .move(edge: .top)))
+        VStack(spacing: 14) {
+            NowPlayingCard()
+            PresenceRow(onTapFriend: { friendPeek = $0 })
+            BroadcastStrip()
+            ActivityFeedCard()
         }
+        .padding(.horizontal, 18).padding(.bottom, 18)
     }
 
     // MARK: Footer tiles

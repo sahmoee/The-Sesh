@@ -393,7 +393,6 @@ struct StrainRow: View {
 
 struct StrainCatalogDetailView: View {
     @Environment(StrainStore.self) private var strains
-    @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
     let profile: StrainProfile
     @State private var selectedTerpene: TerpeneFact?
@@ -439,31 +438,6 @@ struct StrainCatalogDetailView: View {
                                     Text(summary).font(.system(size: 14)).foregroundStyle(Palette.text.opacity(0.9))
                                 }
                             }
-                        }
-
-                        // Smoke Again — quick re-sesh for a strain you've had before
-                        if !session.entries(forStrain: shown.name).isEmpty {
-                            Menu {
-                                Button { startLiveAgain(shown) } label: {
-                                    Label("Start a live sesh", systemImage: "play.circle")
-                                }
-                                Button { onLog(shown) } label: {
-                                    Label("Quick-log a sesh", systemImage: "square.and.pencil")
-                                }
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "arrow.clockwise.circle.fill").font(.system(size: 18)).foregroundStyle(Palette.onGreen).frame(width: 26)
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("Smoke Again").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.onGreen)
-                                        Text("You've sesh'd this \(session.entries(forStrain: shown.name).count)x").font(.system(size: 12)).foregroundStyle(Palette.onGreen.opacity(0.8))
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.down").font(.system(size: 13)).foregroundStyle(Palette.onGreen.opacity(0.8))
-                                }
-                                .padding(14)
-                                .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.greenBright))
-                            }
-                            .buttonStyle(.plain)
                         }
 
                         // Listen — the strain's soundtrack (mood playlists)
@@ -608,22 +582,6 @@ struct StrainCatalogDetailView: View {
                 TerpeneSheet(fact: fact).presentationDetents([.height(300), .medium])
             }
         }
-    }
-
-    private func startLiveAgain(_ strain: StrainProfile) {
-        // Begin a live sesh pre-filled with this strain.
-        let state = LiveSeshState(
-            startedAt: Date(),
-            stageRaw: SeshStage.allCases.first?.rawValue ?? "",
-            sessionTypeRaw: SessionType.relaxing.rawValue,
-            strainName: strain.name,
-            attachedThought: "",
-            rollFinalSeconds: nil,
-            rollMethod: "Joint",
-            invited: [])
-        session.saveLiveSesh(state)
-        Haptics.success()
-        dismiss()
     }
 
     private func infoPill(_ text: String, color: Color) -> some View {

@@ -100,14 +100,6 @@ struct ProfileView: View {
             NavigationLink { PersonalityProfileView().environment(session).navigationBarBackButtonHidden(true) } label: {
                 menuRow("person.fill.viewfinder", "Smoking Style")
             }.buttonStyle(.plain)
-            rowDivider
-            NavigationLink { GoalsView().environment(session).navigationBarBackButtonHidden(true) } label: {
-                menuRow("target", "Goals")
-            }.buttonStyle(.plain)
-            rowDivider
-            NavigationLink { JokesView().navigationBarBackButtonHidden(true) } label: {
-                menuRow("face.smiling", "Dad Jokes & Giggles")
-            }.buttonStyle(.plain)
         }
         .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
         .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
