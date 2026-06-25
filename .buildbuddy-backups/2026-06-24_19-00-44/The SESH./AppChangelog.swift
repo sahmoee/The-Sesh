@@ -46,26 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.14.0",
-            buildLabel: "June 2026",
-            headline: "One sesh at a time, fully in your control.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "play.circle", tint: Palette.greenBright,
-                               title: "Apple Music controls",
-                               detail: "Play, pause, and skip right from the active session screen."),
-                ChangelogEntry(icon: "record.circle", tint: Palette.gold,
-                               title: "Cleaner sessions",
-                               detail: "Only one sesh runs at a time, and it is ended only from the active screen."),
-                ChangelogEntry(icon: "paintbrush", tint: Palette.purple,
-                               title: "Live appearance",
-                               detail: "Theme and icon changes apply instantly, no need to leave the screen."),
-            ]),
-        ChangelogVersion(
             version: "25.13.0",
             buildLabel: "June 2026",
             headline: "Soundtracks for every strain.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "music.note.list", tint: Palette.greenBright,
                                title: "Strain soundtracks",

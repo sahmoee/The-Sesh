@@ -70,7 +70,8 @@ struct RootView: View {
     @State private var endSeshFromWidget = false
     /// When a start is requested while a sesh is live, stash the pending activity
     /// and show the "in progress" confirm dialog. Works for widget + in-app.
-    @State private var showSessionScreen = false
+    @State private var pendingStartActivity: StartActivity? = nil
+    @State private var showInProgressWarning = false
     /// If set, this activity starts once the current save screen is dismissed.
     @State private var startAfterSave: StartActivity? = nil
     /// Stashed chooser pick, applied after the chooser sheet dismisses.
@@ -80,14 +81,37 @@ struct RootView: View {
     /// If a sesh is already live, warn first; otherwise start fresh.
     private func requestStart(_ activity: StartActivity) {
         if session.liveSesh != nil {
-            // A sesh is already in progress: never start a second one and never
-            // offer to discard. Any start attempt routes to the active screen,
-            // which is the only place a sesh can be ended.
-            showSessionScreen = true
+            pendingStartActivity = activity
+            showInProgressWarning = true
         } else {
             chosenActivity = activity
             showStartSesh = true
         }
+    }
+    private func discardAndStart() {
+        guard let act = pendingStartActivity else { return }
+        session.clearLiveSesh(); LiveSeshActivityController.end(); social.setMyActivity(.idle)
+        pendingStartActivity = nil
+        chosenActivity = act
+        showStartSesh = true
+    }
+    private func saveOldThenStart() {
+        guard let act = pendingStartActivity else { return }
+        // Open the save screen for the in-progress sesh; the queued activity
+        // starts after the user finishes/skips saving (see fullScreenCover onDismiss).
+        startAfterSave = act
+        pendingStartActivity = nil
+        endSeshFromWidget = true   // reuse the "end -> save" path
+        showStartSesh = true
+    }
+
+    /// Message for the in-progress confirm dialog, naming the live sesh.
+    private var inProgressMessage: String {
+        if let s = session.liveSesh {
+            let what = s.strainName.isEmpty ? s.stage.rawValue.lowercased() : s.strainName
+            return "You have a \(what) sesh in progress. Save it or discard it before starting a new one?"
+        }
+        return "You have a sesh in progress. Save it or discard it before starting a new one?"
     }
     @State private var showCompare = false
     @State private var logPrefill: StrainProfile?
@@ -106,9 +130,9 @@ struct RootView: View {
         case .openChooser:
             showActivityChooser = true
         case .endSesh:
-            // Per the session rule, a sesh can only be ended from the active
-            // screen — route there instead of an inline end/save.
-            if session.liveSesh != nil { showSessionScreen = true }
+            // End the live sesh and open the (skippable) save screen.
+            endSeshFromWidget = true
+            showStartSesh = true
         case .logSesh:
             selection = .sessions
         case .quickThought:
@@ -122,7 +146,7 @@ struct RootView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             TabBar(selection: $selection, onSelect: { selectTab($0) })
         }
-        .id("\(theme.choice.rawValue)-\(theme.iconStyle.rawValue)")
+        .id(theme.choice)
         .preferredColorScheme(theme.choice.isDark ? .dark : .light)
         .toast($toastMessage)
         .notificationBanner(onTap: { _ in showInbox = true })
@@ -170,12 +194,10 @@ struct RootView: View {
                 .environment(session).environment(strains).environment(social)
                 .onAppear { entryCountBefore = session.entries.count }
         }
-        .fullScreenCover(isPresented: $showSessionScreen) {
-            SessionActiveView(onEnd: {
-                // End clears live state; the active screen presents its own summary.
-                social.setMyActivity(.idle)
-            })
-            .environment(session).environment(strains).environment(social)
+        .confirmationDialog(inProgressMessage, isPresented: $showInProgressWarning, titleVisibility: .visible) {
+            Button("Save & start new") { saveOldThenStart() }
+            Button("Discard & start new", role: .destructive) { discardAndStart() }
+            Button("Cancel", role: .cancel) { pendingStartActivity = nil }
         }
         .sheet(isPresented: $showActivityChooser, onDismiss: { onChooserDismiss() }) {
             StartSeshChooser(onPick: { act in

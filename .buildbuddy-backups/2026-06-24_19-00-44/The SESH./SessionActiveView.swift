@@ -235,7 +235,6 @@ struct SessionActiveView: View {
             // prompt to add one.
             if scrobbler.current?.isCurrent() == true {
                 NowPlayingCard()
-                transportControls
             } else {
                 emptyNowPlaying
             }
@@ -251,26 +250,6 @@ struct SessionActiveView: View {
             }
             .buttonStyle(.plain)
         }
-    }
-
-    /// Apple Music transport controls (previous / play-pause / next), driving the
-    /// system music player so playback is controllable from inside the app.
-    private var transportControls: some View {
-        HStack(spacing: 28) {
-            Button { scrobbler.skipToPrevious(); Haptics.tap() } label: {
-                Image(systemName: "backward.fill").font(.system(size: 20)).foregroundStyle(Palette.text)
-            }
-            Button { scrobbler.togglePlayPause(); Haptics.tap() } label: {
-                Image(systemName: scrobbler.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.system(size: 46)).foregroundStyle(Palette.greenBright)
-            }
-            Button { scrobbler.skipToNext(); Haptics.tap() } label: {
-                Image(systemName: "forward.fill").font(.system(size: 20)).foregroundStyle(Palette.text)
-            }
-        }
-        .buttonStyle(.plain)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
     }
 
     private var emptyNowPlaying: some View {

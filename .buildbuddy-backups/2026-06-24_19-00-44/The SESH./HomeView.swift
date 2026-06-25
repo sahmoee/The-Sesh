@@ -136,22 +136,22 @@ struct HomeView: View {
         .padding(.horizontal, 18).padding(.bottom, 18)
     }
 
-    /// Fourth tile: a Bong Rip start action when idle. While a sesh is live it
-    /// becomes a View Session tile that opens the active screen — which is the
-    /// only place a sesh can be ended.
+    /// Fourth tile: a Bong Rip start action when idle; becomes End Session while a
+    /// sesh is live so ending stays one tap away. (When the dedicated Session
+    /// screen ships, End Session moves there and this can be Bong Rip always.)
     @ViewBuilder private var bongOrEndTile: some View {
         if isLive {
             illustratedTile(
-                title: "View Session",
-                subtitle: "Tap to manage your sesh",
+                title: "End Session",
+                subtitle: "See you later, \(session.userName)",
                 icon: .bongRip,
                 fill: endFill,
                 tint: endTint
             ) {
-                Haptics.tap(); showSessionScreen = true
+                Haptics.warning(); onEndSesh()
             }
-            .accessibilityLabel("View Session")
-            .accessibilityHint("Opens your active sesh, where you can end it")
+            .accessibilityLabel("End Session")
+            .accessibilityHint("Ends and saves your current sesh")
         } else {
             illustratedTile(
                 title: "Bong Rip",

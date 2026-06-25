@@ -44,27 +44,6 @@ final class ScrobbleStore {
     private var appleObserver: NSObjectProtocol?
     private let player = MPMusicPlayerController.systemMusicPlayer
 
-    // MARK: Apple Music playback control
-    // The system music player controls Apple Music playback directly from the
-    // app. These drive the in-app transport buttons.
-
-    /// Whether the system Apple Music player is currently playing.
-    var isPlaying: Bool { player.playbackState == .playing }
-
-    /// Toggle play/pause on the system Apple Music player.
-    func togglePlayPause() {
-        if player.playbackState == .playing { player.pause() } else { player.play() }
-    }
-
-    func playMusic() { player.play() }
-    func pauseMusic() { player.pause() }
-    func skipToNext() { player.skipToNextItem() }
-    func skipToPrevious() {
-        // Tapping previous restarts the current track first, like most players;
-        // a quick double-tap then goes to the prior track.
-        player.skipToPreviousItem()
-    }
-
     // MARK: Lifecycle
 
     func configure(identity: SeshIdentity?) {
