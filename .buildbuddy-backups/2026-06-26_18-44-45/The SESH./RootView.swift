@@ -90,10 +90,6 @@ struct RootView: View {
         }
     }
     @State private var showCompare = false
-    @State private var showAddPurchase = false
-    @State private var showFriends = false
-    @State private var showBadges = false
-    @State private var showAnalytics = false
     @State private var logPrefill: StrainProfile?
     @State private var toastMessage: String?
     @State private var entryCountBefore = 0
@@ -117,26 +113,6 @@ struct RootView: View {
             selection = .track
         case .quickThought:
             showQuickThought = true
-        }
-    }
-
-    /// Routes a Home Quick Action to its destination.
-    private func routeQuickAction(_ action: HomeQuickAction) {
-        switch action {
-        case .compareStrains: showCompare = true
-        case .addPurchase:    showAddPurchase = true
-        case .logSession:     showStartSesh = true
-        case .logThought:     showQuickThought = true
-        case .friends:        showFriends = true
-        case .music:          selection = .home   // music hub lands on Home (step 6)
-        case .startCyph:      selection = .community
-        case .scanProduct:    showStrains = true  // scan flow not built yet -> strains
-        case .viewBadges:     showBadges = true
-        case .setStatus:      showActivityChooser = true
-        case .analytics:      showAnalytics = true
-        case .stash:          showStash = true
-        case .lounge:         showLounge = true
-        case .strains:        selection = .explore
         }
     }
 
@@ -215,18 +191,6 @@ struct RootView: View {
         .sheet(isPresented: $showCompare) {
             CompareStrainsView().environment(session).environment(strains)
         }
-        .sheet(isPresented: $showAddPurchase) {
-            AddPurchaseView().environment(session)
-        }
-        .fullScreenCover(isPresented: $showFriends) {
-            FriendsView().environment(social).environment(session)
-        }
-        .fullScreenCover(isPresented: $showBadges) {
-            BadgesView().environment(session)
-        }
-        .fullScreenCover(isPresented: $showAnalytics) {
-            StatsView().environment(session)
-        }
     }
 
     @ViewBuilder private var tabContent: some View {
@@ -249,8 +213,7 @@ struct RootView: View {
                     onOpenLounge: { showLounge = true },
                     onOpenStrains: { showStrains = true },
                     onMenu: { showActivityChooser = true },
-                    onOpenInbox: { showInbox = true },
-                    onQuickAction: { routeQuickAction($0) }
+                    onOpenInbox: { showInbox = true }
                 )
             }
             tabView(.community) { JourneyView() }

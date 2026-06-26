@@ -23,8 +23,6 @@ struct HomeView: View {
     var onOpenStrains: () -> Void = {}
     var onMenu: () -> Void = {}
     var onOpenInbox: () -> Void = {}
-    /// Routes a tapped Home Quick Action to its destination (handled by RootView).
-    var onQuickAction: (HomeQuickAction) -> Void = { _ in }
 
     @State private var friendPeek: SeshUser?
     @State private var showSessionScreen = false
@@ -71,11 +69,8 @@ struct HomeView: View {
                         .buttonStyle(.plain)
                     }
                     buttonGrid
-                    if !isLive {
-                        HomeQuickActionsRow(onAction: { onQuickAction($0) })
-                            .padding(.bottom, 18)
-                    }
                     feedSection
+                    footerTiles
                 }
                 .padding(.bottom, 96)
             }

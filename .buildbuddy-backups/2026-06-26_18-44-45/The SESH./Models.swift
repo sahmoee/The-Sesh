@@ -680,35 +680,6 @@ final class AppSession {
            let v = try? Self.jsonDecoder.decode([SeshGoal].self, from: data) {
             goals = v
         }
-        loadQuickActions()
-    }
-
-    // MARK: Home Quick Actions (personalizable, ordered, uncapped)
-
-    var quickActions: [HomeQuickAction] = HomeQuickAction.defaults
-    private let quickActionsKey = "ht.quickActions.v1"
-
-    func addQuickAction(_ a: HomeQuickAction) {
-        guard !quickActions.contains(a) else { return }
-        quickActions.append(a); saveQuickActions()
-    }
-    func removeQuickActions(at offsets: IndexSet) {
-        quickActions.remove(atOffsets: offsets); saveQuickActions()
-    }
-    func moveQuickAction(from: IndexSet, to: Int) {
-        quickActions.move(fromOffsets: from, toOffset: to); saveQuickActions()
-    }
-    private func saveQuickActions() {
-        if let data = try? Self.jsonEncoder.encode(quickActions) {
-            UserDefaults.standard.set(data, forKey: quickActionsKey)
-            CloudSync.set(data, forKey: quickActionsKey)
-        }
-    }
-    private func loadQuickActions() {
-        if let data = UserDefaults.standard.data(forKey: quickActionsKey),
-           let v = try? Self.jsonDecoder.decode([HomeQuickAction].self, from: data) {
-            quickActions = v
-        }
     }
 
     // MARK: Custom categories (#custom categories)

@@ -46,20 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.21.0",
-            buildLabel: "June 2026",
-            headline: "Your Home, your shortcuts.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "slider.horizontal.3", tint: Palette.greenBright,
-                               title: "Quick Actions",
-                               detail: "Home now has personalizable Quick Actions. Tap Edit to choose which actions appear, reorder them, and add as many as you want."),
-            ]),
-        ChangelogVersion(
             version: "25.20.0",
             buildLabel: "June 2026",
             headline: "Make it yours.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "paintbrush.fill", tint: Palette.greenBright,
                                title: "Appearance",
