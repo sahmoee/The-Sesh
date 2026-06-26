@@ -30,36 +30,6 @@ enum SeshIcon {
     case leaf          // generic cannabis leaf (feed)
     case blunt         // feed: smoking
     case bong          // feed: bong
-    // Expanded icon pack (vintage / midnight / symbols variants supplied as
-    // <name>_vintage, <name>_midnight, <name>_symbols assets).
-    case compareStrains
-    case addPurchase
-    case logSession
-    case logThought
-    case friends
-    case music
-    case startCyph
-    case scanProduct
-    case viewBadges
-    case setStatus
-
-    /// Icons from the expanded pack resolve to <name>_<style> assets; the
-    /// original eight use the legacy _tile / _midnight naming.
-    var packBaseName: String? {
-        switch self {
-        case .compareStrains: return "compare_strains"
-        case .addPurchase:    return "add_purchase"
-        case .logSession:     return "log_session"
-        case .logThought:     return "log_thought"
-        case .friends:        return "friends"
-        case .music:          return "music"
-        case .startCyph:      return "start_cyph"
-        case .scanProduct:    return "scan_product"
-        case .viewBadges:     return "view_badges"
-        case .setStatus:      return "set_status"
-        default:              return nil
-        }
-    }
 }
 
 enum IconStyle: String, CaseIterable, Identifiable {
@@ -72,15 +42,7 @@ enum IconStyle: String, CaseIterable, Identifiable {
         switch self {
         case .apothecary: return "Illustrated · Vintage"
         case .midnight:   return "Illustrated · Midnight"
-        case .sfSymbols:  return "Minimal"
-        }
-    }
-    /// A short blurb shown under the name in the icon-style picker.
-    var subtitle: String {
-        switch self {
-        case .apothecary: return "Warm, hand-drawn apothecary art"
-        case .midnight:   return "Dark, neon-lit illustrations"
-        case .sfSymbols:  return "Clean, simple system glyphs"
+        case .sfSymbols:  return "Symbols"
         }
     }
 
@@ -93,14 +55,6 @@ enum IconStyle: String, CaseIterable, Identifiable {
     /// style. For .midnight we try a "_midnight" suffixed asset and the caller
     /// falls back to the apothecary name if it's missing.
     func assetName(for icon: SeshIcon) -> String {
-        // Expanded pack icons use <name>_vintage / _midnight / _symbols.
-        if let pack = icon.packBaseName {
-            switch self {
-            case .apothecary: return pack + "_vintage"
-            case .midnight:   return pack + "_midnight"
-            case .sfSymbols:  return pack + "_symbols"
-            }
-        }
         let base = Self.baseAsset(icon)
         switch self {
         case .midnight: return base + "_midnight"
@@ -110,8 +64,6 @@ enum IconStyle: String, CaseIterable, Identifiable {
 
     /// The base (apothecary) asset name — also the fallback for midnight.
     static func baseAsset(_ icon: SeshIcon) -> String {
-        // Expanded pack icons fall back to their vintage art.
-        if let pack = icon.packBaseName { return pack + "_vintage" }
         switch icon {
         case .rollUp:       return "roll_up_tile"
         case .smoking:      return "smoking_tile"
@@ -121,31 +73,20 @@ enum IconStyle: String, CaseIterable, Identifiable {
         case .leaf:         return "icon_leaf"
         case .blunt:        return "icon_blunt"
         case .bong:         return "icon_bong"
-        default:            return "icon_leaf"   // safe default
         }
     }
 
     /// The SF Symbol name for a logical icon (used in .sfSymbols style).
     static func symbolName(_ icon: SeshIcon) -> String {
         switch icon {
-        case .rollUp:         return "flame.fill"
-        case .smoking:        return "smoke.fill"
-        case .bongRip:        return "humidity.fill"
-        case .highThoughts:   return "brain.head.profile"
-        case .moon:           return "moon.fill"
-        case .leaf:           return "leaf.fill"
-        case .blunt:          return "smoke.fill"
-        case .bong:           return "humidity.fill"
-        case .compareStrains: return "magnifyingglass"
-        case .addPurchase:    return "bag.badge.plus"
-        case .logSession:     return "book.closed.fill"
-        case .logThought:     return "book.fill"
-        case .friends:        return "person.2.fill"
-        case .music:          return "music.note"
-        case .startCyph:      return "flame.fill"
-        case .scanProduct:    return "viewfinder"
-        case .viewBadges:     return "rosette"
-        case .setStatus:      return "moon.stars.fill"
+        case .rollUp:       return "flame.fill"
+        case .smoking:      return "smoke.fill"
+        case .bongRip:      return "humidity.fill"
+        case .highThoughts: return "brain.head.profile"
+        case .moon:         return "moon.fill"
+        case .leaf:         return "leaf.fill"
+        case .blunt:        return "smoke.fill"
+        case .bong:         return "humidity.fill"
         }
     }
 }
@@ -162,16 +103,10 @@ struct SeshIconView: View {
     var body: some View {
         switch theme.iconStyle {
         case .sfSymbols:
-            // Pack icons ship a dedicated "_symbols" illustration; prefer it.
-            // The original icons use a true SF Symbol.
-            if let pack = icon.packBaseName, UIImage(named: pack + "_symbols") != nil {
-                Image(pack + "_symbols").resizable().scaledToFit().frame(height: size)
-            } else {
-                Image(systemName: IconStyle.symbolName(icon))
-                    .font(.system(size: size * 0.7, weight: .regular))
-                    .foregroundStyle(symbolColor ?? Palette.text)
-                    .frame(height: size)
-            }
+            Image(systemName: IconStyle.symbolName(icon))
+                .font(.system(size: size * 0.7, weight: .regular))
+                .foregroundStyle(symbolColor ?? Palette.text)
+                .frame(height: size)
         case .apothecary, .midnight:
             illustrated
         }

@@ -213,27 +213,13 @@ struct ProfileSettingsView: View {
 
                         Divider().overlay(Palette.stroke).padding(.vertical, 4)
 
-                        // Appearance — theme + icon style now live on their own page.
-                        NavigationLink {
-                            AppearanceView().navigationBarBackButtonHidden(true)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "paintbrush.fill")
-                                    .font(.system(size: 16)).foregroundStyle(Palette.greenBright).frame(width: 26)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Appearance").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
-                                    Text("Theme · \(theme.choice.label), Icons · \(theme.iconStyle.label)")
-                                        .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
-                                        .lineLimit(1)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
-                            }
-                            .padding(12)
-                            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-                        }
-                        .buttonStyle(.plain)
+                        // Appearance / theme switcher
+                        themePicker
+
+                        Divider().overlay(Palette.stroke).padding(.vertical, 4)
+
+                        // Icon / art style (illustrations vs SF Symbols)
+                        iconStylePicker
 
                         Divider().overlay(Palette.stroke).padding(.vertical, 4)
 
@@ -360,6 +346,115 @@ struct ProfileSettingsView: View {
         }
     }
 
+    // Appearance picker with live swatches for each theme.
+    private var themePicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            FieldLabel(text: "Appearance")
+            Text("Calming. Personal. Elevated. Your sesh, your story.")
+                .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                ForEach(ThemeChoice.allCases) { choice in
+                    Button {
+                        theme.choice = choice; Haptics.selection()
+                    } label: {
+                        VStack(spacing: 7) {
+                            // mini preview using that theme's literal palette
+                            ZStack {
+                                RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                                    .fill(choice.palette.bgTop)
+                                VStack(spacing: 5) {
+                                    RoundedRectangle(cornerRadius: 4).fill(choice.palette.card).frame(height: 16)
+                                        .overlay(
+                                            HStack(spacing: 3) {
+                                                RoundedRectangle(cornerRadius: 2).fill(choice.palette.text.opacity(0.8)).frame(width: 22, height: 4)
+                                                Spacer()
+                                            }.padding(.horizontal, 4)
+                                        )
+                                    HStack(spacing: 4) {
+                                        Circle().fill(choice.palette.green).frame(width: 11, height: 11)
+                                        Circle().fill(choice.palette.gold).frame(width: 11, height: 11)
+                                        Circle().fill(choice.palette.purple).frame(width: 11, height: 11)
+                                        Circle().fill(choice.palette.moodAngry).frame(width: 11, height: 11)
+                                    }
+                                }
+                                .padding(8)
+                            }
+                            .frame(height: 72)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                                    .stroke(theme.choice == choice ? Palette.gold : Palette.stroke,
+                                            lineWidth: theme.choice == choice ? 2 : 1)
+                            )
+                            HStack(spacing: 4) {
+                                if theme.choice == choice {
+                                    Image(systemName: "checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(Palette.gold)
+                                }
+                                Text(choice.label).font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(theme.choice == choice ? Palette.text : Palette.textSecondary)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    /// Picks the icon/art style (vintage illustrations, midnight illustrations,
+    /// or SF Symbols) — independent of the color theme above.
+    private var iconStylePicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            FieldLabel(text: "Icon Style")
+            Text("How actions and avatars are drawn.")
+                .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+            VStack(spacing: 8) {
+                ForEach(IconStyle.allCases) { style in
+                    Button {
+                        theme.iconStyle = style; Haptics.selection()
+                    } label: {
+                        HStack(spacing: 12) {
+                            iconStylePreview(style)
+                            Text(style.label)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(Palette.text)
+                            Spacer()
+                            if theme.iconStyle == style {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 16)).foregroundStyle(Palette.greenBright)
+                            } else {
+                                Image(systemName: "circle")
+                                    .font(.system(size: 16)).foregroundStyle(Palette.textTertiary)
+                            }
+                        }
+                        .padding(12)
+                        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+                        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                            .stroke(theme.iconStyle == style ? Palette.greenBright : Palette.stroke,
+                                    lineWidth: theme.iconStyle == style ? 2 : 1))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    /// A tiny three-icon preview of a given icon style.
+    @ViewBuilder private func iconStylePreview(_ style: IconStyle) -> some View {
+        HStack(spacing: 4) {
+            ForEach([SeshIcon.rollUp, .bongRip, .leaf], id: \.self) { icon in
+                if style.usesSymbols {
+                    Image(systemName: IconStyle.symbolName(icon))
+                        .font(.system(size: 14)).foregroundStyle(Palette.greenBright)
+                        .frame(width: 22, height: 22)
+                } else {
+                    let name = style.assetName(for: icon)
+                    let resolved = UIImage(named: name) != nil ? name : IconStyle.baseAsset(icon)
+                    Image(resolved).resizable().scaledToFit().frame(width: 22, height: 22)
+                }
+            }
+        }
+        .frame(width: 86, alignment: .leading)
+    }
 }
 
 struct ExportView: View {

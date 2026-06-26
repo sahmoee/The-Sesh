@@ -188,17 +188,6 @@ enum ThemeChoice: String, CaseIterable, Identifiable {
         case .midnight:   return "Midnight"
         }
     }
-    /// A short personality blurb shown under the name in the theme picker.
-    var subtitle: String {
-        switch self {
-        case .midnight:   return "Bold, modern, neon-inspired"
-        case .elevated:   return "Bright, premium, minimal"
-        case .apothecary: return "Earthy, natural, dispensary-inspired"
-        case .olive:      return "Warm, organic, calming"
-        case .navy:       return "Cool, relaxed, understated"
-        case .rasta:      return "Vibrant, colorful, expressive"
-        }
-    }
     var palette: ThemePalette {
         switch self {
         case .olive:      return .olive
@@ -237,10 +226,8 @@ final class ThemeManager {
         let saved = UserDefaults.standard.string(forKey: "sesh.theme.v1")
         let initial = ThemeChoice(rawValue: saved ?? "apothecary") ?? .apothecary
         self.choice = initial
-        // Icon style default: Illustrated Midnight for NEW installs (no saved
-        // value). Existing users keep whatever they previously had.
         let savedIcon = UserDefaults.standard.string(forKey: "sesh.iconStyle.v1")
-        self.iconStyle = IconStyle(rawValue: savedIcon ?? "midnight") ?? .midnight
+        self.iconStyle = IconStyle(rawValue: savedIcon ?? "apothecary") ?? .apothecary
         ActiveTheme.current = initial.palette
         CloudSync.startObserving(keys: ["sesh.theme.v1", "sesh.iconStyle.v1"]) { [weak self] in
             if let saved = UserDefaults.standard.string(forKey: "sesh.theme.v1"),

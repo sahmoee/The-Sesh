@@ -46,20 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.20.0",
-            buildLabel: "June 2026",
-            headline: "Make it yours.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "paintbrush.fill", tint: Palette.greenBright,
-                               title: "Appearance",
-                               detail: "Theme and icon style now live on one Appearance page. Each theme has a personality, and the Symbols style is now called Minimal."),
-            ]),
-        ChangelogVersion(
             version: "25.19.0",
             buildLabel: "June 2026",
             headline: "A clearer way to get around.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "square.grid.2x2.fill", tint: Palette.greenBright,
                                title: "New navigation",
