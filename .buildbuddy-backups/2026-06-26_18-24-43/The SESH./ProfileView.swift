@@ -108,10 +108,6 @@ struct ProfileView: View {
             NavigationLink { JokesView().navigationBarBackButtonHidden(true) } label: {
                 menuRow("face.smiling", "Dad Jokes & Giggles")
             }.buttonStyle(.plain)
-            rowDivider
-            NavigationLink { ListenView().navigationBarBackButtonHidden(true) } label: {
-                menuRow("music.note", "Listen")
-            }.buttonStyle(.plain)
         }
         .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
         .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))

@@ -9,29 +9,29 @@
 import SwiftUI
 
 enum Tab: Int, CaseIterable {
-    // Order defines tab-bar order: Home · Community · Explore · Track · Me
-    case home, community, explore, track, me
+    // Order defines tab-bar order: Home · Sessions · Cyphs · Listen · Profile
+    case home, sessions, journey, listen, profile
 
     var title: String {
         switch self {
-        case .home:      return "Home"
-        case .community: return "Community"
-        case .explore:   return "Explore"
-        case .track:     return "Track"
-        case .me:        return "Me"
+        case .home:     return "Home"
+        case .sessions: return "Sessions"
+        case .journey:  return "Cyphs"
+        case .listen:   return "Listen"
+        case .profile:  return "Profile"
         }
     }
     var symbol: String {
         switch self {
-        case .home:      return "house"
-        case .community: return "person.2"
-        case .explore:   return "leaf"
-        case .track:     return "chart.bar"
-        case .me:        return "person.crop.circle"
+        case .home:     return "house"
+        case .sessions: return "doc.text"
+        case .journey:  return "smoke"
+        case .listen:   return "music.note"
+        case .profile:  return "person.crop.circle"
         }
     }
     /// Symbols without a clean ".fill" variant get symbolVariant instead.
-    var fillable: Bool { true }
+    var fillable: Bool { self != .journey }
 }
 
 struct RootView: View {
@@ -110,7 +110,7 @@ struct RootView: View {
             // screen — route there instead of an inline end/save.
             if session.liveSesh != nil { showSessionScreen = true }
         case .logSesh:
-            selection = .track
+            selection = .sessions
         case .quickThought:
             showQuickThought = true
         }
@@ -216,15 +216,10 @@ struct RootView: View {
                     onOpenInbox: { showInbox = true }
                 )
             }
-            tabView(.community) { JourneyView() }
-            tabView(.explore) {
-                StrainLibraryView(onLog: { strain in
-                    logPrefill = strain
-                    showLog = true
-                })
-            }
-            tabView(.track) { JournalView() }
-            tabView(.me) { ProfileView() }
+            tabView(.sessions) { JournalView() }
+            tabView(.listen) { ListenView() }
+            tabView(.journey) { JourneyView() }
+            tabView(.profile) { ProfileView() }
         }
     }
 

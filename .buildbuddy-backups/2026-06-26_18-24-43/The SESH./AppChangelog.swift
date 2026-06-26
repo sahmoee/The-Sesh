@@ -46,30 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.19.0",
-            buildLabel: "June 2026",
-            headline: "A clearer way to get around.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "square.grid.2x2.fill", tint: Palette.greenBright,
-                               title: "New navigation",
-                               detail: "The tabs are now Home, Community, Explore, Track, and Me. Each is a hub for a part of the app. Cyphs lives in Community and your sessions live in Track."),
-            ]),
-        ChangelogVersion(
-            version: "25.18.0",
-            buildLabel: "June 2026",
-            headline: "A bigger icon library.",
-            isLatest: false,
-            entries: [
-                ChangelogEntry(icon: "square.grid.3x3.fill", tint: Palette.greenBright,
-                               title: "New icon art",
-                               detail: "Added vintage, midnight, and symbols art for ten more actions like Compare Strains, Friends, Badges, and Scan Product."),
-            ]),
-        ChangelogVersion(
             version: "25.17.0",
             buildLabel: "June 2026",
             headline: "Blunts join the lineup.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "smoke.fill", tint: Palette.greenBright,
                                title: "Blunt method",
