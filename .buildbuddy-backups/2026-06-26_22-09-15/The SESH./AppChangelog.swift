@@ -46,20 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.26.0",
-            buildLabel: "June 2026",
-            headline: "Ending a sesh actually ends it.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "checkmark.circle.fill", tint: Palette.greenBright,
-                               title: "Sesh ending fixed",
-                               detail: "Ending a sesh now clears it for good, so you no longer reopen the app to find a sesh still running. A long-abandoned sesh also clears itself automatically."),
-            ]),
-        ChangelogVersion(
             version: "25.25.1",
             buildLabel: "June 2026",
             headline: "Quicker rips, cleaner menus.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "humidity.fill", tint: Palette.greenBright,
                                title: "Instant Bong Rip",

@@ -353,10 +353,7 @@ struct SessionActiveView: View {
                 moodLabel: selectedType.map { displayMood(for: $0) } ?? "Relaxed")
         }
         onEnd()
-        // Use clearLiveSesh() so the persisted copy is removed too; a bare
-        // assignment to nil leaves the UserDefaults key, which would restore the
-        // sesh on next launch.
-        session.clearLiveSesh()
+        session.liveSesh = nil
         showSummary = true
     }
 

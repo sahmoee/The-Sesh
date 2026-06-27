@@ -883,15 +883,7 @@ final class AppSession {
     private func loadLiveSesh() {
         if let data = UserDefaults.standard.data(forKey: liveSeshKey),
            let v = try? Self.jsonDecoder.decode(LiveSeshState.self, from: data) {
-            // Safety net: a sesh that's been "active" for an implausibly long time
-            // (e.g. the app was killed mid-sesh and never ended) is treated as
-            // abandoned and cleared, so it doesn't linger across launches forever.
-            if Date().timeIntervalSince(v.startedAt) > 12 * 60 * 60 {
-                UserDefaults.standard.removeObject(forKey: liveSeshKey)
-                liveSesh = nil
-            } else {
-                liveSesh = v
-            }
+            liveSesh = v
         }
     }
 
