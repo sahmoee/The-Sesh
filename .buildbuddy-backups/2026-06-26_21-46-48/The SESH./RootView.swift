@@ -8,19 +8,6 @@
 
 import SwiftUI
 
-/// Quick Action destinations presented as sheets (consolidated so RootView keeps
-/// a single sheet modifier for them, rather than many booleans that can collide).
-enum QuickActionSheet: String, Identifiable {
-    case compare, addPurchase
-    var id: String { rawValue }
-}
-
-/// Quick Action destinations presented full-screen.
-enum QuickActionCover: String, Identifiable {
-    case friends, badges, analytics
-    var id: String { rawValue }
-}
-
 enum Tab: Int, CaseIterable {
     // Order defines tab-bar order: Home · Community · Explore · Track · Me
     case home, community, explore, track, me
@@ -102,8 +89,11 @@ struct RootView: View {
             showStartSesh = true
         }
     }
-    @State private var quickSheet: QuickActionSheet?
-    @State private var quickCover: QuickActionCover?
+    @State private var showCompare = false
+    @State private var showAddPurchase = false
+    @State private var showFriends = false
+    @State private var showBadges = false
+    @State private var showAnalytics = false
     @State private var logPrefill: StrainProfile?
     @State private var toastMessage: String?
     @State private var entryCountBefore = 0
@@ -133,17 +123,17 @@ struct RootView: View {
     /// Routes a Home Quick Action to its destination.
     private func routeQuickAction(_ action: HomeQuickAction) {
         switch action {
-        case .compareStrains: quickSheet = .compare
-        case .addPurchase:    quickSheet = .addPurchase
+        case .compareStrains: showCompare = true
+        case .addPurchase:    showAddPurchase = true
         case .logSession:     showStartSesh = true
         case .logThought:     showQuickThought = true
-        case .friends:        quickCover = .friends
+        case .friends:        showFriends = true
         case .music:          selection = .home   // music hub lands on Home (step 6)
         case .startCyph:      selection = .community
         case .scanProduct:    showStrains = true  // scan flow not built yet -> strains
-        case .viewBadges:     quickCover = .badges
+        case .viewBadges:     showBadges = true
         case .setStatus:      showActivityChooser = true
-        case .analytics:      quickCover = .analytics
+        case .analytics:      showAnalytics = true
         case .stash:          showStash = true
         case .lounge:         showLounge = true
         case .strains:        selection = .explore
@@ -223,23 +213,20 @@ struct RootView: View {
         .onOpenURL { url in
             handleDeepLink(url)
         }
-        .sheet(item: $quickSheet) { which in
-            switch which {
-            case .compare:
-                CompareStrainsView().environment(session).environment(strains)
-            case .addPurchase:
-                AddPurchaseView().environment(session).environment(strains)
-            }
+        .sheet(isPresented: $showCompare) {
+            CompareStrainsView().environment(session).environment(strains)
         }
-        .fullScreenCover(item: $quickCover) { which in
-            switch which {
-            case .friends:
-                FriendsView().environment(social).environment(session)
-            case .badges:
-                BadgesView().environment(session)
-            case .analytics:
-                StatsView().environment(session)
-            }
+        .sheet(isPresented: $showAddPurchase) {
+            AddPurchaseView().environment(session).environment(strains)
+        }
+        .fullScreenCover(isPresented: $showFriends) {
+            FriendsView().environment(social).environment(session)
+        }
+        .fullScreenCover(isPresented: $showBadges) {
+            BadgesView().environment(session)
+        }
+        .fullScreenCover(isPresented: $showAnalytics) {
+            StatsView().environment(session)
         }
     }
 
