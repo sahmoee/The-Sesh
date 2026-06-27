@@ -709,35 +709,6 @@ final class AppSession {
            let v = try? Self.jsonDecoder.decode([HomeQuickAction].self, from: data) {
             quickActions = v
         }
-        loadSessionTools()
-    }
-
-    // MARK: Session Tools (in-sesh, personalizable, separate from Quick Actions)
-
-    var sessionTools: [SessionTool] = SessionTool.defaults
-    private let sessionToolsKey = "ht.sessionTools.v1"
-
-    func addSessionTool(_ t: SessionTool) {
-        guard !sessionTools.contains(t) else { return }
-        sessionTools.append(t); saveSessionTools()
-    }
-    func removeSessionTools(at offsets: IndexSet) {
-        sessionTools.remove(atOffsets: offsets); saveSessionTools()
-    }
-    func moveSessionTool(from: IndexSet, to: Int) {
-        sessionTools.move(fromOffsets: from, toOffset: to); saveSessionTools()
-    }
-    private func saveSessionTools() {
-        if let data = try? Self.jsonEncoder.encode(sessionTools) {
-            UserDefaults.standard.set(data, forKey: sessionToolsKey)
-            CloudSync.set(data, forKey: sessionToolsKey)
-        }
-    }
-    private func loadSessionTools() {
-        if let data = UserDefaults.standard.data(forKey: sessionToolsKey),
-           let v = try? Self.jsonDecoder.decode([SessionTool].self, from: data) {
-            sessionTools = v
-        }
     }
 
     // MARK: Custom categories (#custom categories)

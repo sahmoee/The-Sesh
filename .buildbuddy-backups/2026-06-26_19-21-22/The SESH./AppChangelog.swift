@@ -46,20 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.22.0",
-            buildLabel: "June 2026",
-            headline: "Tools for the sesh.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "slider.horizontal.3", tint: Palette.purple,
-                               title: "Session Tools",
-                               detail: "While seshing, Home now shows personalizable Session Tools. Tap Edit to choose which tools appear and reorder them, separate from your Quick Actions."),
-            ]),
-        ChangelogVersion(
             version: "25.21.0",
             buildLabel: "June 2026",
             headline: "Your Home, your shortcuts.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "slider.horizontal.3", tint: Palette.greenBright,
                                title: "Quick Actions",

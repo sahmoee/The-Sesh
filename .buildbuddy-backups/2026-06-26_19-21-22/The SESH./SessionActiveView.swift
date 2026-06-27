@@ -19,7 +19,7 @@ import Combine
 /// Quick action to perform when the active session screen opens (driven by the
 /// home quick-action tiles while a sesh is live).
 enum SessionQuickAction {
-    case none, addSong, mood, logThought, end
+    case none, addSong, mood, end
 }
 
 struct SessionActiveView: View {
@@ -58,7 +58,7 @@ struct SessionActiveView: View {
             switch initialAction {
             case .addSong: DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showSongSearch = true }
             case .end:     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { endSession() }
-            case .mood, .logThought, .none: break
+            case .mood, .none: break
             }
         }
         .sheet(isPresented: $showSongSearch) { songSearchSheet }

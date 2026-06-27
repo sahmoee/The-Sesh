@@ -30,7 +30,6 @@ struct HomeView: View {
     @State private var showSessionScreen = false
     @State private var feedCollapsed = false
     @State private var quickAction: SessionQuickAction = .none
-    @State private var showToolsEditor = false
 
     // Button color pairs (soft fill + deep tint), built from the existing palette.
     private let rollFill = Palette.gold.opacity(0.16)
@@ -152,52 +151,32 @@ struct HomeView: View {
     /// the live sesh: Add Song, Update Mood, and End Session (End lives only here
     /// and on the active screen). Tapping these opens the active screen, which
     /// hosts the song search, mood chips, and the end-and-summary flow.
-    /// While a sesh is active, the start tiles are replaced by Session Tools —
-    /// a separate, personalizable set of in-sesh actions (titled "Session Tools"
-    /// vs the idle "Quick Actions"). Tapping a tool opens the active screen routed
-    /// to that action.
     @ViewBuilder private var liveQuickActions: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Session Tools")
-                    .font(.system(size: 17, weight: .bold)).foregroundStyle(Palette.text)
-                Spacer()
-                Button { showToolsEditor = true } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "slider.horizontal.3").font(.system(size: 12, weight: .semibold))
-                        Text("Edit").font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundStyle(Palette.greenBright)
+        VStack(spacing: 14) {
+            HStack(spacing: 14) {
+                quickActionTile("Add Song", "music.note", Palette.greenBright) {
+                    quickAction = .addSong; showSessionScreen = true
                 }
-                .buttonStyle(.plain)
+                quickActionTile("Update Mood", "face.smiling", Palette.gold) {
+                    quickAction = .mood; showSessionScreen = true
+                }
             }
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10),
-                                GridItem(.flexible(), spacing: 10),
-                                GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                ForEach(session.sessionTools) { tool in
-                    sessionToolTile(tool)
-                }
+            quickActionTile("End Session", "stop.circle", Palette.moodAngry, wide: true) {
+                quickAction = .end; showSessionScreen = true
             }
         }
         .padding(.horizontal, 18).padding(.bottom, 18)
-        .sheet(isPresented: $showToolsEditor) { SessionToolsEditor() }
     }
 
-    private func sessionToolTile(_ tool: SessionTool) -> some View {
-        Button {
-            Haptics.tap()
-            quickAction = tool.route
-            showSessionScreen = true
-        } label: {
-            VStack(spacing: 8) {
-                Image(systemName: tool.symbol).font(.system(size: 22)).foregroundStyle(tool.tint).frame(height: 28)
-                Text(tool.title)
-                    .font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.text)
-                    .multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.85)
+    private func quickActionTile(_ title: String, _ icon: String, _ tint: Color, wide: Bool = false, action: @escaping () -> Void) -> some View {
+        Button { Haptics.tap(); action() } label: {
+            HStack(spacing: 10) {
+                Image(systemName: icon).font(.system(size: 20)).foregroundStyle(tint)
+                Text(title).font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
             }
-            .frame(maxWidth: .infinity).padding(.vertical, 14)
+            .frame(maxWidth: .infinity).padding(.vertical, wide ? 18 : 22)
             .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-            .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(tool.tint.opacity(0.35), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(tint.opacity(0.4), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
