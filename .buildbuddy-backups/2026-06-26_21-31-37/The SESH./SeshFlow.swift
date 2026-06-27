@@ -51,7 +51,6 @@ enum SeshMethod: String, CaseIterable, Identifiable {
 struct StartSessionView: View {
     @Environment(StrainStore.self) private var strains
     @Environment(AppSession.self) private var session
-    @Environment(ScrobbleStore.self) private var scrobbler
     @Environment(\.dismiss) private var dismiss
 
     @State private var query = ""
@@ -243,18 +242,6 @@ struct StartSessionView: View {
             rollMethod: method.rawValue,
             invited: [])
         session.saveLiveSesh(state)
-        // Capture the currently-playing song with this strain, so the sesh builds
-        // the strain<->music history that powers stations and recommendations.
-        if let np = scrobbler.current {
-            session.recordSongPlay(StrainSongPlay(
-                strainName: name,
-                title: np.title,
-                artist: np.artist,
-                album: np.album,
-                artworkURL: np.artworkURL,
-                sourceRaw: np.source.rawValue,
-                sessionTypeRaw: state.sessionTypeRaw))
-        }
         Haptics.success()
         dismiss()
     }

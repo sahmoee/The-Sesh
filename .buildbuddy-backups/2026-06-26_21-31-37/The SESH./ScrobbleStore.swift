@@ -38,9 +38,6 @@ final class ScrobbleStore {
     /// Set by the app so new now-playing tracks feed auto-collecting playlists.
     weak var playlists: PlaylistStore?
 
-    /// Set by the app so songs played during a sesh are recorded with the strain.
-    weak var session: AppSession?
-
     private let api = SeshAPI()
     private var identity: SeshIdentity?
     private var spotifyPoll: Task<Void, Never>?
@@ -174,17 +171,7 @@ final class ScrobbleStore {
         current = np
         broadcastIfAllowed(np)
         // Feed auto-collecting playlists, but only on an actual song change.
-        if isNewSong {
-            playlists?.autoCollect(np)
-            // If a sesh is active, tie this song to the strain being smoked.
-            if let session, let live = session.liveSesh {
-                session.recordSongPlay(StrainSongPlay(
-                    strainName: live.strainName,
-                    title: np.title, artist: np.artist, album: np.album,
-                    artworkURL: np.artworkURL, sourceRaw: np.source.rawValue,
-                    sessionTypeRaw: live.sessionTypeRaw))
-            }
-        }
+        if isNewSong { playlists?.autoCollect(np) }
     }
 
     /// Broadcast the track to friends according to the user's settings.

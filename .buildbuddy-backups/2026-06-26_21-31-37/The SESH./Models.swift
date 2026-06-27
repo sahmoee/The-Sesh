@@ -738,7 +738,6 @@ final class AppSession {
            let v = try? Self.jsonDecoder.decode([SessionTool].self, from: data) {
             sessionTools = v
         }
-        loadSongPlays()
     }
 
     /// The date of the most recent logged sesh (entry), if any.
@@ -757,36 +756,6 @@ final class AppSession {
         let h = m / 60
         if h < 24 { return "\(h)h ago" }
         return "\(h / 24)d ago"
-    }
-
-    // MARK: Music memory (songs captured during seshes, tied to strains)
-
-    var songPlays: [StrainSongPlay] = []
-    private let songPlaysKey = "ht.songPlays.v1"
-
-    /// Record a song captured during a sesh, tied to the strain. De-dupes a rapid
-    /// repeat of the same song+strain within a couple minutes.
-    func recordSongPlay(_ play: StrainSongPlay) {
-        if let recent = songPlays.first,
-           recent.title == play.title, recent.artist == play.artist,
-           recent.strainName == play.strainName,
-           Date().timeIntervalSince(recent.date) < 120 {
-            return
-        }
-        songPlays.insert(play, at: 0)
-        saveSongPlays()
-    }
-    private func saveSongPlays() {
-        if let data = try? Self.jsonEncoder.encode(songPlays) {
-            UserDefaults.standard.set(data, forKey: songPlaysKey)
-            CloudSync.set(data, forKey: songPlaysKey)
-        }
-    }
-    private func loadSongPlays() {
-        if let data = UserDefaults.standard.data(forKey: songPlaysKey),
-           let v = try? Self.jsonDecoder.decode([StrainSongPlay].self, from: data) {
-            songPlays = v
-        }
     }
 
     // MARK: Custom categories (#custom categories)

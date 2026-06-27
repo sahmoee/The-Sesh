@@ -112,10 +112,6 @@ struct ProfileView: View {
             NavigationLink { ListenView().navigationBarBackButtonHidden(true) } label: {
                 menuRow("music.note", "Listen")
             }.buttonStyle(.plain)
-            rowDivider
-            NavigationLink { MusicIdentityView().navigationBarBackButtonHidden(true) } label: {
-                menuRow("waveform", "Music Identity")
-            }.buttonStyle(.plain)
         }
         .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
         .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))

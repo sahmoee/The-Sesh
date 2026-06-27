@@ -221,12 +221,6 @@ struct JournalView: View {
                 } label: {
                     Image(systemName: "arrow.up.arrow.down").font(.system(size: 16)).foregroundStyle(Palette.text)
                 }
-                NavigationLink {
-                    MusicMemoryView().navigationBarBackButtonHidden(true)
-                } label: {
-                    Image(systemName: "music.note.list").font(.system(size: 16)).foregroundStyle(Palette.text)
-                }
-                .accessibilityLabel("Music memory")
                 Button {
                     Haptics.tap(); showLogChooser = true
                 } label: {

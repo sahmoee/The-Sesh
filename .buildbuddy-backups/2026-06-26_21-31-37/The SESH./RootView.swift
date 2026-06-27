@@ -261,7 +261,7 @@ struct RootView: View {
                     showLog = true
                 })
             }
-            tabView(.track) { NavigationStack { JournalView() } }
+            tabView(.track) { JournalView() }
             tabView(.me) { ProfileView() }
         }
     }

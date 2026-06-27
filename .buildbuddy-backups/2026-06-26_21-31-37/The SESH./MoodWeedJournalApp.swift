@@ -57,7 +57,6 @@ struct SeshApp: App {
                 // music sources (Apple Music on-device and/or Spotify polling).
                 scrobbler.social = social
                 scrobbler.playlists = playlists
-                scrobbler.session = session
                 scrobbler.configure(identity: social.identitySnapshot)
                 spotify.configure(identity: social.identitySnapshot)
                 playlists.spotify = spotify
