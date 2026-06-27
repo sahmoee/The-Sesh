@@ -64,13 +64,12 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     header
                     if isLive {
-                        ActiveSeshCard(
-                            onExpand: { showSessionScreen = true },
-                            onLogThought: { quickAction = .logThought; showSessionScreen = true },
-                            onChangeMethod: { showSessionScreen = true },
-                            onEnd: { quickAction = .end; showSessionScreen = true })
-                            .padding(.horizontal, 18)
-                            .padding(.bottom, 16)
+                        Button { showSessionScreen = true } label: {
+                            CurrentStatusCard()
+                                .padding(.horizontal, 18)
+                                .padding(.bottom, 16)
+                        }
+                        .buttonStyle(.plain)
                     }
                     buttonGrid
                     if !isLive {

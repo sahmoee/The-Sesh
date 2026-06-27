@@ -46,20 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.25.0",
-            buildLabel: "June 2026",
-            headline: "Your sesh, front and center.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "flame.fill", tint: Palette.greenBright,
-                               title: "Active sesh card",
-                               detail: "While you're seshing, Home now leads with a rich card: the strain, its type and THC, a live timer, and quick Log Thought, Change, and End buttons."),
-            ]),
-        ChangelogVersion(
             version: "25.24.1",
             buildLabel: "June 2026",
             headline: "Smoother screens.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "rectangle.stack.fill", tint: Palette.greenBright,
                                title: "Reliability",
