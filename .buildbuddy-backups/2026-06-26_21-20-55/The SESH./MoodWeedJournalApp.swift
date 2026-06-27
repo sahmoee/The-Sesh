@@ -50,9 +50,6 @@ struct SeshApp: App {
                 social.notifications = notifications
                 social.configure(userID: auth.userID, displayName: session.userName)
                 await social.bootstrap()
-                // Cold launch: become "ready" if away (mirrors the scenePhase hook,
-                // which only fires on change, not the initial launch).
-                social.enterReadyIfAway()
                 // Wire the scrobbler to the social layer and start any enabled
                 // music sources (Apple Music on-device and/or Spotify polling).
                 scrobbler.social = social
@@ -77,12 +74,7 @@ struct SeshApp: App {
             .onChange(of: scenePhase) { _, phase in
                 // Foreground -> in-app banner; background -> lock-screen alert.
                 notifications.scenePhaseActive = (phase == .active)
-                if phase == .active {
-                    notifications.dismissBanner()
-                    // Opening the app makes you "ready" — but only if you were away
-                    // and not mid-sesh, so this never overrides a live status.
-                    social.enterReadyIfAway()
-                }
+                if phase == .active { notifications.dismissBanner() }
             }
             .onChange(of: auth.userID) { _, _ in
                 social.configure(userID: auth.userID, displayName: session.userName)

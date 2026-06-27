@@ -740,24 +740,6 @@ final class AppSession {
         }
     }
 
-    /// The date of the most recent logged sesh (entry), if any.
-    var lastSeshDate: Date? {
-        entries.map(\.date).max()
-    }
-
-    /// A short "time since last sesh" phrase for the status area, e.g. "5h ago".
-    /// Returns nil when there are no sessions yet.
-    var timeSinceLastSeshPhrase: String? {
-        guard let last = lastSeshDate else { return nil }
-        let secs = max(0, Int(Date().timeIntervalSince(last)))
-        if secs < 60 { return "just now" }
-        let m = secs / 60
-        if m < 60 { return "\(m)m ago" }
-        let h = m / 60
-        if h < 24 { return "\(h)h ago" }
-        return "\(h / 24)d ago"
-    }
-
     // MARK: Custom categories (#custom categories)
 
     private let customCatsKey = DefaultsKey.customCategories

@@ -197,8 +197,7 @@ struct RootView: View {
         .fullScreenCover(isPresented: $showSessionScreen) {
             SessionActiveView(onEnd: {
                 // End clears live state; the active screen presents its own summary.
-                // Status goes to "vibing", then fades to "away" after a while.
-                social.enterVibingThenAway()
+                social.setMyActivity(.idle)
             })
             .environment(session).environment(strains).environment(social)
         }

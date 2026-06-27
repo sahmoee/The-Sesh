@@ -113,10 +113,7 @@ struct HomeView: View {
 
             Spacer()
 
-            HStack(spacing: 10) {
-                StatusPill()
-                NotificationBell(tint: Palette.textSecondary, action: onOpenInbox)
-            }
+            NotificationBell(tint: Palette.textSecondary, action: onOpenInbox)
         }
         .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 16)
     }
@@ -319,6 +316,7 @@ struct HomeView: View {
             VStack(spacing: 14) {
                 NowPlayingCard()
                 PresenceRow(onTapFriend: { friendPeek = $0 })
+                BroadcastStrip()
                 ActivityFeedCard()
             }
             .padding(.horizontal, 18).padding(.bottom, 18)

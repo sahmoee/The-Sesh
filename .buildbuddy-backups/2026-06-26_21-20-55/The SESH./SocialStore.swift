@@ -268,10 +268,6 @@ final class SocialStore {
         if me.activity != activity { activityStartedAt = Date() }
         me.activity = activity
         me.lastSeen = Date()
-        // Keep the user-facing status roughly in sync when the activity is driven
-        // by sesh events (start/stage/end), so existing call sites move the status
-        // machine without each needing to know about SeshStatus.
-        syncStatus(from: activity)
         // Only broadcast (and drop a feed event) when the status actually changed,
         // so rapid re-sets of the same status don't spam friends with duplicates.
         guard changed else { return }
@@ -287,60 +283,6 @@ final class SocialStore {
     /// Last status/detail we actually broadcast, used to suppress duplicate posts.
     private var lastPostedActivity: SeshActivity?
     private var lastPostedDetail: String?
-
-    // MARK: - User status (automatic state machine + manual override)
-
-    /// The user's own displayed status. Defaults to away; the app moves it to
-    /// ready on open, through rollingUp/smoking during a sesh, then vibing and
-    /// back to away after a sesh ends.
-    var myStatus: SeshStatus = .away
-    private var vibingFadeTask: Task<Void, Never>?
-
-    /// Map a sesh-driven activity onto myStatus. Only the sesh states drive the
-    /// status here; idle is left to the explicit vibing/away transitions so we
-    /// don't clobber the post-sesh "vibing" with an "away" the moment activity
-    /// clears.
-    private func syncStatus(from activity: SeshActivity) {
-        switch activity {
-        case .rollingUp, .lighting, .packingBowl:
-            myStatus = .rollingUp
-        case .smoking, .hittingBong:
-            myStatus = .smoking
-        default:
-            break
-        }
-    }
-
-    /// Manually set the status (from the dropdown). Cancels any pending fade.
-    func setStatus(_ status: SeshStatus, detail: String? = nil) {
-        vibingFadeTask?.cancel(); vibingFadeTask = nil
-        applyStatus(status, detail: detail)
-    }
-
-    /// Apply a status and mirror it to the broadcast activity.
-    private func applyStatus(_ status: SeshStatus, detail: String? = nil) {
-        myStatus = status
-        setMyActivity(status.activity, detail: detail)
-    }
-
-    /// Called on app open: become "ready" only if currently away and not seshing.
-    /// Auto-transitions always win, so an active sesh status is left untouched.
-    func enterReadyIfAway() {
-        guard myStatus == .away else { return }
-        applyStatus(.ready)
-    }
-
-    /// Called when a sesh ends: go to vibing, then fade to away after a while.
-    func enterVibingThenAway(after seconds: UInt64 = 1800) {
-        vibingFadeTask?.cancel()
-        applyStatus(.vibing)
-        vibingFadeTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(Double(seconds)))
-            guard !Task.isCancelled, let store = self else { return }
-            // Only fade if still vibing (a new sesh or manual change cancels this).
-            if store.myStatus == .vibing { store.applyStatus(.away) }
-        }
-    }
 
     /// Invite friends (by display name) to a sesh. Resolves names to handles and
     /// tells the Worker, which pushes each invited friend.

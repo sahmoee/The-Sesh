@@ -46,20 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.23.0",
-            buildLabel: "June 2026",
-            headline: "Status that knows what you're doing.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "circle.circle.fill", tint: Palette.greenBright,
-                               title: "Automatic status",
-                               detail: "Your status now moves itself: ready when you open the app, rolling up and smoking during a sesh, then vibing and away after. Tap it to set your own, including a custom one."),
-            ]),
-        ChangelogVersion(
             version: "25.22.0",
             buildLabel: "June 2026",
             headline: "Tools for the sesh.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "slider.horizontal.3", tint: Palette.purple,
                                title: "Session Tools",
