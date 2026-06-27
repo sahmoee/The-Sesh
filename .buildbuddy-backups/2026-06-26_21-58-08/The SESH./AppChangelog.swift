@@ -46,20 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.25.1",
-            buildLabel: "June 2026",
-            headline: "Quicker rips, cleaner menus.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "humidity.fill", tint: Palette.greenBright,
-                               title: "Instant Bong Rip",
-                               detail: "Tapping Bong Rip now starts a rip right away instead of opening the start screen. Also fixed a blank icon in the status menu."),
-            ]),
-        ChangelogVersion(
             version: "25.25.0",
             buildLabel: "June 2026",
             headline: "Your sesh, front and center.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "flame.fill", tint: Palette.greenBright,
                                title: "Active sesh card",

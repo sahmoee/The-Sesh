@@ -97,31 +97,10 @@ struct RootView: View {
             // offer to discard. Any start attempt routes to the active screen,
             // which is the only place a sesh can be ended.
             showSessionScreen = true
-        } else if activity == .hittingBong {
-            // A bong rip is an immediate, in-the-moment action — start it right
-            // away instead of opening the start-a-session screen.
-            startBongRipNow()
         } else {
             chosenActivity = activity
             showStartSesh = true
         }
-    }
-
-    /// Immediately begin a bong-rip sesh and open the active screen.
-    private func startBongRipNow() {
-        let state = LiveSeshState(
-            startedAt: Date(),
-            stageRaw: SeshStage.smoking.rawValue,
-            sessionTypeRaw: SessionType.relaxing.rawValue,
-            strainName: "",
-            attachedThought: "",
-            rollFinalSeconds: nil,
-            rollMethod: "Bong",
-            invited: [])
-        session.saveLiveSesh(state)
-        social.setMyActivity(.hittingBong)
-        Haptics.success()
-        showSessionScreen = true
     }
     @State private var quickSheet: QuickActionSheet?
     @State private var quickCover: QuickActionCover?

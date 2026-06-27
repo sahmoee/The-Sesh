@@ -25,11 +25,7 @@ struct StatusPill: View {
                 Button {
                     social.setStatus(status); Haptics.selection()
                 } label: {
-                    if social.myStatus == status {
-                        Label(status.label, systemImage: "checkmark")
-                    } else {
-                        Text(status.label)
-                    }
+                    Label(status.label, systemImage: social.myStatus == status ? "checkmark" : "")
                 }
             }
             Divider()
