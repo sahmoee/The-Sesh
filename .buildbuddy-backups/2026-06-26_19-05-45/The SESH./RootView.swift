@@ -216,7 +216,7 @@ struct RootView: View {
             CompareStrainsView().environment(session).environment(strains)
         }
         .sheet(isPresented: $showAddPurchase) {
-            AddPurchaseView().environment(session).environment(strains)
+            AddPurchaseView().environment(session)
         }
         .fullScreenCover(isPresented: $showFriends) {
             FriendsView().environment(social).environment(session)
