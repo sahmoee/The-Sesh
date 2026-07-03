@@ -32,20 +32,6 @@ struct StatusPill: View {
                     }
                 }
             }
-            if !session.savedStatuses.isEmpty {
-                Divider()
-                ForEach(session.savedStatuses) { saved in
-                    Button {
-                        social.setStatus(.custom(saved.text)); Haptics.selection()
-                    } label: {
-                        if social.myStatus == .custom(saved.text) {
-                            Label(saved.text, systemImage: "checkmark")
-                        } else {
-                            Label(saved.text, systemImage: "bookmark")
-                        }
-                    }
-                }
-            }
             Divider()
             Button {
                 showCustom = true
@@ -58,11 +44,7 @@ struct StatusPill: View {
         .alert("Set a custom status", isPresented: $showCustom) {
             CustomStatusField { text in
                 let trimmed = text.trimmingCharacters(in: .whitespaces)
-                if !trimmed.isEmpty {
-                    social.setStatus(.custom(trimmed))
-                    session.rememberStatus(trimmed)   // save for reuse in the dropdown
-                    Haptics.success()
-                }
+                if !trimmed.isEmpty { social.setStatus(.custom(trimmed)); Haptics.success() }
             }
             Button("Cancel", role: .cancel) { }
         } message: {

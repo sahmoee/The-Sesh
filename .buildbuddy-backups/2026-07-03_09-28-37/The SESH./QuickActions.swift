@@ -105,7 +105,6 @@ enum HomeQuickAction: String, CaseIterable, Identifiable, Codable {
 /// affordance. Tapping a tile emits its action to the parent for routing.
 struct HomeQuickActionsRow: View {
     @Environment(AppSession.self) private var session
-    @Environment(ThemeManager.self) private var theme
     let onAction: (HomeQuickAction) -> Void
     @State private var showEditor = false
 
@@ -142,22 +141,8 @@ struct HomeQuickActionsRow: View {
     private func tile(_ action: HomeQuickAction) -> some View {
         Button { Haptics.tap(); onAction(action) } label: {
             VStack(spacing: 8) {
-                // In Minimal (SF Symbols) mode, render the ACTION's own distinct
-                // symbol. Routing through the shared illustrated SeshIcon mapping
-                // collapses several actions onto the same glyph in Minimal mode
-                // (e.g. Analytics→logSession, Stash→leaf, Lounge→friends,
-                // Strains→compareStrains), because those SeshIcons each resolve to
-                // a single symbol. Each HomeQuickAction already carries a unique
-                // `symbol`, so use it directly. Illustrated styles are unaffected.
-                if theme.iconStyle.usesSymbols {
-                    Image(systemName: action.symbol)
-                        .font(.system(size: 30, weight: .regular))
-                        .foregroundStyle(Palette.text)
-                        .frame(height: 46)
-                } else {
-                    SeshIconView(icon: action.icon, size: 46)
-                        .frame(height: 46)
-                }
+                SeshIconView(icon: action.icon, size: 46)
+                    .frame(height: 46)
                 Text(action.title)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(Palette.text)
@@ -230,15 +215,13 @@ enum SessionTool: String, CaseIterable, Identifiable, Codable {
     /// How this tool routes into the active session screen.
     var route: SessionQuickAction {
         switch self {
-        case .addSong:      return .addSong
-        case .updateMood:   return .mood
-        case .logThought:   return .logThought
-        case .endSession:   return .end
-        case .notes:        return .notes
-        case .changeMethod: return .changeMethod
+        case .addSong:    return .addSong
+        case .updateMood: return .mood
+        case .logThought: return .logThought
+        case .endSession: return .end
         // Not-yet-built in-sesh flows open the active screen, where these
         // controls will live; they don't claim a feature that isn't there.
-        case .invite, .addProduct: return .none
+        case .invite, .addProduct, .changeMethod, .notes: return .none
         }
     }
 

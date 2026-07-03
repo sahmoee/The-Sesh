@@ -46,8 +46,6 @@ struct SeshApp: App {
             .environment(spotify)
             .environment(playlists)
             .task {
-                // Apply the stored haptics preference at launch.
-                Haptics.isEnabled = session.hapticsEnabled
                 // Let the social layer push friend events into the notifier.
                 social.notifications = notifications
                 social.configure(userID: auth.userID, displayName: session.userName)

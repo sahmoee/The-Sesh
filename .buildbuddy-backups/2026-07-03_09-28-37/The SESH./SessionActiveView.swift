@@ -19,7 +19,7 @@ import Combine
 /// Quick action to perform when the active session screen opens (driven by the
 /// home quick-action tiles while a sesh is live).
 enum SessionQuickAction {
-    case none, addSong, mood, logThought, end, notes, changeMethod
+    case none, addSong, mood, logThought, end
 }
 
 struct SessionActiveView: View {
@@ -38,8 +38,6 @@ struct SessionActiveView: View {
     @State private var selectedType: SessionType?
     @State private var showSummary = false
     @State private var summaryData: SummaryData?
-    @State private var showNotes = false
-    @State private var showChangeMethod = false
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var live: LiveSeshState? { session.liveSesh }
@@ -60,14 +58,10 @@ struct SessionActiveView: View {
             switch initialAction {
             case .addSong: DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showSongSearch = true }
             case .end:     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { endSession() }
-            case .notes:   DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { showNotes = true }
-            case .changeMethod: DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { showChangeMethod = true }
             case .mood, .logThought, .none: break
             }
         }
         .sheet(isPresented: $showSongSearch) { songSearchSheet }
-        .sheet(isPresented: $showNotes) { notesSheet }
-        .sheet(isPresented: $showChangeMethod) { changeMethodSheet }
         .fullScreenCover(isPresented: $showSummary, onDismiss: { dismiss() }) {
             if let d = summaryData {
                 SessionSummaryView(
@@ -382,32 +376,6 @@ struct SessionActiveView: View {
         session.saveLiveSesh(state)
     }
 
-    // MARK: - Notes (in-sesh) — edits the live sesh's attached thought
-
-    private var notesSheet: some View {
-        SessionNotesSheet(
-            initialText: session.liveSesh?.attachedThought ?? "",
-            onSave: { text in
-                guard var state = session.liveSesh else { return }
-                state.attachedThought = text
-                session.saveLiveSesh(state)
-                Haptics.success()
-            })
-    }
-
-    // MARK: - Change Method (in-sesh) — updates the live sesh's roll method
-
-    private var changeMethodSheet: some View {
-        SessionChangeMethodSheet(
-            current: session.liveSesh?.rollMethod ?? "",
-            onPick: { method in
-                guard var state = session.liveSesh else { return }
-                state.rollMethod = method
-                session.saveLiveSesh(state)
-                Haptics.success()
-            })
-    }
-
     private func matchedStrain(_ live: LiveSeshState) -> StrainProfile? {
         strains.strains.first { $0.name.caseInsensitiveCompare(live.strainName) == .orderedSame }
     }
@@ -439,97 +407,5 @@ struct SessionSongSearch: View {
             return existing.id
         }
         return playlists.createPlaylist(name: "Session Soundtrack", autoCollect: true).id
-    }
-}
-
-// MARK: - In-sesh Notes sheet
-
-/// A real in-sesh notes editor (upgrades the former stub). Edits the live sesh's
-/// `attachedThought`, which is carried into the saved entry when the sesh ends.
-struct SessionNotesSheet: View {
-    let initialText: String
-    let onSave: (String) -> Void
-    @Environment(\.dismiss) private var dismiss
-    @State private var text: String = ""
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                AppBackground()
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Jot down what's on your mind this sesh. It'll be attached to the log when you finish.")
-                        .font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
-                    TextEditor(text: $text)
-                        .focused($focused)
-                        .font(.system(size: 16))
-                        .scrollContentBackground(.hidden)
-                        .padding(12)
-                        .frame(minHeight: 180)
-                        .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.field))
-                        .overlay(RoundedRectangle(cornerRadius: Radius.md).stroke(Palette.stroke, lineWidth: 1))
-                    Spacer()
-                }
-                .padding(16)
-            }
-            .navigationTitle("Sesh Notes")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { onSave(text.trimmingCharacters(in: .whitespacesAndNewlines)); dismiss() }
-                        .fontWeight(.semibold)
-                }
-            }
-            .onAppear { text = initialText; focused = true }
-        }
-    }
-}
-
-// MARK: - In-sesh Change Method sheet
-
-/// A real in-sesh method switcher (upgrades the former stub, wired to the Active
-/// Sesh card's Change button). Updates the live sesh's `rollMethod`, which feeds
-/// the saved entry's method when the sesh ends.
-struct SessionChangeMethodSheet: View {
-    let current: String
-    let onPick: (String) -> Void
-    @Environment(\.dismiss) private var dismiss
-
-    private let methods = ["Joint", "Blunt", "Bong", "Pipe", "Vape", "Edible", "Dab"]
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                AppBackground()
-                ScrollView {
-                    VStack(spacing: 10) {
-                        ForEach(methods, id: \.self) { method in
-                            Button {
-                                onPick(method); dismiss()
-                            } label: {
-                                HStack {
-                                    Text(method).font(.system(size: 16, weight: .medium)).foregroundStyle(Palette.text)
-                                    Spacer()
-                                    if method.caseInsensitiveCompare(current) == .orderedSame {
-                                        Image(systemName: "checkmark").foregroundStyle(Palette.greenBright)
-                                    }
-                                }
-                                .padding(.horizontal, 16).padding(.vertical, 15)
-                                .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.card))
-                                .overlay(RoundedRectangle(cornerRadius: Radius.md).stroke(Palette.stroke, lineWidth: 1))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(16)
-                }
-            }
-            .navigationTitle("Change Method")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-            }
-        }
     }
 }

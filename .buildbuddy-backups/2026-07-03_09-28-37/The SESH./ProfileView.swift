@@ -9,7 +9,6 @@ import UIKit
 struct ProfileView: View {
     @Environment(AppSession.self) private var session
     @Environment(SocialStore.self) private var social
-    @Environment(StrainStore.self) private var strains
 
     var body: some View {
         NavigationStack {
@@ -20,10 +19,8 @@ struct ProfileView: View {
                         headerSection
                         avatarSection
                         statRow
-                        extrasMenu
                         gamificationMenu
                         settingsMenu
-                        versionFooter
                     }
                     .padding(.horizontal, 18).padding(.bottom, 28)
                 }
@@ -80,24 +77,6 @@ struct ProfileView: View {
         .padding(.vertical, 16)
         .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
         .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-    }
-
-    @ViewBuilder private var extrasMenu: some View {
-        VStack(spacing: 0) {
-            NavigationLink { SeshExtrasHub().environment(session).environment(strains) } label: {
-                menuRow("square.grid.2x2.fill", "Extras")
-            }.buttonStyle(.plain)
-        }
-        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-    }
-
-    /// App version footer (small feature): shows the composed build label.
-    private var versionFooter: some View {
-        Text(BuildConfig.displayLabel)
-            .font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
-            .frame(maxWidth: .infinity)
-            .padding(.top, 4)
     }
 
     @ViewBuilder private var gamificationMenu: some View {
@@ -194,8 +173,6 @@ struct ProfileSettingsView: View {
     @Environment(AuthManager.self) private var auth
     @State private var name = ""
     @State private var showResetConfirm = false
-    @State private var showClearMusicConfirm = false
-    @State private var hapticsOn = true
     @State private var iCloudOn = CloudSync.isEnabled
     /// Friend-notifications toggle. Backed by the same UserDefaults key the
     /// NotificationManager reads, so flipping it here enables/disables friend
@@ -264,41 +241,6 @@ struct ProfileSettingsView: View {
 
                         Divider().overlay(Palette.stroke).padding(.vertical, 4)
 
-                        // Preferences: haptics + clear music history
-                        VStack(alignment: .leading, spacing: 12) {
-                            FieldLabel(text: "Preferences")
-                            Toggle(isOn: $hapticsOn) {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "hand.tap.fill")
-                                        .font(.system(size: 15)).foregroundStyle(Palette.greenBright).frame(width: 22)
-                                    Text("Haptics").font(.system(size: 15)).foregroundStyle(Palette.text)
-                                }
-                            }
-                            .tint(Palette.green)
-                            .onChange(of: hapticsOn) { _, newValue in
-                                session.hapticsEnabled = newValue
-                                if newValue { Haptics.selection() }
-                            }
-
-                            Button {
-                                Haptics.warning(); showClearMusicConfirm = true
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "music.note.list")
-                                        .font(.system(size: 15)).foregroundStyle(Palette.moodAngry).frame(width: 22)
-                                    Text("Clear Music History").font(.system(size: 15)).foregroundStyle(Palette.moodAngry)
-                                    Spacer()
-                                    Text("\(session.songPlays.count)")
-                                        .font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
-                                }
-                                .padding(.vertical, 10).padding(.horizontal, 12)
-                                .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        Divider().overlay(Palette.stroke).padding(.vertical, 4)
-
                         // Danger zone: reset everything (also "logs out")
                         VStack(alignment: .leading, spacing: 8) {
                             FieldLabel(text: "Reset")
@@ -330,15 +272,7 @@ struct ProfileSettingsView: View {
                 }
             }
         }
-        .onAppear { name = session.userName; hapticsOn = session.hapticsEnabled }
-        .alert("Clear music history?", isPresented: $showClearMusicConfirm) {
-            Button("Cancel", role: .cancel) {}
-            Button("Clear", role: .destructive) {
-                session.clearMusicHistory(); Haptics.success()
-            }
-        } message: {
-            Text("Removes all songs captured during your seshes. Stations and pairings will reset.")
-        }
+        .onAppear { name = session.userName }
         .alert("Reset all data and log out?", isPresented: $showResetConfirm) {
             Button("Cancel", role: .cancel) {}
             Button("Reset & Log Out", role: .destructive) {

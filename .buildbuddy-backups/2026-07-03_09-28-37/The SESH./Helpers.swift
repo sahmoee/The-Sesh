@@ -12,28 +12,16 @@ import UIKit
 // MARK: - Haptics
 
 enum Haptics {
-    /// Master on/off for in-app haptics. Backed by AppSession.hapticsEnabled,
-    /// which sets this at launch and whenever the user toggles it in Settings.
-    /// Defaults to the stored value (on for fresh installs).
-    static var isEnabled: Bool = {
-        UserDefaults.standard.object(forKey: "sesh.haptics.enabled.v1") == nil
-            ? true : UserDefaults.standard.bool(forKey: "sesh.haptics.enabled.v1")
-    }()
-
     static func tap() {
-        guard isEnabled else { return }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
     static func success() {
-        guard isEnabled else { return }
         UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
     static func selection() {
-        guard isEnabled else { return }
         UISelectionFeedbackGenerator().selectionChanged()
     }
     static func warning() {
-        guard isEnabled else { return }
         UINotificationFeedbackGenerator().notificationOccurred(.warning)
     }
 }

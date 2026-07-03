@@ -67,7 +67,7 @@ struct HomeView: View {
                         ActiveSeshCard(
                             onExpand: { showSessionScreen = true },
                             onLogThought: { quickAction = .logThought; showSessionScreen = true },
-                            onChangeMethod: { quickAction = .changeMethod; showSessionScreen = true },
+                            onChangeMethod: { showSessionScreen = true },
                             onEnd: { quickAction = .end; showSessionScreen = true })
                             .padding(.horizontal, 18)
                             .padding(.bottom, 16)
@@ -109,14 +109,6 @@ struct HomeView: View {
                 Text(isLive ? "You're seshing" : "What's the move?")
                     .font(.system(size: 22, weight: .semibold, design: .serif))
                     .foregroundStyle(Palette.text)
-                if !isLive, let since = session.timeSinceLastSeshPhrase {
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock").font(.system(size: 10))
-                        Text("Last sesh \(since)").font(.system(size: 12))
-                    }
-                    .foregroundStyle(Palette.textTertiary)
-                    .padding(.top, 1)
-                }
             }
             .padding(.leading, 10)
 
