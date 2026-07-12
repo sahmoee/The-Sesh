@@ -39,6 +39,7 @@
 /* Begin PBXFileReference section */
 		7B15D1122FE86D4F00F13C0B /* SeshWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SeshWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B2DD4F92FDF181D00E3B22C /* The SESH..app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "The SESH..app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		7B35ED553003DF58008D5DF1 /* The SESH..xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "The SESH..xcodeproj"; sourceTree = "<group>"; };
 		7B90A45F2FDFE9A80078E9C8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		7B90A4612FDFE9A80078E9C8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		7B90A4B52FDFF7280078E9C8 /* SeshWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SeshWidgetExtension.entitlements; sourceTree = "<group>"; };
@@ -123,6 +124,11 @@
 				7B2DD4F92FDF181D00E3B22C /* The SESH..app */,
 				7B15D1122FE86D4F00F13C0B /* SeshWidgetExtension.appex */,
 			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7B35ED5A3003DF58008D5DF1 /* Products */ = {
+			isa = PBXGroup;
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -215,6 +221,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7B2DD4FA2FDF181D00E3B22C /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 7B35ED5A3003DF58008D5DF1 /* Products */;
+					ProjectRef = 7B35ED553003DF58008D5DF1 /* The SESH..xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				7B2DD4F82FDF181D00E3B22C /* The SESH. */,
