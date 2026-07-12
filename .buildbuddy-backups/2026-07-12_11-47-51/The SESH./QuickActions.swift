@@ -95,37 +95,6 @@ enum HomeQuickAction: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    /// The SF Symbol for this action in a specific icon style. Each style has
-    /// its own distinct symbol set (see IconStyle), so Vintage and Midnight now
-    /// render as glyphs — the same way Minimal does — instead of routing through
-    /// illustrated assets (several of which have no "_vintage" art and left the
-    /// tiles blank). Actions with no dedicated SeshIcon fall back to their own
-    /// per-style symbol below.
-    func symbol(for style: IconStyle) -> String {
-        switch self {
-        case .analytics:
-            switch style {
-            case .apothecary: return "chart.bar.fill"
-            case .midnight:   return "chart.bar"
-            case .sfSymbols:  return "chart.bar.fill"
-            }
-        case .stash:
-            switch style {
-            case .apothecary: return "shippingbox.fill"
-            case .midnight:   return "shippingbox"
-            case .sfSymbols:  return "shippingbox.fill"
-            }
-        case .lounge:
-            switch style {
-            case .apothecary: return "globe.americas.fill"
-            case .midnight:   return "globe.americas"
-            case .sfSymbols:  return "globe.americas.fill"
-            }
-        default:
-            return style.symbolName(for: icon)
-        }
-    }
-
     /// The default set shown before the user customizes anything.
     static let defaults: [HomeQuickAction] = [.addPurchase, .logSession, .friends, .analytics]
 }
@@ -173,18 +142,22 @@ struct HomeQuickActionsRow: View {
     private func tile(_ action: HomeQuickAction) -> some View {
         Button { Haptics.tap(); onAction(action) } label: {
             VStack(spacing: 8) {
-                // Every icon style renders Quick Actions as SF Symbols, but each
-                // style resolves to its OWN distinct symbol set (see IconStyle /
-                // HomeQuickAction.symbol(for:)). Vintage and Midnight used to route
-                // through illustrated SeshIcon assets, several of which have no
-                // "_vintage" art and left tiles blank at runtime. Routing all
-                // styles through the action's per-style symbol keeps Vintage and
-                // Midnight looking like Minimal — clean, filled tiles — while still
-                // giving each appearance its own glyph vocabulary.
-                Image(systemName: action.symbol(for: theme.iconStyle))
-                    .font(.system(size: 30, weight: .regular))
-                    .foregroundStyle(Palette.text)
-                    .frame(height: 46)
+                // In Minimal (SF Symbols) mode, render the ACTION's own distinct
+                // symbol. Routing through the shared illustrated SeshIcon mapping
+                // collapses several actions onto the same glyph in Minimal mode
+                // (e.g. Analytics→logSession, Stash→leaf, Lounge→friends,
+                // Strains→compareStrains), because those SeshIcons each resolve to
+                // a single symbol. Each HomeQuickAction already carries a unique
+                // `symbol`, so use it directly. Illustrated styles are unaffected.
+                if theme.iconStyle.usesSymbols {
+                    Image(systemName: action.symbol)
+                        .font(.system(size: 30, weight: .regular))
+                        .foregroundStyle(Palette.text)
+                        .frame(height: 46)
+                } else {
+                    SeshIconView(icon: action.icon, size: 46)
+                        .frame(height: 46)
+                }
                 Text(action.title)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(Palette.text)

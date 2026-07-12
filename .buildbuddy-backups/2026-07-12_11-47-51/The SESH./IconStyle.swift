@@ -125,68 +125,6 @@ enum IconStyle: String, CaseIterable, Identifiable {
         }
     }
 
-    /// A style-specific SF Symbol for a logical icon. All three icon styles now
-    /// draw the Quick Actions (and any glyph-based tile) as SF Symbols, but each
-    /// style gets its OWN symbol set so the three appearances stay visually
-    /// distinct — Vintage leans on filled, ornamental glyphs; Midnight on sleek
-    /// outline/edge glyphs; Minimal keeps the plain system defaults. This avoids
-    /// the missing "<name>_vintage" illustrated assets that left tiles blank.
-    func symbolName(for icon: SeshIcon) -> String {
-        switch self {
-        case .apothecary: return IconStyle.vintageSymbol(icon)
-        case .midnight:   return IconStyle.midnightSymbol(icon)
-        case .sfSymbols:  return IconStyle.symbolName(icon)
-        }
-    }
-
-    /// Vintage / apothecary glyph set — warm, filled, decorative symbols.
-    static func vintageSymbol(_ icon: SeshIcon) -> String {
-        switch icon {
-        case .rollUp:         return "flame.fill"
-        case .smoking:        return "smoke.fill"
-        case .bongRip:        return "drop.fill"
-        case .highThoughts:   return "brain.head.profile"
-        case .moon:           return "moon.stars.fill"
-        case .leaf:           return "leaf.fill"
-        case .blunt:          return "smoke.fill"
-        case .bong:           return "drop.fill"
-        case .compareStrains: return "rectangle.on.rectangle.angled.fill"
-        case .addPurchase:    return "bag.fill.badge.plus"
-        case .logSession:     return "book.closed.fill"
-        case .logThought:     return "brain.fill"
-        case .friends:        return "person.2.fill"
-        case .music:          return "music.quarternote.3"
-        case .startCyph:      return "flame.fill"
-        case .scanProduct:    return "viewfinder.circle.fill"
-        case .viewBadges:     return "rosette"
-        case .setStatus:      return "moon.stars.fill"
-        }
-    }
-
-    /// Midnight glyph set — sleek, neon-leaning outline / edge symbols.
-    static func midnightSymbol(_ icon: SeshIcon) -> String {
-        switch icon {
-        case .rollUp:         return "flame"
-        case .smoking:        return "smoke"
-        case .bongRip:        return "drop"
-        case .highThoughts:   return "brain"
-        case .moon:           return "moon.stars"
-        case .leaf:           return "leaf"
-        case .blunt:          return "smoke"
-        case .bong:           return "drop"
-        case .compareStrains: return "rectangle.on.rectangle.angled"
-        case .addPurchase:    return "bag.badge.plus"
-        case .logSession:     return "book.closed"
-        case .logThought:     return "brain.head.profile"
-        case .friends:        return "person.2"
-        case .music:          return "music.note.list"
-        case .startCyph:      return "flame"
-        case .scanProduct:    return "viewfinder"
-        case .viewBadges:     return "rosette"
-        case .setStatus:      return "moon.stars"
-        }
-    }
-
     /// The SF Symbol name for a logical icon (used in .sfSymbols style).
     static func symbolName(_ icon: SeshIcon) -> String {
         switch icon {

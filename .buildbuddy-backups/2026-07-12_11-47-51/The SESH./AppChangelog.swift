@@ -46,20 +46,10 @@ enum AppChangelog {
     // `isLatest: true`.
     static let versions: [ChangelogVersion] = [
         ChangelogVersion(
-            version: "25.26.1",
-            buildLabel: "July 2026",
-            headline: "Quick Actions look right in every style.",
-            isLatest: true,
-            entries: [
-                ChangelogEntry(icon: "square.grid.2x2.fill", tint: Palette.greenBright,
-                               title: "Quick Action icons fixed",
-                               detail: "Quick Action tiles now show a clean icon in every appearance. Vintage and Midnight each get their own icon set instead of a blank tile."),
-            ]),
-        ChangelogVersion(
             version: "25.26.0",
             buildLabel: "June 2026",
             headline: "Ending a sesh actually ends it.",
-            isLatest: false,
+            isLatest: true,
             entries: [
                 ChangelogEntry(icon: "checkmark.circle.fill", tint: Palette.greenBright,
                                title: "Sesh ending fixed",
