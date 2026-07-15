@@ -9,6 +9,19 @@
 
 import SwiftUI
 
+/// Compact "2m", "1h", "just now" relative time for the social feed.
+func seshAgo(_ date: Date) -> String {
+    let s = Int(Date().timeIntervalSince(date))
+    if s < 10 { return "just now" }
+    if s < 60 { return "\(s)s" }
+    let m = s / 60
+    if m < 60 { return "\(m)m" }
+    let h = m / 60
+    if h < 24 { return "\(h)h" }
+    return "\(h / 24)d"
+}
+
+
 // MARK: - Shared helpers
 
 /// Compact "2m", "1h", "just now" relative time for the social feed.

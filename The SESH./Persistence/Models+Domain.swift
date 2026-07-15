@@ -420,8 +420,3 @@ struct StrainInsight: Identifiable {
     let sessions: Int
     let averageRating: Double
 }
-
-// MARK: - Session store
-
-@MainActor
-@Observable

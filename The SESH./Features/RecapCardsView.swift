@@ -89,12 +89,14 @@ struct RecapCardsView: View {
             .foregroundStyle(.white.opacity(0.9))
 
             if showSessions {
-                Text("\(entries.count)")
-                    .font(.system(size: 52, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                + Text("  sesh\(entries.count == 1 ? "" : "es")")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.85))
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("\(entries.count)")
+                        .font(.system(size: 52, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text("sesh\(entries.count == 1 ? "" : "es")")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
             }
             VStack(alignment: .leading, spacing: 6) {
                 if showTopStrain, let top = topStrain {

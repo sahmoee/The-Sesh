@@ -12,6 +12,17 @@
 import SwiftUI
 
 /// Formats an elapsed interval as m:ss (or h:mm:ss past an hour) for the live timer.
+func seshDuration(_ interval: TimeInterval) -> String {
+    let total = Int(interval)
+    let h = total / 3600
+    let m = (total % 3600) / 60
+    let s = total % 60
+    if h > 0 { return String(format: "%d:%02d:%02d", h, m, s) }
+    return String(format: "%d:%02d", m, s)
+}
+
+
+/// Formats an elapsed interval as m:ss (or h:mm:ss past an hour) for the live timer.
 struct StartSeshView: View {
     /// When set (from the "What are you doing?" chooser or a widget), the sesh
     /// starts live immediately in this activity instead of showing setup.

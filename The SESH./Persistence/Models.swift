@@ -384,7 +384,7 @@ final class AppSession {
             guard let data = try? Self.jsonEncoder.encode(play) else { return nil }
             return (id: play.id.uuidString, date: play.date, payload: data)
         })
-        if let data = try? Self.jsonEncoder.encode(songPlays.prefix(300)) {
+        if let data = try? Self.jsonEncoder.encode(Array(songPlays.prefix(300))) {
             CloudSync.set(data, forKey: songPlaysKey)
         }
     }

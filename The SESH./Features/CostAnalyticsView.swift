@@ -39,7 +39,7 @@ struct CostAnalyticsView: View {
             bucket[m, default: 0] += e.price ?? 0
         }
         out = bucket.sorted { $0.key > $1.key }
-        return out.prefix(6).map { ($0.key.formatted(fmt), $0.value) }
+        return out.prefix(6).map { ($0.0.formatted(fmt), $0.1) }
     }
 
     var body: some View {
