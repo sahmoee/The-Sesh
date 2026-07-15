@@ -244,15 +244,20 @@ final class SocialStore {
         outbox.scheduleReplay(api: api)
     }
 
-    /// (#C1) Make sure we hold a session token. Apple users get their session
-    /// in AuthManager.handle() (which has the identity token); this covers the
-    /// guest path and app relaunches.
+    /// (#C1) Make sure we hold a session token.
+    ///
+    /// Apple users get a verified session in AuthManager.handle() at the
+    /// moment of interactive sign-in (the only time Apple issues an identity
+    /// token). On normal launches no identity token exists, so we fall back
+    /// to a device-bound session keyed by the stable user id — otherwise a
+    /// signed-in user would 401 on every call and the app would sit
+    /// "offline" forever. The next interactive sign-in upgrades the session
+    /// to the JWKS-verified apple: identity; DeviceCheck (#C2) gates this
+    /// fallback path against scripted abuse.
     func ensureSession() async {
         guard SeshAuth.shared.token == nil else { return }
-        if me.id.hasPrefix("dev_") {
-            await SeshAuth.shared.exchangeGuest(deviceID: me.id, handle: me.handle,
-                                                name: me.displayName, code: friendCode)
-        }
+        await SeshAuth.shared.exchangeGuest(deviceID: me.id, handle: me.handle,
+                                            name: me.displayName, code: friendCode)
     }
 
     /// Sign-out teardown (#C9): unregister this device's push token so the
