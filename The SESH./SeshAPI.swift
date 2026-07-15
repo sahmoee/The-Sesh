@@ -9,6 +9,7 @@
 //
 
 import Foundation
+import os
 
 /// One-shot snapshot of the social world from the Worker.
 struct SeshSnapshot: Codable {
@@ -54,6 +55,12 @@ enum APIError: Error {
     }
 }
 
+/// (#C1) Every request now carries `Authorization: Bearer <session>` from
+/// SeshAuth; the Worker rejects unauthenticated calls, so the old x-sesh-*
+/// identity headers are gone. (#C5) Writes accept an idempotency key so the
+/// offline outbox can replay them safely. MainActor-isolated because it reads
+/// SeshAuth's token and is only ever called from MainActor stores.
+@MainActor
 struct SeshAPI {
     private var base: URL? { URL(string: BuildConfig.workerURL) }
 
@@ -76,16 +83,21 @@ struct SeshAPI {
     }()
 
     private func makeRequest(_ path: String, method: String = "GET",
-                             identity: SeshIdentity?, body: Data? = nil) -> URLRequest? {
+                             identity: SeshIdentity?, body: Data? = nil,
+                             idempotencyKey: String? = nil) -> URLRequest? {
         guard let base, let url = URL(string: path, relativeTo: base) else { return nil }
         var req = URLRequest(url: url)
         req.httpMethod = method
-        if let id = identity {
-            req.setValue(id.userID, forHTTPHeaderField: "x-sesh-user")
-            req.setValue(id.handle, forHTTPHeaderField: "x-sesh-handle")
-            req.setValue(id.name, forHTTPHeaderField: "x-sesh-name")
-            req.setValue(id.code, forHTTPHeaderField: "x-sesh-code")
+        // (#C1) Verified session token — the Worker derives identity from this,
+        // never from client-supplied fields.
+        if let token = SeshAuth.shared.token {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
+        if let idempotencyKey {
+            req.setValue(idempotencyKey, forHTTPHeaderField: "X-Idempotency-Key")
+        }
+        // (#17) Per-request id, echoed by the Worker's logs for end-to-end traces.
+        req.setValue(Diag.requestID(), forHTTPHeaderField: "X-Request-ID")
         if let body {
             req.httpBody = body
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -93,24 +105,87 @@ struct SeshAPI {
         return req
     }
 
+    /// (#C1) On a 401, silently refresh the session once and retry.
+    private func send(_ req: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        let (data, resp) = try await session.data(for: req)
+        let http = resp as? HTTPURLResponse
+        if http?.statusCode == 401, await SeshAuth.shared.refreshIfNeeded(),
+           let token = SeshAuth.shared.token {
+            var retry = req
+            retry.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (data2, resp2) = try await session.data(for: retry)
+            return (data2, (resp2 as? HTTPURLResponse) ?? HTTPURLResponse())
+        }
+        return (data, http ?? HTTPURLResponse())
+    }
+
+    /// (#C7) Retry wrapper for SAFE (idempotent, read-only) requests: up to
+    /// `attempts` tries with exponential backoff + jitter. Respects
+    /// cancellation, skips retries while the device is offline, and honors
+    /// Retry-After on 429/503.
+    private func sendWithRetry(_ req: URLRequest, attempts: Int = 3) async throws -> (Data, HTTPURLResponse) {
+        var backoff: Double = 0.5
+        var lastError: Error = APIError.network
+        for attempt in 0..<attempts {
+            if Task.isCancelled { break }
+            if attempt > 0 && !ConnectivityMonitor.shared.pathSatisfied { break }
+            do {
+                let (data, resp) = try await send(req)
+                if resp.statusCode == 429 || resp.statusCode == 503 {
+                    let retryAfter = Double(resp.value(forHTTPHeaderField: "Retry-After") ?? "")
+                    let delay = retryAfter ?? (backoff + Double.random(in: 0...0.3))
+                    Diag.network.info("retrying \(req.url?.path ?? "?", privacy: .public) after \(delay, privacy: .public)s (\(resp.statusCode))")
+                    try await Task.sleep(for: .seconds(delay))
+                    backoff = min(backoff * 2, 8)
+                    continue
+                }
+                return (data, resp)
+            } catch {
+                lastError = error
+                if attempt < attempts - 1 {
+                    try? await Task.sleep(for: .seconds(backoff + Double.random(in: 0...0.3)))
+                    backoff = min(backoff * 2, 8)
+                }
+            }
+        }
+        throw lastError
+    }
+
     // MARK: Reads
 
-    func fetchSnapshot(identity: SeshIdentity?) async -> SeshSnapshot? {
-        guard let req = makeRequest("/api/snapshot", identity: identity) else { return nil }
+    /// (#C8) Delta-aware snapshot fetch. Sends If-None-Match with the last seen
+    /// revision; the Worker answers 304 with no body when nothing changed.
+    enum SnapshotResult {
+        case fresh(SeshSnapshot, etag: String?)
+        case notModified
+        case failure
+    }
+
+    func fetchSnapshot(identity: SeshIdentity?, etag: String? = nil) async -> SnapshotResult {
+        guard var req = makeRequest("/api/snapshot", identity: identity) else { return .failure }
+        if let etag { req.setValue(etag, forHTTPHeaderField: "If-None-Match") }
         do {
-            let (data, resp) = try await session.data(for: req)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
-            return try Self.decoder.decode(SeshSnapshot.self, from: data)
+            let (data, resp) = try await sendWithRetry(req)
+            switch resp.statusCode {
+            case 304:
+                return .notModified
+            case 200:
+                let snapshot = try Self.decoder.decode(SeshSnapshot.self, from: data)
+                return .fresh(snapshot, etag: resp.value(forHTTPHeaderField: "ETag"))
+            default:
+                Diag.network.warning("snapshot failed: \(resp.statusCode)")
+                return .failure
+            }
         } catch {
-            return nil
+            return .failure
         }
     }
 
     func fetchMessages(roomID: String, identity: SeshIdentity?) async -> [ChatMessage]? {
         guard let req = makeRequest("/api/rooms/\(roomID)/messages", identity: identity) else { return nil }
         do {
-            let (data, resp) = try await session.data(for: req)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+            let (data, resp) = try await sendWithRetry(req)
+            guard resp.statusCode == 200 else { return nil }
             return try Self.decoder.decode([ChatMessage].self, from: data)
         } catch {
             return nil
@@ -125,34 +200,63 @@ struct SeshAPI {
         return false
     }
 
+    /// (#6) Typed variant — Encodable request bodies instead of [String: Any].
+    /// New call sites should prefer this; the untyped overloads remain only for
+    /// endpoints not yet migrated.
+    @discardableResult
+    func post<Body: Encodable>(_ path: String, body: Body,
+                               idempotencyKey: String? = nil) async -> Result<Void, APIError> {
+        guard let data = try? Self.encoder.encode(body) else { return .failure(.invalidRequest) }
+        return await postRaw(path, body: data, idempotencyKey: idempotencyKey)
+    }
+
+    /// Shared encoder (ISO-8601 dates) for typed request bodies (#6).
+    static let encoder: JSONEncoder = {
+        let e = JSONEncoder()
+        e.dateEncodingStrategy = .iso8601
+        return e
+    }()
+
     /// POST returning a typed result so callers can distinguish a network failure
     /// from a rate-limit (HTTP 429) and surface the right message.
     @discardableResult
-    func postResult(_ path: String, identity: SeshIdentity?, _ payload: [String: Any]) async -> Result<Void, APIError> {
-        var body = payload
-        if let id = identity {
-            body["userID"] = id.userID; body["handle"] = id.handle; body["name"] = id.name; body["code"] = id.code
+    func postResult(_ path: String, identity: SeshIdentity?, _ payload: [String: Any],
+                    idempotencyKey: String? = nil) async -> Result<Void, APIError> {
+        guard let data = try? JSONSerialization.data(withJSONObject: payload) else {
+            return .failure(.invalidRequest)
         }
-        guard let data = try? JSONSerialization.data(withJSONObject: body),
-              let req = makeRequest(path, method: "POST", identity: identity, body: data) else {
+        return await postRaw(path, body: data, idempotencyKey: idempotencyKey)
+    }
+
+    /// (#C5) Raw POST used both directly and by the OfflineOutbox replay.
+    /// The idempotency key makes redelivery safe.
+    @discardableResult
+    func postRaw(_ path: String, body: Data, idempotencyKey: String? = nil) async -> Result<Void, APIError> {
+        guard let req = makeRequest(path, method: "POST", identity: nil, body: body,
+                                    idempotencyKey: idempotencyKey) else {
             return .failure(.invalidRequest)
         }
         do {
-            let (_, resp) = try await session.data(for: req)
-            let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
-            switch code {
+            let (_, resp) = try await send(req)
+            switch resp.statusCode {
             case 200...299: return .success(())
             case 429:        return .failure(.rateLimited)
             case 404:        return .failure(.notFound)
-            default:         return .failure(.server(code))
+            default:         return .failure(.server(resp.statusCode))
             }
         } catch {
             return .failure(.network)
         }
     }
 
+    struct ActivityBody: Encodable { var activity: String; var detail: String }
+    struct MessageBody: Encodable { var id: String; var text: String }
+    struct TokenBody: Encodable { var token: String }
+    struct FriendCodeBody: Encodable { var code: String }
+    struct TargetUserBody: Encodable { var userID: String }
+
     func postActivity(_ activity: SeshActivity, detail: String?, identity: SeshIdentity?) async {
-        await post("/api/activity", identity: identity, ["activity": activity.rawValue, "detail": detail ?? ""])
+        _ = await post("/api/activity", body: ActivityBody(activity: activity.rawValue, detail: detail ?? ""))
     }
 
     // MARK: Scrobbler (now-playing)
@@ -175,8 +279,8 @@ struct SeshAPI {
     func spotifyNowPlaying(identity: SeshIdentity?) async -> NowPlaying? {
         guard let req = makeRequest("/api/spotify/now-playing", identity: identity) else { return nil }
         do {
-            let (data, resp) = try await session.data(for: req)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+            let (data, resp) = try await send(req)
+            guard resp.statusCode == 200 else { return nil }
             return try Self.decoder.decode(NowPlaying.self, from: data)
         } catch {
             return nil
@@ -202,8 +306,8 @@ struct SeshAPI {
         let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         guard let req = makeRequest("/api/spotify/search?q=\(encoded)", identity: identity) else { return [] }
         do {
-            let (data, resp) = try await session.data(for: req)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return [] }
+            let (data, resp) = try await send(req)
+            guard resp.statusCode == 200 else { return [] }
             return try Self.decoder.decode([PlaylistTrack].self, from: data)
         } catch {
             return []
@@ -226,8 +330,8 @@ struct SeshAPI {
             return .failure("Couldn't reach Spotify.")
         }
         do {
-            let (respData, resp) = try await session.data(for: req)
-            let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+            let (respData, resp) = try await send(req)
+            let code = resp.statusCode
             guard code == 200 else { return .failure("Spotify export failed (\(code)).") }
             let decoded = try Self.decoder.decode(SpotifyExportResponse.self, from: respData)
             return .success(addedCount: decoded.added, total: decoded.total, url: decoded.url)
@@ -278,28 +382,32 @@ struct SeshAPI {
 
     /// Register this device's APNs token so friends' "went live" events can push.
     func registerPush(token: String, identity: SeshIdentity?) async {
-        await post("/api/push/register", identity: identity, ["token": token])
+        _ = await post("/api/push/register", body: TokenBody(token: token))
     }
     /// Remove a token (sign-out / permission revoked).
     func unregisterPush(token: String, identity: SeshIdentity?) async {
-        await post("/api/push/unregister", identity: identity, ["token": token])
+        _ = await post("/api/push/unregister", body: TokenBody(token: token))
     }
 
     func sendMessage(_ m: ChatMessage, identity: SeshIdentity?) async {
-        await post("/api/rooms/\(m.roomID)/messages", identity: identity, ["id": m.id, "text": m.text])
+        _ = await post("/api/rooms/\(m.roomID)/messages", body: MessageBody(id: m.id, text: m.text),
+                       idempotencyKey: m.id)
     }
 
     /// Add a friend by their code. Returns true on success.
     func addFriend(code: String, identity: SeshIdentity?) async -> Bool {
-        await post("/api/friends/add", identity: identity, ["code": code])
+        if case .success = await post("/api/friends/add", body: FriendCodeBody(code: code)) { return true }
+        return false
     }
 
     /// Block / unblock a user (their content disappears from your snapshot & chat).
     func block(userID: String, identity: SeshIdentity?) async -> Bool {
-        await post("/api/block", identity: identity, ["userID": userID])
+        if case .success = await post("/api/block", body: TargetUserBody(userID: userID)) { return true }
+        return false
     }
     func unblock(userID: String, identity: SeshIdentity?) async -> Bool {
-        await post("/api/unblock", identity: identity, ["userID": userID])
+        if case .success = await post("/api/unblock", body: TargetUserBody(userID: userID)) { return true }
+        return false
     }
 
     /// Report a user or a message for moderation.
@@ -319,8 +427,8 @@ struct SeshAPI {
         }
         guard let req = makeRequest(path, identity: identity) else { return nil }
         do {
-            let (data, resp) = try await session.data(for: req)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+            let (data, resp) = try await send(req)
+            guard resp.statusCode == 200 else { return nil }
             return try Self.decoder.decode([ChatMessage].self, from: data)
         } catch { return nil }
     }

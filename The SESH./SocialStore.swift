@@ -10,7 +10,12 @@
 
 import SwiftUI
 
+/// (#2) Explicitly MainActor-isolated: this store mutates @Observable UI state
+/// from many async Tasks (polling, chat sends, push registration, realtime
+/// events). Under Swift 6 strict concurrency every mutation is now checked to
+/// happen on the main actor instead of relying on call-site discipline.
 @Observable
+@MainActor
 final class SocialStore {
     // Current user. Starts as a local placeholder and is replaced by the
     // signed-in identity via configure(...) at app launch.
@@ -34,12 +39,27 @@ final class SocialStore {
     var online = false           // did the Worker respond?
     var loading = false
 
+    /// (#App14/#C6) Rich connectivity state for the UI, derived from the shared
+    /// path monitor + server reachability + sync activity.
+    var connectivity: ConnectivityState { ConnectivityMonitor.shared.state }
+
+    /// (#C8) Revision of the last applied snapshot (the Worker's ETag).
+    private var snapshotETag: String?
+
     /// Set by the app at launch so polled friend events become notifications.
     weak var notifications: NotificationManager?
 
     private let api = SeshAPI()
     private var pollTask: Task<Void, Never>?
     private var openRoomID: String?     // room whose chat we're actively polling
+
+    /// (#C3) Push-driven realtime channel. While connected, the server tells us
+    /// when social state changes and we pull one snapshot — the poll loop drops
+    /// to a slow safety-net cadence instead of hammering every 12 seconds.
+    private let realtime = SeshRealtime()
+
+    /// (#C5) Durable offline queue for writes.
+    private let outbox = OfflineOutbox.shared
 
     /// The identity sent to the Worker on every call.
     private var identity: SeshIdentity {
@@ -183,24 +203,94 @@ final class SocialStore {
 
     // MARK: Lifecycle
 
-    /// Initial load: try the Worker, fall back to seeded data, then start polling.
+    /// Initial load: authenticate, try the Worker, start realtime + fallback
+    /// polling, and replay any writes queued while offline.
     func bootstrap() async {
+        // (#15) Show the last persisted server state instantly (cold offline
+        // launches get real content, not empty screens).
+        if friends.isEmpty, let cached = SocialCache.loadSnapshot() {
+            apply(cached, notify: false)
+            snapshotETag = SocialCache.snapshotETag()
+        }
+        // (#C6) Refresh + replay the moment the network path comes back.
+        ConnectivityMonitor.shared.onReconnect = { [weak self] in
+            guard let self else { return }
+            self.outbox.scheduleReplay(api: self.api)
+            Task { await self.refresh() }
+        }
+        await ensureSession()
         await refresh()
-        startPolling()
+        realtime.onChange = { [weak self] in
+            Task { await self?.refresh() }
+        }
+        realtime.onStateChange = { [weak self] state in
+            guard let self else { return }
+            if state == .connected {
+                // Reconnected: replay queued writes, then converge.
+                self.outbox.scheduleReplay(api: self.api)
+                Task { await self.refresh() }
+            }
+        }
+        realtime.connect()
+        startPolling(every: 60)   // slow safety net behind the socket (#C3)
+        outbox.scheduleReplay(api: api)
+    }
+
+    /// (#C1) Make sure we hold a session token. Apple users get their session
+    /// in AuthManager.handle() (which has the identity token); this covers the
+    /// guest path and app relaunches.
+    func ensureSession() async {
+        guard SeshAuth.shared.token == nil else { return }
+        if me.id.hasPrefix("dev_") {
+            await SeshAuth.shared.exchangeGuest(deviceID: me.id, handle: me.handle,
+                                                name: me.displayName, code: friendCode)
+        }
+    }
+
+    /// Sign-out teardown (#C9): unregister this device's push token so the
+    /// backend stops pushing to a signed-out device, drop the session, and
+    /// close the realtime channel.
+    func signOut() async {
+        if let tok = pushToken {
+            _ = await api.post("/api/push/unregister", body: SeshAPI.TokenBody(token: tok))
+        }
+        teardown()
+        SeshAuth.shared.signOut()
+    }
+
+    /// (#8) Central ownership of every long-lived task this store spawns.
+    /// Cancels polling, the realtime socket, the post-sesh status fade, and
+    /// any in-flight outbox replay. Called on sign-out; also safe to call
+    /// when the social layer should go fully quiet (e.g. background audits).
+    func teardown() {
+        stopPolling()
+        vibingFadeTask?.cancel(); vibingFadeTask = nil
+        realtime.disconnect()
+        outbox.cancelReplay()
     }
 
     func refresh() async {
         loading = true
-        defer { loading = false }
-        if let snapshot = await api.fetchSnapshot(identity: identity) {
+        ConnectivityMonitor.shared.isSyncing = true
+        defer { loading = false; ConnectivityMonitor.shared.isSyncing = false }
+
+        switch await api.fetchSnapshot(identity: identity, etag: snapshotETag) {
+        case .fresh(let snapshot, let etag):
             online = true
+            ConnectivityMonitor.shared.serverReachable = true
+            snapshotETag = etag
             apply(snapshot)
-            // Refresh the open room's messages too.
+            SocialCache.saveSnapshot(snapshot, etag: etag)   // (#15)
             if let room = openRoomID, let msgs = await api.fetchMessages(roomID: room, identity: identity) {
                 messagesByRoom[room] = msgs
+                SocialCache.saveMessages(msgs, roomID: room)
             }
-        } else {
+        case .notModified:                                    // (#C8)
+            online = true
+            ConnectivityMonitor.shared.serverReachable = true
+        case .failure:
             online = false
+            ConnectivityMonitor.shared.serverReachable = false
             if friends.isEmpty { seedLocal() }
         }
     }
@@ -214,6 +304,9 @@ final class SocialStore {
                 try? await Task.sleep(for: .seconds(Double(seconds)))
                 guard let self else { return }
                 if Task.isCancelled { return }
+                // (#C6) Don't hammer the radio while offline — the reconnect
+                // hook refreshes immediately when the path returns.
+                guard ConnectivityMonitor.shared.pathSatisfied else { continue }
                 await self.api.heartbeat(identity: self.identity)
                 await self.refresh()
             }
@@ -222,7 +315,7 @@ final class SocialStore {
 
     func stopPolling() { pollTask?.cancel(); pollTask = nil }
 
-    private func apply(_ s: SeshSnapshot) {
+    private func apply(_ s: SeshSnapshot, notify: Bool = true) {
         // Capture prior unread-per-room to detect new incoming chat messages.
         let priorUnread = Dictionary(uniqueKeysWithValues: rooms.map { ($0.id, $0.unread) })
 
@@ -247,7 +340,7 @@ final class SocialStore {
             }
         }
 
-        if let notifications {
+        if let notifications, notify {
             Task { @MainActor in
                 notifications.ingestFeed(events, myHandle: myHandle)
                 for n in chatNotes {
@@ -281,7 +374,16 @@ final class SocialStore {
                                   userName: me.displayName, activity: activity,
                                   detail: detail, at: Date())
         feed.insert(event, at: 0)
-        Task { await api.postActivity(activity, detail: detail, identity: identity) }
+        // (#App16) Privacy gates: nothing leaves the device unless shared.
+        let privacy = PrivacySettings.shared
+        guard privacy.shareActivity else { return }
+        let sharedDetail = privacy.shareStrainDetails ? (detail ?? "") : ""
+        // (#C5) Presence/status writes queue offline and replay idempotently.
+        if let body = try? SeshAPI.encoder.encode(
+            SeshAPI.ActivityBody(activity: activity.rawValue, detail: sharedDetail)) {
+            outbox.enqueue(path: "/api/activity", body: body)
+            outbox.scheduleReplay(api: api)
+        }
     }
 
     /// Last status/detail we actually broadcast, used to suppress duplicate posts.
@@ -359,6 +461,8 @@ final class SocialStore {
         if me.nowPlaying?.title == np.title && me.nowPlaying?.artist == np.artist
             && me.nowPlaying?.source == np.source { me.nowPlaying = np; return }
         me.nowPlaying = np
+        // (#App16) Now-playing stays local unless music sharing is on.
+        guard PrivacySettings.shared.shareMusic else { return }
         Task { await api.postNowPlaying(np, identity: identity) }
     }
 
@@ -477,9 +581,14 @@ final class SocialStore {
     func openRoom(_ roomID: String) {
         openRoomID = roomID
         markRoomRead(roomID)
+        // (#15) Cached page first so the room isn't blank offline.
+        if messagesByRoom[roomID] == nil, let cached = SocialCache.loadMessages(roomID: roomID) {
+            messagesByRoom[roomID] = cached
+        }
         Task {
             if let msgs = await api.fetchMessages(roomID: roomID, identity: identity) {
                 messagesByRoom[roomID] = msgs
+                SocialCache.saveMessages(msgs, roomID: roomID)
             }
         }
     }
@@ -500,9 +609,15 @@ final class SocialStore {
             rooms[i].lastMessage = trimmed
             rooms[i].lastMessageAt = Date()
         }
+        // (#C5) Through the outbox: delivered now if online, queued + replayed
+        // with the message id as idempotency key if not. No more silently
+        // vanished messages.
+        if let body = try? SeshAPI.encoder.encode(SeshAPI.MessageBody(id: msg.id, text: trimmed)) {
+            outbox.enqueue(path: "/api/rooms/\(roomID)/messages", body: body, key: msg.id)
+            outbox.scheduleReplay(api: api)
+        }
         Task {
-            await api.sendMessage(msg, identity: identity)
-            // Re-sync so we converge with the server (and pick up others' msgs).
+            // Converge with the server (and pick up others' messages).
             if let msgs = await api.fetchMessages(roomID: roomID, identity: identity) {
                 messagesByRoom[roomID] = msgs
             }

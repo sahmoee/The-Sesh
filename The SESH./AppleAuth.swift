@@ -42,6 +42,17 @@ final class AuthManager {
             guard let cred = auth.credential as? ASAuthorizationAppleIDCredential else { return }
             userID = cred.user
             CloudSync.set(cred.user, forKey: idKey)
+            // (#C1) Exchange the SIWA identity token for a verified backend
+            // session. The Worker validates it against Apple's JWKS; all API
+            // calls then carry the resulting Bearer token.
+            if let tokenData = cred.identityToken,
+               let identityToken = String(data: tokenData, encoding: .utf8) {
+                let name = fullName ?? ""
+                Task { @MainActor in
+                    await SeshAuth.shared.exchangeApple(identityToken: identityToken,
+                                                        handle: "", name: name, code: "")
+                }
+            }
             if let name = cred.fullName {
                 // Prefer just the first name; fall back to the family name only
                 // if no given name was provided.
@@ -60,6 +71,9 @@ final class AuthManager {
         userID = nil; fullName = nil; email = nil
         let d = UserDefaults.standard
         d.removeObject(forKey: idKey); d.removeObject(forKey: nameKey); d.removeObject(forKey: emailKey)
+        // (#C1, #C9) Drop the backend session too. The push token unregister is
+        // handled by SocialStore.signOut(), which callers should also invoke.
+        SeshAuth.shared.signOut()
     }
 }
 

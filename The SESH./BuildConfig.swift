@@ -39,7 +39,18 @@ enum BuildConfig {
     /// Codename for this line of builds (cosmetic; update if you like).
     static let buildName = "Cypher"
 
-    /// SESH social Worker (sessions, presence, chat, live signaling).
-    /// Same hosting convention as the sibling apps' workers.
-    static let workerURL = "https://sesh-worker.stocked.workers.dev"
+    /// (#C10) SESH social Worker, per environment. Debug builds can point at a
+    /// dev/staging Worker without touching code: set the override once via
+    ///   UserDefaults.standard.set("https://sesh-worker-dev.stocked.workers.dev",
+    ///                             forKey: "sesh.dev.workerURL")
+    /// (or an Xcode scheme launch argument). Release always uses production.
+    static let workerURL: String = {
+        #if DEBUG
+        if let override = UserDefaults.standard.string(forKey: "sesh.dev.workerURL"),
+           !override.isEmpty {
+            return override
+        }
+        #endif
+        return "https://sesh-worker.stocked.workers.dev"
+    }()
 }

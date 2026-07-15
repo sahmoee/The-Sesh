@@ -130,6 +130,8 @@ struct RootView: View {
     @State private var entryCountBefore = 0
     @State private var thoughtCountBefore = 0
     @State private var showWhatsNew = false
+    /// (#App18) 21+ / responsible-use gate, shown once on first launch.
+    @State private var showAgeGate = !AgeGate.isConfirmed
 
     /// Routes a sesh:// deep link (from the Home Screen widget) to the right action.
     private func handleDeepLink(_ url: URL) {
@@ -186,6 +188,9 @@ struct RootView: View {
         }
         .task {
             if AppChangelog.shouldShowWhatsNew { showWhatsNew = true }
+        }
+        .fullScreenCover(isPresented: $showAgeGate) {
+            AgeGateView { showAgeGate = false }
         }
         .sheet(isPresented: $showWhatsNew) {
             WhatsNewView().presentationDetents([.large])

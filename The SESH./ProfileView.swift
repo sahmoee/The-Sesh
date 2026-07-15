@@ -192,6 +192,7 @@ struct ProfileSettingsView: View {
     @Environment(ThemeManager.self) private var theme
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthManager.self) private var auth
+    @Environment(SocialStore.self) private var social
     @State private var name = ""
     @State private var showResetConfirm = false
     @State private var showClearMusicConfirm = false
@@ -250,6 +251,31 @@ struct ProfileSettingsView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Appearance").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
                                     Text("Theme · \(theme.choice.label), Icons · \(theme.iconStyle.label)")
+                                        .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
+                            }
+                            .padding(12)
+                            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+                            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+
+                        Divider().overlay(Palette.stroke).padding(.vertical, 4)
+
+                        // Privacy & Safety: sharing controls, responsible use,
+                        // community rules (#App16, #App17, #App18).
+                        NavigationLink {
+                            PrivacySafetyHubView().navigationBarBackButtonHidden(true)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "hand.raised.fill")
+                                    .font(.system(size: 16)).foregroundStyle(Palette.greenBright).frame(width: 26)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Privacy & Safety").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                                    Text("Sharing, responsible use, community rules")
                                         .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
                                         .lineLimit(1)
                                 }
@@ -368,7 +394,12 @@ struct ProfileSettingsView: View {
                         }
                     }
                     Spacer()
-                    Button { auth.signOut(); Haptics.warning() } label: {
+                    Button {
+                        // (#C9) Unregister this device's push token + drop the
+                        // backend session before clearing local identity.
+                        Task { await social.signOut() }
+                        auth.signOut(); Haptics.warning()
+                    } label: {
                         Text("Sign Out").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.moodAngry)
                             .padding(.horizontal, 14).padding(.vertical, 7)
                             .background(Capsule().fill(Palette.field))

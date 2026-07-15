@@ -134,11 +134,24 @@ final class StrainImageStore {
     static let bundledBudCount = 30
 
     /// Pick a stable bundled bud photo for a strain id. Same id -> same photo.
+    /// (#12) Uses FNV-1a over the id's UTF-8 bytes. Swift's `hashValue` is
+    /// randomly seeded per process, so the previous implementation reassigned
+    /// every strain a different photo on every launch despite the comment.
     static func bundledBud(for strainID: String) -> UIImage? {
         guard bundledBudCount > 0 else { return nil }
-        let idx = abs(strainID.hashValue % bundledBudCount) + 1
-        let name = String(format: "bud_%02d", idx)
+        let name = String(format: "bud_%02d", budIndex(for: strainID))
         return UIImage(named: name)
+    }
+
+    /// The 1-based bundled-photo index for a strain id. Internal (not private)
+    /// so unit tests can assert cross-launch stability (#16).
+    static func budIndex(for strainID: String) -> Int {
+        var hash: UInt64 = 0xcbf29ce484222325
+        for byte in strainID.utf8 {
+            hash ^= UInt64(byte)
+            hash = hash &* 0x100000001b3
+        }
+        return Int(hash % UInt64(bundledBudCount)) + 1
     }
 
     /// Resolve a manifest URL string, allowing either absolute URLs or paths

@@ -116,7 +116,7 @@ enum SeshSchemaV1: VersionedSchema {
     // must change for SwiftData to recognize the new shape and migrate the
     // existing on-disk store instead of throwing. Keeping it at 1.0.0 while the
     // model shape changed was causing a launch-time ModelContainer failure.
-    static var versionIdentifier = Schema.Version(1, 1, 0)
+    static let versionIdentifier = Schema.Version(1, 1, 0)
     static var models: [any PersistentModel.Type] {
         [SDJournalEntry.self, SDThought.self]
     }
@@ -244,7 +244,57 @@ final class SeshDataStore {
 
     // MARK: Bulk
 
-    /// Replace the entire dataset (used by the iCloud merge to converge state).
+    /// (#9) Record-level reconciliation: bring the on-disk store in line with
+    /// the in-memory working set WITHOUT deleting and re-inserting everything.
+    /// Inserts new records, updates changed ones in place, and deletes only the
+    /// records that were removed. This is what `AppSession.save()` now calls on
+    /// every edit — previously each save wiped and rewrote the whole database,
+    /// which scaled O(dataset) per keystroke and risked data loss if the app
+    /// died between the delete and the re-insert.
+    func sync(entries: [JournalEntry], thoughts: [HighThought]) {
+        guard let context else { return }
+
+        // Entries -------------------------------------------------------
+        let existingEntries = (try? context.fetch(FetchDescriptor<SDJournalEntry>())) ?? []
+        var entryByID = Dictionary(existingEntries.map { ($0.id, $0) },
+                                   uniquingKeysWith: { a, _ in a })
+        var wantedEntryIDs = Set<UUID>()
+        for e in entries {
+            wantedEntryIDs.insert(e.id)
+            if let record = entryByID[e.id] {
+                record.apply(e)          // update in place (no-op writes are cheap)
+            } else {
+                context.insert(SDJournalEntry(e))
+            }
+        }
+        for (id, record) in entryByID where !wantedEntryIDs.contains(id) {
+            context.delete(record)
+        }
+        entryByID.removeAll()
+
+        // Thoughts ------------------------------------------------------
+        let existingThoughts = (try? context.fetch(FetchDescriptor<SDThought>())) ?? []
+        var thoughtByID = Dictionary(existingThoughts.map { ($0.id, $0) },
+                                     uniquingKeysWith: { a, _ in a })
+        var wantedThoughtIDs = Set<UUID>()
+        for t in thoughts {
+            wantedThoughtIDs.insert(t.id)
+            if let record = thoughtByID[t.id] {
+                record.apply(t)
+            } else {
+                context.insert(SDThought(t))
+            }
+        }
+        for (id, record) in thoughtByID where !wantedThoughtIDs.contains(id) {
+            context.delete(record)
+        }
+        thoughtByID.removeAll()
+
+        if context.hasChanges { try? context.save() }
+    }
+
+    /// Replace the entire dataset. Kept ONLY for the one-time UserDefaults ->
+    /// SwiftData migration into an empty store; everything else uses sync().
     func replaceAll(entries: [JournalEntry], thoughts: [HighThought]) {
         try? context?.delete(model: SDJournalEntry.self)
         try? context?.delete(model: SDThought.self)

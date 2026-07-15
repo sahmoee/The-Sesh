@@ -44,7 +44,10 @@ enum SeshCategory: String, CaseIterable, Identifiable, Codable {
     var id: String { rawValue }
 
     /// Migrate a legacy stored rawValue to the current one. #vault migration
-    static func migrate(_ raw: String) -> String {
+    /// nonisolated: pure string mapping, called from nonisolated SwiftData
+    /// model conversions (SDJournalEntry.asStruct) under Swift 6's default
+    /// MainActor isolation.
+    nonisolated static func migrate(_ raw: String) -> String {
         switch raw {
         case "Personal Faves": return SeshCategory.personalFaves.rawValue
         case "Good Enough":    return SeshCategory.goodEnough.rawValue
@@ -506,14 +509,15 @@ final class AppSession {
         }
         if let name = d.string(forKey: nameKey), !name.isEmpty { userName = name }
         // Converge: persist the merged set locally and push back up.
-        store.replaceAll(entries: entries, thoughts: thoughts)
+        // (#9) Record-level sync instead of a destructive replaceAll.
+        store.sync(entries: entries, thoughts: thoughts)
         pushToCloud()
         lastSyncedAt = Date()
     }
 
     /// Union two collections by id, preferring the newer item for duplicates,
-    /// returned newest-first.
-    private static func mergeByID<T>(local: [T], incoming: [T],
+    /// returned newest-first. Internal for unit testing (#16).
+    static func mergeByID<T>(local: [T], incoming: [T],
                                      id: (T) -> UUID, date: (T) -> Date) -> [T] {
         var byID: [UUID: T] = [:]
         for item in local { byID[id(item)] = item }
@@ -875,10 +879,13 @@ final class AppSession {
         if let data = try? Self.jsonEncoder.encode(state) {
             UserDefaults.standard.set(data, forKey: liveSeshKey)
         }
+        // (#App18) Opt-in water / check-in reminders while a sesh is live.
+        SeshReminders.scheduleForActiveSesh()
     }
     func clearLiveSesh() {
         liveSesh = nil
         UserDefaults.standard.removeObject(forKey: liveSeshKey)
+        SeshReminders.cancel()   // (#App18)
     }
     private func loadLiveSesh() {
         if let data = UserDefaults.standard.data(forKey: liveSeshKey),
@@ -1301,7 +1308,9 @@ final class AppSession {
     /// the last change, instead of re-encoding and uploading the entire dataset
     /// on every keystroke. KVS is rate-limited, so this matters as data grows.
     func save() {
-        store.replaceAll(entries: entries, thoughts: thoughts)
+        // (#9) Record-level sync — no longer wipes and rewrites the whole
+        // SwiftData database on every save.
+        store.sync(entries: entries, thoughts: thoughts)
         scheduleCloudPush()
     }
 
