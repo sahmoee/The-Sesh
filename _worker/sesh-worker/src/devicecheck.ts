@@ -28,10 +28,15 @@ export interface DeviceCheckEnv {
 }
 
 async function importP8(pem: string): Promise<CryptoKey> {
+  // Tolerate secrets pasted with literal "\n" escapes, BEGIN/END lines, or
+  // stray characters — strip everything that isn't base64 before decoding.
+  // (A malformed secret previously made atob() throw and took the whole
+  // request down with it.)
   const body = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/, "")
-    .replace(/-----END PRIVATE KEY-----/, "")
-    .replace(/\s+/g, "");
+    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+    .replace(/-----END PRIVATE KEY-----/g, "")
+    .replace(/\\n/g, "")
+    .replace(/[^A-Za-z0-9+/=]/g, "");
   const der = Uint8Array.from(atob(body), (c) => c.charCodeAt(0));
   return crypto.subtle.importKey("pkcs8", der.buffer,
     { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
@@ -46,13 +51,19 @@ async function dcJWT(env: DeviceCheckEnv): Promise<string | null> {
   if (!keyID || !teamID || !p8) return null;
   const nowSec = Math.floor(Date.now() / 1000);
   if (_jwt && nowSec - _jwt.iat < 50 * 60) return _jwt.token;
-  const header = b64url(utf8(JSON.stringify({ alg: "ES256", kid: keyID })));
-  const claims = b64url(utf8(JSON.stringify({ iss: teamID, iat: nowSec })));
-  const input = `${header}.${claims}`;
-  const key = await importP8(p8);
-  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, utf8(input));
-  _jwt = { token: `${input}.${b64url(sig)}`, iat: nowSec };
-  return _jwt.token;
+  try {
+    const header = b64url(utf8(JSON.stringify({ alg: "ES256", kid: keyID })));
+    const claims = b64url(utf8(JSON.stringify({ iss: teamID, iat: nowSec })));
+    const input = `${header}.${claims}`;
+    const key = await importP8(p8);
+    const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, utf8(input));
+    _jwt = { token: `${input}.${b64url(sig)}`, iat: nowSec };
+    return _jwt.token;
+  } catch (e) {
+    // Bad/malformed key material: DeviceCheck is unavailable, never fatal.
+    console.log(`devicecheck_key_error ${String(e)}`);
+    return null;
+  }
 }
 
 export type DeviceCheckVerdict = "valid" | "invalid" | "unavailable";
