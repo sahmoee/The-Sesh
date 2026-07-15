@@ -229,8 +229,10 @@ extension AppSession {
     /// Wipe all captured song plays (the "clear music history" small feature).
     func clearMusicHistory() {
         songPlays.removeAll()
+        // (#10) Song history now lives in SwiftData records.
+        SeshDataStore.shared.syncCollection("songPlays", items: [])
+        UserDefaults.standard.removeObject(forKey: "ht.songPlays.v1")
         if let data = try? Self.jsonEncoder.encode([StrainSongPlay]()) {
-            UserDefaults.standard.set(data, forKey: "ht.songPlays.v1")
             CloudSync.set(data, forKey: "ht.songPlays.v1")
         }
     }

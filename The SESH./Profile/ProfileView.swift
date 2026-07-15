@@ -265,6 +265,31 @@ struct ProfileSettingsView: View {
 
                         Divider().overlay(Palette.stroke).padding(.vertical, 4)
 
+                        // Sesh Lab: the new-features pack (Batch 5).
+                        NavigationLink {
+                            SeshLabView().environment(session).environment(social)
+                                .navigationBarBackButtonHidden(true)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "flask.fill")
+                                    .font(.system(size: 16)).foregroundStyle(Palette.greenBright).frame(width: 26)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Sesh Lab").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                                    Text("Forecasts, match scores, recaps, rest days")
+                                        .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
+                            }
+                            .padding(12)
+                            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+                            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+
+                        Divider().overlay(Palette.stroke).padding(.vertical, 4)
+
                         // Privacy & Safety: sharing controls, responsible use,
                         // community rules (#App16, #App17, #App18).
                         NavigationLink {

@@ -22,6 +22,7 @@ enum SeshDeepLink {
     case endSesh                    // sesh://end  (ends live sesh, opens save)
     case logSesh                    // sesh://log
     case quickThought               // sesh://thought
+    case addFriend(String)          // sesh://friend/<CODE> (QR friend card)
 
     static let scheme = "sesh"
 
@@ -37,6 +38,8 @@ enum SeshDeepLink {
         case "end":     self = .endSesh
         case "log":     self = .logSesh
         case "thought": self = .quickThought
+        case "friend":
+            if let arg, !arg.isEmpty { self = .addFriend(arg.uppercased()) } else { return nil }
         default:        return nil
         }
     }
@@ -47,6 +50,7 @@ enum SeshDeepLink {
         case .startSesh(let a): return URL(string: "\(SeshDeepLink.scheme)://start/\(a.rawValue)")!
         case .openChooser:      return URL(string: "\(SeshDeepLink.scheme)://start")!
         case .endSesh:          return URL(string: "\(SeshDeepLink.scheme)://end")!
+        case .addFriend(let c): return URL(string: "\(SeshDeepLink.scheme)://friend/\(c)")!
         case .logSesh:          return URL(string: "\(SeshDeepLink.scheme)://log")!
         case .quickThought:     return URL(string: "\(SeshDeepLink.scheme)://thought")!
         }

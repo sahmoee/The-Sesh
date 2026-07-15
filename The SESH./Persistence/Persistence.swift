@@ -107,6 +107,25 @@ final class SDThought {
 }
 
 
+// MARK: - Keyed record store (#10)
+
+/// Generic record for collections migrating OUT of UserDefaults (purchases,
+/// song history, goals, …). Each item is stored individually (record-level
+/// writes, indexed by key) with its payload as the same JSON the Codable
+/// structs already produce — so domain types keep evolving without schema
+/// churn, and preference storage stops ballooning.
+@Model
+final class SDRecord {
+    @Attribute(.unique) var key: String   // "<collection>/<item-id>"
+    var collection: String
+    var date: Date
+    var payload: Data
+
+    init(key: String, collection: String, date: Date, payload: Data) {
+        self.key = key; self.collection = collection; self.date = date; self.payload = payload
+    }
+}
+
 // MARK: - Schema & versioning (for migrations)
 
 enum SeshSchemaV1: VersionedSchema {
@@ -116,9 +135,11 @@ enum SeshSchemaV1: VersionedSchema {
     // must change for SwiftData to recognize the new shape and migrate the
     // existing on-disk store instead of throwing. Keeping it at 1.0.0 while the
     // model shape changed was causing a launch-time ModelContainer failure.
-    static let versionIdentifier = Schema.Version(1, 1, 0)
+    // 1.2.0: added SDRecord (keyed record store for ex-UserDefaults
+    // collections, #10). Additive -> automatic lightweight migration.
+    static let versionIdentifier = Schema.Version(1, 2, 0)
     static var models: [any PersistentModel.Type] {
-        [SDJournalEntry.self, SDThought.self]
+        [SDJournalEntry.self, SDThought.self, SDRecord.self]
     }
 }
 
@@ -306,6 +327,43 @@ final class SeshDataStore {
     func wipe() {
         try? context?.delete(model: SDJournalEntry.self)
         try? context?.delete(model: SDThought.self)
+        try? context?.delete(model: SDRecord.self)
         try? context?.save()
+    }
+
+    // MARK: Keyed record collections (#10)
+
+    /// All payloads in a collection, newest first.
+    func recordPayloads(in collection: String) -> [Data] {
+        let d = FetchDescriptor<SDRecord>(
+            predicate: #Predicate { $0.collection == collection },
+            sortBy: [SortDescriptor(\.date, order: .reverse)])
+        return ((try? context?.fetch(d)) ?? []).map(\.payload)
+    }
+
+    /// Record-level sync of a whole collection: upsert present items, delete
+    /// removed ones. Items are (id, date, payload) triples.
+    func syncCollection(_ collection: String, items: [(id: String, date: Date, payload: Data)]) {
+        guard let context else { return }
+        let d = FetchDescriptor<SDRecord>(predicate: #Predicate { $0.collection == collection })
+        let existing = (try? context.fetch(d)) ?? []
+        var byKey = Dictionary(existing.map { ($0.key, $0) }, uniquingKeysWith: { a, _ in a })
+        var wanted = Set<String>()
+        for item in items {
+            let key = "\(collection)/\(item.id)"
+            wanted.insert(key)
+            if let rec = byKey[key] {
+                rec.date = item.date
+                rec.payload = item.payload
+            } else {
+                context.insert(SDRecord(key: key, collection: collection,
+                                        date: item.date, payload: item.payload))
+            }
+        }
+        for (key, rec) in byKey where !wanted.contains(key) {
+            context.delete(rec)
+        }
+        byKey.removeAll()
+        if context.hasChanges { try? context.save() }
     }
 }

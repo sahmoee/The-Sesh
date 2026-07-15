@@ -8,19 +8,6 @@
 
 import SwiftUI
 
-/// Quick Action destinations presented as sheets (consolidated so RootView keeps
-/// a single sheet modifier for them, rather than many booleans that can collide).
-enum QuickActionSheet: String, Identifiable {
-    case compare, addPurchase
-    var id: String { rawValue }
-}
-
-/// Quick Action destinations presented full-screen.
-enum QuickActionCover: String, Identifiable {
-    case friends, badges, analytics
-    var id: String { rawValue }
-}
-
 enum Tab: Int, CaseIterable {
     // Order defines tab-bar order: Home · Community · Explore · Track · Me
     case home, community, explore, track, me
@@ -67,16 +54,14 @@ struct RootView: View {
             selection = tab
         }
     }
+    /// (#14) Typed navigation for the simple destinations.
+    @State private var router = AppRouter()
     @State private var showLog = false
-    @State private var showInbox = false
     @State private var showQuickThought = false
     /// Pre-selected tag for the thought composer (e.g. .rant from High Thoughts).
     @State private var quickThoughtTag: ThoughtTag? = nil
     /// "High Thoughts" action sheet: choose Thought or Rant.
     @State private var showHighThoughtChooser = false
-    @State private var showLounge = false
-    @State private var showStash = false
-    @State private var showStrains = false
     @State private var showStartSesh = false
     @State private var showActivityChooser = false
     @State private var chosenActivity: StartActivity? = nil
@@ -123,13 +108,10 @@ struct RootView: View {
         Haptics.success()
         showSessionScreen = true
     }
-    @State private var quickSheet: QuickActionSheet?
-    @State private var quickCover: QuickActionCover?
     @State private var logPrefill: StrainProfile?
     @State private var toastMessage: String?
     @State private var entryCountBefore = 0
     @State private var thoughtCountBefore = 0
-    @State private var showWhatsNew = false
     /// (#App18) 21+ / responsible-use gate, shown once on first launch.
     @State private var showAgeGate = !AgeGate.isConfirmed
 
@@ -150,25 +132,31 @@ struct RootView: View {
             selection = .track
         case .quickThought:
             showQuickThought = true
+        case .addFriend(let code):
+            // (Feature 8) Scanned a QR friend card.
+            Task {
+                let message = await social.addFriend(code: code)
+                toastMessage = message
+            }
         }
     }
 
     /// Routes a Home Quick Action to its destination.
     private func routeQuickAction(_ action: HomeQuickAction) {
         switch action {
-        case .compareStrains: quickSheet = .compare
-        case .addPurchase:    quickSheet = .addPurchase
+        case .compareStrains: router.present(.compare)
+        case .addPurchase:    router.present(.addPurchase)
         case .logSession:     showStartSesh = true
         case .logThought:     showQuickThought = true
-        case .friends:        quickCover = .friends
+        case .friends:        router.present(CoverRoute.friends)
         case .music:          selection = .home   // music hub lands on Home (step 6)
         case .startCyph:      selection = .community
-        case .scanProduct:    showStrains = true  // scan flow not built yet -> strains
-        case .viewBadges:     quickCover = .badges
+        case .scanProduct:    router.present(.strains)  // scan flow not built yet -> strains
+        case .viewBadges:     router.present(CoverRoute.badges)
         case .setStatus:      showActivityChooser = true
-        case .analytics:      quickCover = .analytics
-        case .stash:          showStash = true
-        case .lounge:         showLounge = true
+        case .analytics:      router.present(CoverRoute.analytics)
+        case .stash:          router.present(.stash)
+        case .lounge:         router.present(CoverRoute.lounge)
         case .strains:        selection = .explore
         }
     }
@@ -182,18 +170,12 @@ struct RootView: View {
         .id("\(theme.choice.rawValue)-\(theme.iconStyle.rawValue)")
         .preferredColorScheme(theme.choice.isDark ? .dark : .light)
         .toast($toastMessage)
-        .notificationBanner(onTap: { _ in showInbox = true })
-        .sheet(isPresented: $showInbox) {
-            NavigationStack { NotificationInboxView() }
-        }
+        .notificationBanner(onTap: { _ in router.present(.inbox) })
         .task {
-            if AppChangelog.shouldShowWhatsNew { showWhatsNew = true }
+            if AppChangelog.shouldShowWhatsNew { router.present(.whatsNew) }
         }
         .fullScreenCover(isPresented: $showAgeGate) {
             AgeGateView { showAgeGate = false }
-        }
-        .sheet(isPresented: $showWhatsNew) {
-            WhatsNewView().presentationDetents([.large])
         }
         .sheet(isPresented: $showLog, onDismiss: { onLogDismiss() }) {
             LogSeshView(prefill: logPrefill).environment(session).environment(strains)
@@ -211,20 +193,6 @@ struct RootView: View {
             Button("Start a Rant") { quickThoughtTag = .rant; showQuickThought = true }
             Button("Cancel", role: .cancel) { }
         }
-        .sheet(isPresented: $showStash) {
-            StashView().environment(session)
-        }
-        .sheet(isPresented: $showStrains) {
-            NavigationStack {
-                StrainLibraryView(onLog: { strain in
-                    logPrefill = strain
-                    showStrains = false
-                    showLog = true
-                })
-            }
-            .environment(session).environment(strains)
-        }
-        .fullScreenCover(isPresented: $showLounge) { LoungeView() }
         .fullScreenCover(isPresented: $showStartSesh, onDismiss: { onStartSeshDismiss() }) {
             StartSessionView()
                 .environment(session).environment(strains).environment(social)
@@ -249,16 +217,36 @@ struct RootView: View {
         .onOpenURL { url in
             handleDeepLink(url)
         }
-        .sheet(item: $quickSheet) { which in
+        .sheet(item: routerSheetBinding) { which in
             switch which {
+            case .inbox:
+                NavigationStack { NotificationInboxView() }
+            case .stash:
+                StashView().environment(session)
+            case .strains:
+                NavigationStack {
+                    StrainLibraryView(onLog: { strain in
+                        logPrefill = strain
+                        router.dismiss()
+                        showLog = true
+                    })
+                }
+                .environment(session).environment(strains)
+            case .whatsNew:
+                WhatsNewView().presentationDetents([.large])
             case .compare:
                 CompareStrainsView().environment(session).environment(strains)
             case .addPurchase:
                 AddPurchaseView().environment(session).environment(strains)
+            case .seshLab:
+                NavigationStack { SeshLabView() }
+                    .environment(session).environment(strains).environment(social)
             }
         }
-        .fullScreenCover(item: $quickCover) { which in
+        .fullScreenCover(item: routerCoverBinding) { which in
             switch which {
+            case .lounge:
+                LoungeView()
             case .friends:
                 FriendsView().environment(social).environment(session)
             case .badges:
@@ -267,6 +255,15 @@ struct RootView: View {
                 StatsView().environment(session)
             }
         }
+        .environment(router)
+    }
+
+    /// Bindings into the @Observable router (#14).
+    private var routerSheetBinding: Binding<SheetRoute?> {
+        Binding(get: { router.sheet }, set: { router.sheet = $0 })
+    }
+    private var routerCoverBinding: Binding<CoverRoute?> {
+        Binding(get: { router.cover }, set: { router.cover = $0 })
     }
 
     @ViewBuilder private var tabContent: some View {
@@ -285,11 +282,11 @@ struct RootView: View {
                         showStartSesh = true
                     },
                     onHighThought: { showHighThoughtChooser = true },
-                    onOpenStash: { showStash = true },
-                    onOpenLounge: { showLounge = true },
-                    onOpenStrains: { showStrains = true },
+                    onOpenStash: { router.present(.stash) },
+                    onOpenLounge: { router.present(CoverRoute.lounge) },
+                    onOpenStrains: { router.present(.strains) },
                     onMenu: { showActivityChooser = true },
-                    onOpenInbox: { showInbox = true },
+                    onOpenInbox: { router.present(.inbox) },
                     onQuickAction: { routeQuickAction($0) }
                 )
             }
@@ -355,7 +352,8 @@ struct TabBar: View {
             ForEach(Tab.allCases, id: \.self) { tab in
                 Button {
                     if selection != tab { Haptics.selection() }
-                    withAnimation(.easeOut(duration: 0.2)) { onSelect(tab) }
+                    // (#App10) Respects Reduce Motion.
+                    withMotion(.easeOut(duration: 0.2)) { onSelect(tab) }
                 } label: {
                     VStack(spacing: 4) {
                         Image(systemName: iconName(tab))
@@ -366,7 +364,7 @@ struct TabBar: View {
                     }
                     .foregroundStyle(selection == tab ? Palette.gold : Palette.textSecondary)
                     .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
+                    .minimumTapTarget()   // (#App10) 44pt HIG minimum
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(tab.title)

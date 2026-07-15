@@ -102,3 +102,39 @@ Add **`SafetyAndPrivacy.swift`** to the app target (plus the Batch 1/2 files if 
 
 ## Deliberately not auto-applied (needs a compiler + review, happy to do next)
 Code 3/4 (file splits & feature folders), 5 (dependency injection), 10/11 (UserDefaults→SwiftData, CloudKit records), 13 (shared image pipeline), 14 (navigation coordinator); App 1/2 (session-aware Home + quick actions), 10 (accessibility pass), 12 (iPad layouts); and the Features list. These reshape live UI/persistence code — doing them blind risks breaking your build in ways a zip can't fix.
+
+---
+
+# Batch 5 — full structural batch (applied directly; rollback: `git reset --hard 6c89bd7`)
+
+## Code 3 — File splits
+Models→(Models + Models+Domain), SocialViews→(SocialViews + CypherViews + ChatViews + FriendViews), InsightsScreens→(+StatsViews + StrainDetailViews), StrainLibraryView→(+StrainCatalogViews), AppChangelog→(+ChangelogViews), StartSeshView→(+SaveSeshView). Pure moves — no code changes; every file now ≤ ~930 lines, most ≤ 400.
+
+## Code 4 — Feature folders
+77 files organized into Session/ Social/ Strains/ Music/ Journal/ Stash/ Insights/ Profile/ CoreUI/ Persistence/ Networking/ Core/ Features/. The synchronized Xcode group picks structure up automatically. `SeshActivityAttributes.swift` stays at the folder root — the widget target's membership exception references it by relative path.
+
+## Code 5 — Dependency injection (`Core/AppDependencies.swift`)
+`Clock`/`SystemClock`/`FixedClock`, `ImageLoading`, `NotificationScheduling` protocols + an `AppDependencies` container. `SocialStore` now takes `init(api:outbox:clock:)` with production defaults — tests inject fakes, call sites unchanged.
+
+## Code 14 — Navigation coordinator (`CoreUI/AppRouter.swift`)
+`SheetRoute`/`CoverRoute` typed routes + `AppRouter` in the environment. RootView's inbox/stash/strains/lounge/whatsNew booleans and the QuickAction enums collapsed into ONE `.sheet(item:)` + ONE `.fullScreenCover(item:)`. The sesh-lifecycle presentations (start/active/chooser/log/thought) intentionally keep dedicated state — their onDismiss chains are sequencing logic.
+
+## Code 10 — UserDefaults → SwiftData (`SDRecord`)
+New keyed record model (schema 1.2.0, lightweight migration). Purchases and song history now store one record per item in SwiftData with one-time migration out of UserDefaults (keys removed after). iCloud KVS mirror retained for cross-device. Same pattern ready for goals/tools/photos.
+
+## Code 13 — Shared image pipeline (`Core/ImagePipeline.swift`)
+Actor with NSCache memory tier (64MB pixel budget), disk tier, request coalescing, ImageIO downsampled decode, failure cooldown, cancellation. StrainImageStore's remote fetches now go through it.
+
+## App 10 — Accessibility (partial, foundations)
+`CoreUI/Accessibility.swift`: `.minimumTapTarget()`, `.seshDynamicType()`, Reduce-Motion-aware `withMotion{}`. Applied to the tab bar (44pt targets, motion-safe selection). All new Batch-5 screens ship with combined a11y elements + labels. Full per-screen audit still needs a device pass. iPad multi-column (App 12) NOT done — that's a real design task.
+
+## Features (6 of 20, self-contained in `Features/`, hub: Sesh Lab)
+- **11** Stash depletion forecasts (30-day burn rate → days left per jar)
+- **12** Cost-per-session analytics (per sesh/method/strain/month + avg duration)
+- **13** Personal strain match score (ratings, repeat use, recency, mood lift, verdicts)
+- **20** Shareable recap cards (field toggles, ImageRenderer + ShareLink)
+- **8** QR friend card (`sesh://friend/<CODE>` deep link wired end-to-end)
+- **15** Rest-day & tolerance planner (weekly plan, streaks, 10am opt-in reminders)
+Entry points: Profile ▸ Settings ▸ Sesh Lab, or `router.present(.seshLab)`.
+
+Not attempted (need live services/design): SharePlay, collaborative queue, shared Cypher state, product scanner, voice thoughts, session memories, polls, expanded Live Activities, effect timeline, smart companion.

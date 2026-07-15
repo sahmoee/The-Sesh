@@ -111,9 +111,10 @@ final class StrainImageStore {
             return img
         }
 
-        // 2. Remote image from the manifest.
+        // 2. Remote image from the manifest — via the shared pipeline (#13):
+        //    coalesced downloads, disk cache, bounded-size decode, cancellation.
         if let entry = manifest[strainID], let url = remoteURL(for: entry.url) {
-            if let (data, _) = try? await session.data(from: url), let img = UIImage(data: data) {
+            if let img = await ImagePipeline.shared.image(from: url) {
                 store(img, for: strainID)
                 return img
             }

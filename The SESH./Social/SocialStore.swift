@@ -49,7 +49,8 @@ final class SocialStore {
     /// Set by the app at launch so polled friend events become notifications.
     weak var notifications: NotificationManager?
 
-    private let api = SeshAPI()
+    private let api: SeshAPI
+    private let clock: Clock
     private var pollTask: Task<Void, Never>?
     private var openRoomID: String?     // room whose chat we're actively polling
 
@@ -59,7 +60,14 @@ final class SocialStore {
     private let realtime = SeshRealtime()
 
     /// (#C5) Durable offline queue for writes.
-    private let outbox = OfflineOutbox.shared
+    private let outbox: OfflineOutbox
+
+    /// (#5) Injected dependencies; production defaults keep call sites working.
+    init(api: SeshAPI = SeshAPI(), outbox: OfflineOutbox = .shared, clock: Clock = SystemClock()) {
+        self.api = api
+        self.outbox = outbox
+        self.clock = clock
+    }
 
     /// The identity sent to the Worker on every call.
     private var identity: SeshIdentity {
