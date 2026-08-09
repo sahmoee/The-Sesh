@@ -1,14 +1,19 @@
 # Secrets — NEVER commit
 Secrets.xcconfig
+Secrets.local.xcconfig
 *.secret.xcconfig
 .env
 .env.*
+!.env.example
 .dev.vars
 *.p8
 *.p12
 *.cer
+*.pem
+*.key
 *.mobileprovision
 AuthKey_*.p8
+GoogleService-Info.plist
 # Cloudflare worker local state (secrets live in Cloudflare)
 _worker/**/.wrangler/
 **/.wrangler/
