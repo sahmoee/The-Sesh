@@ -61,7 +61,14 @@ final class AppSession {
     /// Moves any pre-SwiftData UserDefaults data into SwiftData exactly once.
     private func migrateFromUserDefaultsIfNeeded() {
         let d = UserDefaults.standard
-        guard !d.bool(forKey: migratedKey) else { return }
+        // The `migrated` flag alone is NOT a sufficient guard. While the
+        // SwiftData container was failing to open, the app ran memory-only: the
+        // store looked empty on every launch, the flag got set anyway, and the
+        // journal that still exists in UserDefaults/iCloud was never restored
+        // once storage started working again. So: re-run whenever the store is
+        // empty and there is real legacy data to recover. This is idempotent —
+        // every save mirrors the working set back into UserDefaults, so an
+        // intentionally emptied journal has nothing to resurrect.
         guard store.isEmpty else { d.set(true, forKey: migratedKey); return }
 
         var le: [JournalEntry] = []; var lt: [HighThought] = []

@@ -73,18 +73,6 @@ struct DarkCard<Content: View>: View {
     }
 }
 
-struct CreamCard<Content: View>: View {
-    var padding: CGFloat = 16
-    var radius: CGFloat = Radius.xl
-    @ViewBuilder var content: Content
-    var body: some View {
-        content
-            .padding(padding)
-            .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(Palette.cream))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(Palette.creamStroke, lineWidth: 1))
-    }
-}
-
 // MARK: - Screen header (back / title / trailing)
 
 struct ScreenHeader<Trailing: View>: View {
@@ -235,6 +223,8 @@ struct RatingSlider: View {
                 .foregroundStyle(Palette.text)
             Slider(value: $value, in: 1...10, step: 1)
                 .tint(Palette.greenBright)
+                .accessibilityLabel("Rating")
+                .accessibilityValue("\(Int(value)) out of 10")
             HStack {
                 Text("Slight").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
                 Spacer()
@@ -374,6 +364,7 @@ struct FilterPills: View {
                             .overlay(Capsule().stroke(active ? Color.clear : Palette.stroke, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(active ? .isSelected : [])
                 }
             }
         }
@@ -401,6 +392,7 @@ struct UnderlineTabs: View {
                         }
                     }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(active ? .isSelected : [])
                 }
             }
         }
@@ -413,16 +405,18 @@ struct PrimaryButton: View {
     let title: String
     var icon: String? = nil
     let action: () -> Void
+    @Environment(\.isEnabled) private var isEnabled
     var body: some View {
         Button(action: { Haptics.tap(); action() }) {
             HStack(spacing: 8) {
                 if let icon { Image(systemName: icon).font(.system(size: 16, weight: .semibold)) }
                 Text(title).font(.system(size: 16, weight: .semibold))
             }
-            .foregroundStyle(Palette.onGreen)
+            .foregroundStyle(isEnabled ? Palette.onGreen : Palette.textTertiary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.green))
+            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                .fill(Palette.green.opacity(isEnabled ? 1 : 0.4)))
         }
         .buttonStyle(.plain)
     }
@@ -482,9 +476,10 @@ struct CategoryTag: View {
 struct MoodScale: View {
     @Binding var selection: Int   // 0...4
     private let symbols = [
-        "face.dashed.fill", "face.smiling", "face.smiling",
-        "face.smiling.inverse", "face.smiling.inverse"
+        "cloud.bolt.fill", "cloud.rain.fill", "cloud.fill",
+        "cloud.sun.fill", "sun.max.fill"
     ]
+    private let labels = ["Angry", "Meh", "Neutral", "Good", "Great"]
     private let tints = [
         Palette.moodAngry, Palette.moodMeh, Palette.moodNeutral,
         Palette.moodGood, Palette.moodGreat
@@ -505,6 +500,8 @@ struct MoodScale: View {
                             .stroke(selection == i ? tints[i].opacity(0.6) : Color.clear, lineWidth: 1.5))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(labels[i])
+                .accessibilityAddTraits(selection == i ? .isSelected : [])
             }
         }
         .padding(.horizontal, 4).padding(.vertical, 4)
@@ -517,25 +514,49 @@ struct MoodScale: View {
 
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    /// Memoized subview sizes so each pass measures every subview once.
+    func makeCache(subviews: Subviews) -> [CGSize] {
+        subviews.map { $0.sizeThatFits(.unspecified) }
+    }
+    func updateCache(_ cache: inout [CGSize], subviews: Subviews) {
+        cache = subviews.map { $0.sizeThatFits(.unspecified) }
+    }
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout [CGSize]) -> CGSize {
         let maxWidth = proposal.width ?? .infinity
         var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0
-        for v in subviews {
-            let s = v.sizeThatFits(.unspecified)
+        for s in cache {
             if x + s.width > maxWidth, x > 0 { x = 0; y += rowHeight + spacing; rowHeight = 0 }
             x += s.width + spacing
             rowHeight = max(rowHeight, s.height)
         }
         return CGSize(width: maxWidth == .infinity ? x : maxWidth, height: y + rowHeight)
     }
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout [CGSize]) {
         var x = bounds.minX, y = bounds.minY, rowHeight: CGFloat = 0
-        for v in subviews {
-            let s = v.sizeThatFits(.unspecified)
+        for (v, s) in zip(subviews, cache) {
             if x + s.width > bounds.maxX, x > bounds.minX { x = bounds.minX; y += rowHeight + spacing; rowHeight = 0 }
             v.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(s))
             x += s.width + spacing
             rowHeight = max(rowHeight, s.height)
         }
+    }
+}
+
+// MARK: - Progress bar
+
+/// A simple progress bar that doesn't use GeometryReader (per architecture
+/// rules). Used by the Strains intelligence grid and the Lounge's player and
+/// poll cards. Previously lived in Social/LoungeView.swift, which is retired.
+struct GeometryFreeBar: View {
+    let fraction: Double
+    var body: some View {
+        ZStack(alignment: .leading) {
+            Capsule().fill(Palette.field).frame(height: 8)
+            Capsule().fill(Palette.green).frame(height: 8)
+                .frame(maxWidth: .infinity)
+                .scaleEffect(x: max(0, min(1, fraction)), anchor: .leading)
+        }
+        .accessibilityElement()
+        .accessibilityValue("\(Int(max(0, min(1, fraction)) * 100)) percent")
     }
 }

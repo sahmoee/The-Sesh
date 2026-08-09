@@ -21,7 +21,6 @@ struct LogSeshView: View {
     @State private var strain = ""
     @State private var extraStrains: [String] = []   // #multi-strain
     @State private var newStrainEntry = ""            // input for adding another strain
-    @State private var newExtraStrain = ""
     @State private var method = ""
     @State private var rating: Double = 8
     @State private var mood: Mood?
@@ -44,6 +43,12 @@ struct LogSeshView: View {
     @State private var amountUnit = "g"
     @State private var matched: StrainProfile?
     @State private var showSuggestions = false
+    @State private var confirmDiscard = false
+    /// Snapshot of the editable fields taken right after initial load, used to
+    /// detect unsaved changes when the user backs out.
+    @State private var loadedFingerprint = ""
+    /// One-shot guard: `.task` re-runs when the view re-appears (e.g. after the
+    /// in-form camera cover dismisses), and re-loading would wipe typed input.
     @State private var didLoad = false
 
     private let moodCols = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
@@ -68,7 +73,8 @@ struct LogSeshView: View {
             AppBackground()
             VStack(spacing: 0) {
                 ScreenHeader(title: isEditing ? "Edit sesh" : "Log your sesh",
-                             onBack: { dismiss() }, showLeaf: true)
+                             onBack: { if hasEdits { confirmDiscard = true } else { dismiss() } },
+                             showLeaf: true)
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
 
                 ScrollView {
@@ -92,8 +98,33 @@ struct LogSeshView: View {
                 .scrollDismissesKeyboard(.interactively)
             }
         }
-        .onAppear(perform: loadInitial)
+        .task {
+            guard !didLoad else { return }
+            didLoad = true
+            loadInitial()
+            loadedFingerprint = fieldsFingerprint
+        }
+        .confirmationDialog("Discard changes?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard", role: .destructive) { dismiss() }
+            Button("Keep Editing", role: .cancel) {}
+        } message: {
+            Text("Your edits to this sesh won't be saved.")
+        }
     }
+
+    /// A cheap snapshot of everything the user can edit; compared against the
+    /// post-load snapshot to decide whether backing out needs a confirmation.
+    private var fieldsFingerprint: String {
+        [strain, extraStrains.joined(separator: ","), method, String(rating),
+         mood?.rawValue ?? "", smokeAgain?.rawValue ?? "",
+         category?.rawValue ?? "", customCategory ?? "", champion ?? "",
+         sessionTags.sorted().joined(separator: ","),
+         effects.sorted().joined(separator: ","),
+         trackMoodShift ? "\(moodBefore)-\(moodAfter)" : "",
+         amount, amountUnit, notes, photoName ?? ""].joined(separator: "|")
+    }
+
+    private var hasEdits: Bool { fieldsFingerprint != loadedFingerprint }
 
     // MARK: Sections (split out so the type-checker resolves each in isolation)
 
@@ -182,7 +213,7 @@ struct LogSeshView: View {
     @ViewBuilder private var extraStrainsList: some View {
         if !extraStrains.isEmpty {
             VStack(spacing: 6) {
-                ForEach(Array(extraStrains.enumerated()), id: \.offset) { idx, name in
+                ForEach(Array(extraStrains.enumerated()), id: \.element) { idx, name in
                     HStack(spacing: 8) {
                         Image(systemName: "leaf.fill").font(.system(size: 11)).foregroundStyle(Palette.green)
                         Text(name).font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.text)
@@ -462,8 +493,6 @@ struct LogSeshView: View {
     // MARK: Actions
 
     private func loadInitial() {
-        guard !didLoad else { return }
-        didLoad = true
         if let e = editing {
             strain = e.strain; method = e.method; rating = e.rating
             extraStrains = e.extraStrains ?? []

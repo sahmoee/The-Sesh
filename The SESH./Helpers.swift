@@ -14,27 +14,35 @@ import UIKit
 enum Haptics {
     /// Master on/off for in-app haptics. Backed by AppSession.hapticsEnabled,
     /// which sets this at launch and whenever the user toggles it in Settings.
-    /// Defaults to the stored value (on for fresh installs).
-    static var isEnabled: Bool = {
-        UserDefaults.standard.object(forKey: "sesh.haptics.enabled.v1") == nil
-            ? true : UserDefaults.standard.bool(forKey: "sesh.haptics.enabled.v1")
+    static var isEnabled = true
+
+    // Long-lived, prepared generators: allocating one per call defeats the
+    // Taptic Engine's prepare/latency optimization.
+    private static let impact: UIImpactFeedbackGenerator = {
+        let g = UIImpactFeedbackGenerator(style: .light); g.prepare(); return g
+    }()
+    private static let notification: UINotificationFeedbackGenerator = {
+        let g = UINotificationFeedbackGenerator(); g.prepare(); return g
+    }()
+    private static let select: UISelectionFeedbackGenerator = {
+        let g = UISelectionFeedbackGenerator(); g.prepare(); return g
     }()
 
     static func tap() {
         guard isEnabled else { return }
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        impact.impactOccurred(); impact.prepare()
     }
     static func success() {
         guard isEnabled else { return }
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        notification.notificationOccurred(.success); notification.prepare()
     }
     static func selection() {
         guard isEnabled else { return }
-        UISelectionFeedbackGenerator().selectionChanged()
+        select.selectionChanged(); select.prepare()
     }
     static func warning() {
         guard isEnabled else { return }
-        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        notification.notificationOccurred(.warning); notification.prepare()
     }
 }
 
@@ -51,16 +59,19 @@ enum Fmt {
         let f = NumberFormatter(); f.numberStyle = .currency; f.maximumFractionDigits = 0; return f
     }()
     private static let mediumDateFormatter: DateFormatter = {
-        let f = DateFormatter(); f.dateFormat = "MMM d, yyyy"; return f
+        let f = DateFormatter(); f.setLocalizedDateFormatFromTemplate("MMMdyyyy"); return f
     }()
     private static let shortDateFormatter: DateFormatter = {
-        let f = DateFormatter(); f.dateFormat = "MMM d"; return f
+        let f = DateFormatter(); f.setLocalizedDateFormatFromTemplate("MMMd"); return f
     }()
     private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter(); f.dateFormat = "h:mm a"; return f
+        let f = DateFormatter(); f.setLocalizedDateFormatFromTemplate("jmm"); return f
     }()
     private static let monthNameFormatter: DateFormatter = {
         let f = DateFormatter(); f.dateFormat = "LLLL"; return f
+    }()
+    private static let relativeFormatter: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter(); f.unitsStyle = .abbreviated; return f
     }()
 
     static func currency(_ value: Double) -> String {
@@ -77,6 +88,10 @@ enum Fmt {
     static func shortDate(_ date: Date) -> String { shortDateFormatter.string(from: date) }
     static func time(_ date: Date) -> String { timeFormatter.string(from: date) }
     static func monthName(_ date: Date) -> String { monthNameFormatter.string(from: date) }
+    /// Localized relative time ("5 min ago", "2 hr ago"). Cached formatter.
+    static func relative(_ date: Date) -> String {
+        relativeFormatter.localizedString(for: date, relativeTo: Date())
+    }
 }
 
 // MARK: - Toast
@@ -100,9 +115,10 @@ struct ToastModifier: ViewModifier {
                 .shadow(color: .black.opacity(0.3), radius: 10, y: 4)
                 .padding(.top, 8)
                 .transition(.move(edge: .top).combined(with: .opacity))
-                .task {
+                .task(id: message) {
+                    AccessibilityNotification.Announcement(message).post()
                     try? await Task.sleep(for: .seconds(1.8))
-                    withAnimation(.easeOut(duration: 0.25)) { self.message = nil }
+                    withMotion(.easeOut(duration: 0.25)) { self.message = nil }
                 }
             }
         }
@@ -178,12 +194,21 @@ struct Sparkline: View {
 
     var body: some View {
         Canvas { context, size in
-            guard values.count > 1 else { return }
+            guard !values.isEmpty else { return }
             let maxV = 10.0, minV = 1.0
+            func norm(_ value: Double) -> CGFloat {
+                CGFloat(min(1, max(0, (value - minV) / (maxV - minV))))
+            }
+            guard values.count > 1 else {
+                // Single sample: draw a centered dot at its (clamped) value.
+                let y = size.height - norm(values[0]) * size.height
+                context.fill(Path(ellipseIn: CGRect(x: size.width / 2 - 3, y: y - 3, width: 6, height: 6)),
+                             with: .color(lineColor))
+                return
+            }
             let stepX = size.width / CGFloat(values.count - 1)
             func point(_ i: Int) -> CGPoint {
-                let v = (values[i] - minV) / (maxV - minV)
-                return CGPoint(x: CGFloat(i) * stepX, y: size.height - CGFloat(v) * size.height)
+                CGPoint(x: CGFloat(i) * stepX, y: size.height - norm(values[i]) * size.height)
             }
             var path = Path()
             path.move(to: point(0))

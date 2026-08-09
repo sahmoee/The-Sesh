@@ -20,7 +20,7 @@
 // `pushJobs` (token + payload) to the Worker router, which sends them and
 // reports dead tokens back to POST /push/prune (#C9).
 
-import { now, PRESENCE_WINDOW_MS, str } from "./util";
+import { displayHandle, displayName, json, now, PRESENCE_WINDOW_MS, str } from "./util";
 
 interface UserRecord {
   id: string;
@@ -75,8 +75,17 @@ export class SocialDO implements DurableObject {
   }
 
   private async putUser(u: UserRecord): Promise<void> {
+    if (u.code) {
+      const key = `code:${u.code.toUpperCase()}`;
+      const owner = await this.state.storage.get<string>(key);
+      if (owner && owner !== u.id) {
+        // Code already belongs to another uid — refuse the hijack.
+        u.code = "";
+      } else if (!owner) {
+        await this.state.storage.put(key, u.id);
+      }
+    }
     await this.state.storage.put(`user:${u.id}`, u);
-    if (u.code) await this.state.storage.put(`code:${u.code.toUpperCase()}`, u.id);
   }
 
   private async allUsers(): Promise<UserRecord[]> {
@@ -93,8 +102,10 @@ export class SocialDO implements DurableObject {
     const prev = await this.user(uid);
     const rec: UserRecord = {
       id: uid,
-      handle: handle || prev?.handle || "@you",
-      displayName: name || prev?.displayName || "You",
+      // Never persist a second-person placeholder ("@you" / "You") as this
+      // user's identity — it is what every OTHER account sees.
+      handle: displayHandle(handle || prev?.handle, uid),
+      displayName: displayName(name || prev?.displayName, handle || prev?.handle, uid),
       code: (fields.code as string) || prev?.code || "",
       activity: fields.activity !== undefined ? (fields.activity as string) : (prev?.activity || "idle"),
       lastSeen: now(),
@@ -106,6 +117,30 @@ export class SocialDO implements DurableObject {
     };
     await this.putUser(rec);
     return rec;
+  }
+
+  // ---- room membership -------------------------------------------------------
+  //
+  // `memberCount` used to be seeded at 0 and never written again, so every room
+  // in the app read "0 members" forever — including the room you were standing
+  // in. Membership is now the set of uids that have opened or posted in a room.
+
+  private static readonly MAX_ROOM_MEMBERS = 5000;
+
+  /** Record `uid` as a member of `roomID`. Returns true if this was new. */
+  private async joinRoom(roomID: string, uid: string): Promise<boolean> {
+    if (!roomID || !uid) return false;
+    const key = `rmem:${roomID}`;
+    const members = await this.list<string>(key, []);
+    if (members.includes(uid)) return false;
+    members.push(uid);
+    await this.state.storage.put(key,
+      members.slice(-SocialDO.MAX_ROOM_MEMBERS));
+    return true;
+  }
+
+  private async roomMemberCount(roomID: string): Promise<number> {
+    return (await this.list<string>(`rmem:${roomID}`, [])).length;
   }
 
   private async pushFeed(event: unknown): Promise<void> {
@@ -129,12 +164,17 @@ export class SocialDO implements DurableObject {
   }
 
   async webSocketMessage(ws: WebSocket, message: ArrayBuffer | string): Promise<void> {
-    // Heartbeat from the client keeps presence fresh over the socket.
+    // Heartbeat from the client keeps presence fresh over the socket. The uid
+    // comes from the tag attached at acceptWebSocket (verified identity), never
+    // from the frame — a client can't forge someone else's presence.
     try {
       const data = JSON.parse(typeof message === "string" ? message : new TextDecoder().decode(message));
-      if (data.type === "heartbeat" && typeof data.uid === "string") {
-        const u = await this.user(data.uid);
-        if (u) { u.lastSeen = now(); await this.putUser(u); }
+      if (data.type === "heartbeat") {
+        const [uid] = this.state.getTags(ws);
+        if (uid) {
+          const u = await this.user(uid);
+          if (u) { u.lastSeen = now(); await this.putUser(u); }
+        }
         ws.send(JSON.stringify({ type: "pong", at: now() }));
       }
     } catch { /* ignore malformed frames */ }
@@ -146,15 +186,19 @@ export class SocialDO implements DurableObject {
 
   private async alreadyProcessed(key: string | null): Promise<boolean> {
     if (!key) return false;
-    const k = `idem:${key.slice(0, 128)}`;
-    if (await this.state.storage.get(k)) return true;
-    await this.state.storage.put(k, Date.now());
+    return !!(await this.state.storage.get(`idem:${key.slice(0, 128)}`));
+  }
+
+  /** Record an idempotency key AFTER the handler succeeded — a thrown handler
+   *  must not swallow the client's retry. */
+  private async markProcessed(key: string | null): Promise<void> {
+    if (!key) return;
+    await this.state.storage.put(`idem:${key.slice(0, 128)}`, Date.now());
     // Opportunistic cleanup of old keys (bounded scan).
     const old = await this.state.storage.list<number>({ prefix: "idem:", limit: 500 });
     const cutoff = Date.now() - 24 * 60 * 60 * 1000;
     const stale = [...old].filter(([, at]) => at < cutoff).map(([k2]) => k2);
     if (stale.length) await this.state.storage.delete(stale);
-    return false;
   }
 
   // ---- snapshot --------------------------------------------------------------
@@ -166,14 +210,23 @@ export class SocialDO implements DurableObject {
 
     let rooms = await this.list<Record<string, unknown>>("rooms", []);
     if (rooms.length === 0) { rooms = seedRooms(); await this.state.storage.put("rooms", rooms); }
+    // memberCount is derived, not stored on the room record, so it can't drift.
+    rooms = await Promise.all(rooms.map(async (r) => ({
+      ...r,
+      memberCount: await this.roomMemberCount(str(r.id, 64)),
+    })));
 
     const cyphers = await this.list<unknown>("cyphers", []);
     const live = await this.list<Record<string, unknown>>("live", []);
     const storedFeed = await this.list<Record<string, unknown>>("feed", []);
 
     const tnow = Date.now();
+    const friendIDs = new Set(me?.friends || []);
+    // The admin export (uid "admin", ADMIN_KEY-guarded in the router) needs the
+    // unfiltered view; everyone else sees only their actual friends.
+    const isAdminExport = meID === "admin";
     const friends = users
-      .filter((u) => u.id !== meID && !blocked.has(u.id))
+      .filter((u) => u.id !== meID && (isAdminExport || friendIDs.has(u.id)) && !blocked.has(u.id))
       .map((u) => {
         const stale = tnow - Date.parse(u.lastSeen) > PRESENCE_WINDOW_MS;
         return {
@@ -185,7 +238,7 @@ export class SocialDO implements DurableObject {
       });
 
     const derived = users
-      .filter((u) => u.activity && u.activity !== "idle")
+      .filter((u) => (isAdminExport || u.id === meID || friendIDs.has(u.id)) && u.activity && u.activity !== "idle")
       .map((u) => ({
         id: `ev_${u.id}_${Date.parse(u.lastSeen)}`,
         userID: u.id, userHandle: u.handle, userName: u.displayName,
@@ -196,7 +249,10 @@ export class SocialDO implements DurableObject {
     const feed = [...storedFeed, ...derived]
       .sort((a, b) => Date.parse(b.at as string) - Date.parse(a.at as string))
       .filter((e) => { const k = e.id as string; if (seen.has(k)) return false; seen.add(k); return true; })
-      .filter((e) => !blocked.has((e.userID as string) || ""))
+      .filter((e) => {
+        const who = (e.userID as string) || "";
+        return !blocked.has(who) && (isAdminExport || who === meID || friendIDs.has(who));
+      })
       .slice(0, 50);
 
     return { friends, cyphers, rooms, live, feed };
@@ -233,11 +289,12 @@ export class SocialDO implements DurableObject {
     const ok = (data: Record<string, unknown> = {}) =>
       new Response(JSON.stringify({ ok: true, ...data }), { headers: { "Content-Type": "application/json" } });
 
-    // WebSocket upgrade (#C3)
+    // WebSocket upgrade (#C3). Tag the socket with the verified uid so
+    // heartbeats can't forge presence for someone else.
     if (path === "/ws") {
       if (request.headers.get("Upgrade") !== "websocket") return new Response("expected websocket", { status: 426 });
       const pair = new WebSocketPair();
-      this.state.acceptWebSocket(pair[1]);
+      this.state.acceptWebSocket(pair[1], uid ? [uid] : []);
       await this.touch(uid, handle, name);
       return new Response(null, { status: 101, webSocket: pair[0] });
     }
@@ -263,7 +320,7 @@ export class SocialDO implements DurableObject {
         { headers: { "Content-Type": "application/json" } });
     }
 
-    if (request.method !== "POST") return new Response("not found", { status: 404 });
+    if (request.method !== "POST") return json({ error: "not_found" }, 404);
     let body: Record<string, unknown> = {};
     try { body = await request.json(); } catch { body = {}; }
 
@@ -440,13 +497,24 @@ export class SocialDO implements DurableObject {
 
       case path === "/room-touch": {
         // Called by the router after RoomDO stores a message.
+        const roomID = str(body.roomID, 64);
         const rooms = await this.list<{ id: string; lastMessage?: string | null; lastMessageAt?: string | null }>("rooms", seedRooms() as never);
-        const r = rooms.find((x) => x.id === str(body.roomID, 64));
+        const r = rooms.find((x) => x.id === roomID);
         if (r) {
           r.lastMessage = str(body.text, 200);
           r.lastMessageAt = now();
           await this.state.storage.put("rooms", rooms);
         }
+        // Posting in a room makes you a member of it.
+        await this.joinRoom(roomID, uid);
+        break;
+      }
+
+      case path === "/room-join": {
+        // Called when the app opens a room, so lurkers are counted too. Only a
+        // genuinely new member changes the snapshot — re-opening a room you're
+        // already in must not bump the revision and wake every client.
+        changed = await this.joinRoom(str(body.roomID, 64), uid);
         break;
       }
 
@@ -491,13 +559,16 @@ export class SocialDO implements DurableObject {
         if (!match.friends.includes(uid)) match.friends.push(uid);
         await this.putUser(me);
         await this.putUser(match);
+        await this.markProcessed(idem);
         return ok({ friend: { id: match.id, handle: match.handle, displayName: match.displayName } });
       }
 
       default:
-        return new Response("not found", { status: 404 });
+        return json({ error: "not_found" }, 404);
     }
 
+    // Handler succeeded — only now is the idempotency key committed (#C5).
+    await this.markProcessed(idem);
     if (changed) this.broadcastChanged();
     return ok(pushJobs.length ? { pushJobs } : {});
   }

@@ -69,8 +69,6 @@ struct RootView: View {
     /// When a start is requested while a sesh is live, stash the pending activity
     /// and show the "in progress" confirm dialog. Works for widget + in-app.
     @State private var showSessionScreen = false
-    /// If set, this activity starts once the current save screen is dismissed.
-    @State private var startAfterSave: StartActivity? = nil
     /// Stashed chooser pick, applied after the chooser sheet dismisses.
     @State private var pendingChooserActivity: StartActivity? = nil
 
@@ -167,6 +165,14 @@ struct RootView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             TabBar(selection: $selection, onSelect: { selectTab($0) })
         }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            // Previously-silent failure states: offline/degraded network and
+            // the SwiftData memory-only fallback (data loss on relaunch).
+            VStack(spacing: 6) {
+                ConnectivityBanner(retry: { await social.refresh() })
+                StorageHealthBanner()
+            }
+        }
         .id("\(theme.choice.rawValue)-\(theme.iconStyle.rawValue)")
         .preferredColorScheme(theme.choice.isDark ? .dark : .light)
         .toast($toastMessage)
@@ -194,9 +200,21 @@ struct RootView: View {
             Button("Cancel", role: .cancel) { }
         }
         .fullScreenCover(isPresented: $showStartSesh, onDismiss: { onStartSeshDismiss() }) {
-            StartSessionView()
-                .environment(session).environment(strains).environment(social)
-                .onAppear { entryCountBefore = session.entries.count }
+            Group {
+                if endSeshFromWidget {
+                    // Widget/Home "End Sesh": end the live sesh on appear and go
+                    // straight to the skippable save screen.
+                    StartSeshView(endImmediately: true)
+                } else if let chosenActivity {
+                    // A specific flow was picked (Roll Up / Smoking / widget) —
+                    // start live immediately in that activity.
+                    StartSeshView(initialActivity: chosenActivity)
+                } else {
+                    StartSessionView()
+                }
+            }
+            .environment(session).environment(strains).environment(social)
+            .onAppear { entryCountBefore = session.entries.count }
         }
         .fullScreenCover(isPresented: $showSessionScreen) {
             SessionActiveView(onEnd: {
@@ -246,7 +264,7 @@ struct RootView: View {
         .fullScreenCover(item: routerCoverBinding) { which in
             switch which {
             case .lounge:
-                LoungeView()
+                LoungeFeedView()
             case .friends:
                 FriendsView().environment(social).environment(session)
             case .badges:
@@ -327,10 +345,6 @@ struct RootView: View {
     private func onStartSeshDismiss() {
         chosenActivity = nil
         endSeshFromWidget = false
-        if let next = startAfterSave {
-            startAfterSave = nil
-            requestStart(next)
-        }
     }
 
     private func onChooserDismiss() {

@@ -46,14 +46,24 @@ enum SeshDeepLink {
 
     /// Build the URL for a given link (used by the widget).
     var url: URL {
+        let string: String
         switch self {
-        case .startSesh(let a): return URL(string: "\(SeshDeepLink.scheme)://start/\(a.rawValue)")!
-        case .openChooser:      return URL(string: "\(SeshDeepLink.scheme)://start")!
-        case .endSesh:          return URL(string: "\(SeshDeepLink.scheme)://end")!
-        case .addFriend(let c): return URL(string: "\(SeshDeepLink.scheme)://friend/\(c)")!
-        case .logSesh:          return URL(string: "\(SeshDeepLink.scheme)://log")!
-        case .quickThought:     return URL(string: "\(SeshDeepLink.scheme)://thought")!
+        case .startSesh(let a): string = "\(SeshDeepLink.scheme)://start/\(a.rawValue)"
+        case .openChooser:      string = "\(SeshDeepLink.scheme)://start"
+        case .endSesh:          string = "\(SeshDeepLink.scheme)://end"
+        case .addFriend(let c):
+            // The friend code is arbitrary user data — percent-encode it so it
+            // can't break the URL (or make URL(string:) fail).
+            let code = c.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+            string = "\(SeshDeepLink.scheme)://friend/\(code)"
+        case .logSesh:          string = "\(SeshDeepLink.scheme)://log"
+        case .quickThought:     string = "\(SeshDeepLink.scheme)://thought"
         }
+        // Fatal-free fallback: fall back to the chooser link, then to a benign
+        // file URL (never crashes; the constant strings above are always valid).
+        return URL(string: string)
+            ?? URL(string: "\(SeshDeepLink.scheme)://start")
+            ?? URL(fileURLWithPath: "/")
     }
 }
 
@@ -165,6 +175,7 @@ struct StartSeshChooser: View {
                                 )
                             }
                             .buttonStyle(.plain)
+                            .accessibilityElement(children: .combine)
                         }
                     }
 
@@ -222,11 +233,6 @@ struct CurrentStatusCard: View {
         "Started at \(Fmt.time(social.activityStartedAt))"
     }
 
-    private func elapsed(_ since: Date) -> String {
-        let secs = max(0, Int(Date().timeIntervalSince(since)))
-        return String(format: "%02d:%02d", secs / 60, secs % 60)
-    }
-
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             HStack(alignment: .top, spacing: 12) {
@@ -245,7 +251,7 @@ struct CurrentStatusCard: View {
                 Spacer(minLength: 0)
                 VStack(alignment: .trailing, spacing: 6) {
                     ActivityGlyph(activity: act, size: 30)
-                    Text(elapsed(social.activityStartedAt))
+                    Text(seshDuration(max(0, Date().timeIntervalSince(social.activityStartedAt))))
                         .font(.system(size: 17, weight: .bold))
                         .monospacedDigit()
                         .foregroundStyle(accent)
@@ -348,28 +354,48 @@ struct ConfettiView: View {
 }
 
 /// Canvas-based confetti that doesn't need GeometryReader (forbidden in this app).
+/// Honors Reduce Motion (renders a static burst) and stops animating after a few
+/// seconds instead of running forever.
 private struct GeometryFreeConfetti: View {
     let pieces: [(x: Double, delay: Double, size: Double, spin: Double)]
     let colors: [Color]
     private let start = Date()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var finished = false
+
+    /// How long the confetti animates before freezing.
+    private static let runDuration: TimeInterval = 3
 
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: nil, paused: finished || reduceMotion)) { timeline in
             Canvas { ctx, size in
-                let t = timeline.date.timeIntervalSince(start)
+                let t = reduceMotion ? 0 : min(timeline.date.timeIntervalSince(start), Self.runDuration)
                 for (i, p) in pieces.enumerated() {
-                    let local = max(0, t - p.delay)
-                    let fall = (local * 220).truncatingRemainder(dividingBy: size.height + 40)
-                    let x = p.x * size.width + sin(local * 3 + Double(i)) * 16
-                    let rect = CGRect(x: x, y: fall - 20, width: p.size, height: p.size * 1.6)
+                    let rect: CGRect
+                    let angle: Angle
+                    if reduceMotion {
+                        // Static burst: scatter the pieces using their seeds, no motion.
+                        let y = p.delay / 1.5 * (size.height * 0.5)
+                        rect = CGRect(x: p.x * size.width, y: y, width: p.size, height: p.size * 1.6)
+                        angle = Angle(degrees: p.spin)
+                    } else {
+                        let local = max(0, t - p.delay)
+                        let fall = (local * 220).truncatingRemainder(dividingBy: size.height + 40)
+                        let x = p.x * size.width + sin(local * 3 + Double(i)) * 16
+                        rect = CGRect(x: x, y: fall - 20, width: p.size, height: p.size * 1.6)
+                        angle = Angle(degrees: p.spin + local * 200)
+                    }
                     var path = Path(roundedRect: rect, cornerRadius: 1.5)
-                    let angle = Angle(degrees: p.spin + local * 200)
                     path = path.applying(.init(translationX: rect.midX, y: rect.midY)
                         .rotated(by: angle.radians)
                         .translatedBy(x: -rect.midX, y: -rect.midY))
                     ctx.fill(path, with: .color(colors[i % colors.count]))
                 }
             }
+        }
+        .task {
+            try? await Task.sleep(for: .seconds(Self.runDuration))
+            finished = true
         }
     }
 }

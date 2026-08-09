@@ -31,3 +31,16 @@ xcuserdata/
 node_modules/
 # macOS
 .DS_Store
+
+# macOS AppleDouble resource forks (created by zip/unzip round-trips)
+._*
+.AppleDouble
+
+# Local build snapshots — keep on disk if you want them, never in git
+.buildbuddy-backups/
+
+# One-off patch exports are reproducible from git history
+*.diff
+
+# Worker has no package.json; a stray lockfile is always an artifact
+_worker/**/package-lock.json

@@ -11,11 +11,17 @@ compatibility_date = "2024-11-01"
 bindings = [
   { name = "SOCIAL", class_name = "SocialDO" },
   { name = "ROOMS",  class_name = "RoomDO" },
+  { name = "LOUNGE", class_name = "LoungeDO" },
 ]
 
 [[migrations]]
 tag = "v1-durable-objects"
 new_sqlite_classes = ["SocialDO", "RoomDO"]
+
+# The Lounge's public feed (SESH-RL-001-R2).
+[[migrations]]
+tag = "v2-lounge"
+new_sqlite_classes = ["LoungeDO"]
 
 # KV is retained for Spotify refresh tokens (single-key records; no concurrent
 # write hazard) and for reading legacy data during migration.
@@ -57,10 +63,15 @@ vars = { APNS_BUNDLE_ID = "com.sowens.The-SESH-", APPLE_BUNDLE_ID = "com.sowens.
 durable_objects.bindings = [
   { name = "SOCIAL", class_name = "SocialDO" },
   { name = "ROOMS",  class_name = "RoomDO" },
+  { name = "LOUNGE", class_name = "LoungeDO" },
 ]
 [[env.dev.migrations]]
 tag = "v1-durable-objects"
 new_sqlite_classes = ["SocialDO", "RoomDO"]
+
+[[env.dev.migrations]]
+tag = "v2-lounge"
+new_sqlite_classes = ["LoungeDO"]
 
 [env.staging]
 name = "sesh-worker-staging"
@@ -68,7 +79,12 @@ vars = { APNS_BUNDLE_ID = "com.sowens.The-SESH-", APPLE_BUNDLE_ID = "com.sowens.
 durable_objects.bindings = [
   { name = "SOCIAL", class_name = "SocialDO" },
   { name = "ROOMS",  class_name = "RoomDO" },
+  { name = "LOUNGE", class_name = "LoungeDO" },
 ]
 [[env.staging.migrations]]
 tag = "v1-durable-objects"
 new_sqlite_classes = ["SocialDO", "RoomDO"]
+
+[[env.staging.migrations]]
+tag = "v2-lounge"
+new_sqlite_classes = ["LoungeDO"]

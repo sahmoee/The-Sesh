@@ -19,7 +19,13 @@ import SwiftUI
 final class SocialStore {
     // Current user. Starts as a local placeholder and is replaced by the
     // signed-in identity via configure(...) at app launch.
-    var me = SeshUser(id: "me", handle: "@you", displayName: "You",
+    //
+    // The placeholder is deliberately NOT "You"/"@you". This value is sent to
+    // the Worker as the account's display name and is stamped onto every
+    // message, where it is read by other people — "You" only makes sense on
+    // this device, which is exactly why everyone else saw messages authored by
+    // "You". See `fallbackDisplayName(for:)`.
+    var me = SeshUser(id: "me", handle: "@sesher", displayName: "Sesher",
                       activity: .idle, lastSeen: Date(), streak: 0, isFriend: false)
 
     var friends: [SeshUser] = []
@@ -82,18 +88,30 @@ final class SocialStore {
     /// e.g. "SESH-7K9F". Must be deterministic across launches, so it uses a
     /// fixed hash of the id STRING — Swift's Hashable.hashValue is seeded per
     /// process and would change every launch (breaking the code).
-    var friendCode: String {
+    var friendCode: String { "SESH-" + Self.tag(from: me.id) }
+
+    /// Deterministic 4-character tag for an id ("7K9F"). Stable across launches.
+    static func tag(from id: String) -> String {
         let alphabet = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789") // no ambiguous chars
         // FNV-1a over the id's UTF-8 bytes — stable forever for a given id.
         var hash: UInt64 = 0xcbf29ce484222325
-        for byte in me.id.utf8 {
+        for byte in id.utf8 {
             hash ^= UInt64(byte)
             hash = hash &* 0x100000001b3
         }
         var n = hash
         var code = ""
         for _ in 0..<4 { code.append(alphabet[Int(n % UInt64(alphabet.count))]); n /= UInt64(alphabet.count) }
-        return "SESH-" + code
+        return code
+    }
+
+    /// Display name for someone who hasn't set one — e.g. "Sesher 7K9F".
+    ///
+    /// Never "You". A display name is second-person ONLY on the device that
+    /// owns it; the moment it is sent to the Worker it becomes the label every
+    /// other person sees next to those messages.
+    static func fallbackDisplayName(for id: String) -> String {
+        "Sesher " + tag(from: id)
     }
 
     /// Add a friend by their code. Returns a status message for the UI.
@@ -170,17 +188,46 @@ final class SocialStore {
     /// is derived from the name. Safe to call repeatedly.
     func configure(userID: String?, displayName: String) {
         let id = userID ?? Self.deviceFallbackID()
-        let name = displayName.isEmpty ? "You" : displayName
+        let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        // A blank profile name used to become the literal "You", which was then
+        // sent to the Worker, stored on every message, and shown to everyone
+        // else as the author. Fall back to a stable per-account name instead.
+        let name = (trimmed.isEmpty || Self.isSelfLabel(trimmed))
+            ? Self.fallbackDisplayName(for: id)
+            : trimmed
         let handle = Self.handle(from: name)
         // Only react if something actually changed.
         guard me.id != id || me.displayName != name || me.handle != handle else { return }
         me = SeshUser(id: id, handle: handle, displayName: name,
                       activity: me.activity, lastSeen: Date(), streak: me.streak, isFriend: false)
+        // The session token carries the display name and the Worker stamps it
+        // onto outgoing messages, so a rename has to reach the backend or the
+        // old name keeps being attached until the session expires. Debounced:
+        // configure() is re-entered on every keystroke while the user types a
+        // name, and each push re-mints a session token.
+        scheduleProfileSync()
         // If we already have a device push token, re-register it under the
         // (now correct) identity so the backend stores it on the right user.
         if let tok = pushToken {
             Task { await api.registerPush(token: tok, identity: identity) }
         }
+    }
+
+    /// Coalesced push of the identity to the Worker (see `configure`).
+    private var profileSyncTask: Task<Void, Never>?
+
+    private func scheduleProfileSync() {
+        profileSyncTask?.cancel()
+        profileSyncTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1.5))
+            guard !Task.isCancelled, let self else { return }
+            await self.api.updateProfile(identity: self.identity)
+        }
+    }
+
+    /// Second-person placeholders that must never be used as a stored identity.
+    static func isSelfLabel(_ v: String) -> Bool {
+        ["you", "@you", "me", "@me", "myself", "self"].contains(v.trimmingCharacters(in: .whitespaces).lowercased())
     }
 
     // MARK: Push notifications
@@ -197,7 +244,9 @@ final class SocialStore {
 
     private static func handle(from name: String) -> String {
         let base = name.lowercased().filter { $0.isLetter || $0.isNumber }
-        return "@" + (base.isEmpty ? "you" : String(base.prefix(20)))
+        // "@you" is the same second-person trap as "You" — it is another
+        // account's label everywhere except this device.
+        return "@" + (base.isEmpty ? "sesher" : String(base.prefix(20)))
     }
 
     /// Stable per-install id when the user hasn't signed in with Apple.
@@ -594,6 +643,9 @@ final class SocialStore {
     func openRoom(_ roomID: String) {
         openRoomID = roomID
         markRoomRead(roomID)
+        // Count yourself in the room's membership (the "N members" line was
+        // wired to a field the backend never wrote, so it always read 0).
+        Task { await api.joinRoom(roomID, identity: identity) }
         // (#15) Cached page first so the room isn't blank offline.
         if messagesByRoom[roomID] == nil, let cached = SocialCache.loadMessages(roomID: roomID) {
             messagesByRoom[roomID] = cached
@@ -609,6 +661,21 @@ final class SocialStore {
     /// Stop live-polling a room's chat when its view goes away.
     func closeRoom(_ roomID: String) {
         if openRoomID == roomID { openRoomID = nil }
+    }
+
+    /// Refresh a room's messages by MERGING the server page with local state
+    /// (same dedupe-by-id convergence as `send()`), so optimistic messages that
+    /// haven't flushed through the outbox yet don't vanish mid-poll. Safe to
+    /// call on a timer — unlike `openRoom`, it doesn't re-mark the room read
+    /// or wholesale-replace the local page.
+    func refreshRoom(_ roomID: String) async {
+        guard let msgs = await api.fetchMessages(roomID: roomID, identity: identity) else { return }
+        var merged = msgs + (messagesByRoom[roomID] ?? [])
+        var seen = Set<String>()
+        merged = merged.filter { seen.insert($0.id).inserted }
+        merged.sort { $0.sentAt < $1.sentAt }
+        messagesByRoom[roomID] = merged
+        SocialCache.saveMessages(merged, roomID: roomID)
     }
 
     func send(_ text: String, to roomID: String) {
@@ -630,9 +697,16 @@ final class SocialStore {
             outbox.scheduleReplay(api: api)
         }
         Task {
-            // Converge with the server (and pick up others' messages).
+            // Converge with the server (and pick up others' messages) by
+            // MERGING, not replacing: if the outbox hasn't flushed yet, the
+            // server page won't contain the just-sent optimistic message, and
+            // a wholesale replace would make it vanish from the UI.
             if let msgs = await api.fetchMessages(roomID: roomID, identity: identity) {
-                messagesByRoom[roomID] = msgs
+                var merged = msgs + (messagesByRoom[roomID] ?? [])
+                var seen = Set<String>()
+                merged = merged.filter { seen.insert($0.id).inserted }
+                merged.sort { $0.sentAt < $1.sentAt }
+                messagesByRoom[roomID] = merged
             }
         }
     }

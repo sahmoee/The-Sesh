@@ -29,14 +29,24 @@ struct CyphersView: View {
                         activeBanner(active)
                     }
 
-                    ForEach(social.cyphers) { c in
-                        CypherCard(cypher: c, onJoin: { social.joinCypher(c); joined = c; Haptics.success() })
+                    if social.cyphers.isEmpty {
+                        EmptyStateView(icon: "dot.radiowaves.left.and.right",
+                                       title: "No Cyphers rolling",
+                                       message: "Nobody's hosting right now. Start one and your friends can pull up.",
+                                       actionTitle: "Host a Cypher",
+                                       actionIcon: "plus.circle.fill",
+                                       action: { showHost = true })
+                    } else {
+                        ForEach(social.cyphers) { c in
+                            CypherCard(cypher: c, onJoin: { social.joinCypher(c); joined = c; Haptics.success() })
+                        }
                     }
 
                     Color.clear.frame(height: 96)
                 }
                 .padding(.horizontal, 18)
             }
+            .refreshable { await social.refresh() }
 
             Button { showHost = true; Haptics.tap() } label: {
                 HStack(spacing: 8) {
@@ -137,6 +147,7 @@ struct HostCypherView: View {
     @State private var strain = ""
     @State private var visibility: CypherVisibility = .publicCypher
     @State private var created: Cypher?
+    @State private var starting = false
 
     var body: some View {
         ZStack {
@@ -151,25 +162,30 @@ struct HostCypherView: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             FieldLabel(text: "Who can join")
-                            Picker("", selection: $visibility) {
+                            Picker("Who can join", selection: $visibility) {
                                 Text("Public").tag(CypherVisibility.publicCypher)
                                 Text("Friends").tag(CypherVisibility.friends)
                                 Text("Private").tag(CypherVisibility.privateCypher)
-                            }.pickerStyle(.segmented)
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
                         }
 
                         PrimaryButton(title: "Start Cypher", icon: "dot.radiowaves.left.and.right") {
+                            guard !starting else { return }
+                            starting = true
                             let c = social.hostCypher(title: title, strainName: strain.isEmpty ? nil : strain,
                                                       visibility: visibility, live: false)
                             Haptics.success()
                             created = c
                         }
+                        .disabled(starting)
                     }
                     .padding(.horizontal, 18).padding(.bottom, 40)
                 }
             }
         }
-        .fullScreenCover(item: $created) { c in
+        .fullScreenCover(item: $created, onDismiss: { starting = false }) { c in
             CypherRoomView(cypherID: c.id, dismissParent: { dismiss() })
         }
     }
@@ -256,9 +272,11 @@ struct CypherRoomView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 10) {
-                    Text("Say something to the Cypher 🌿")
-                        .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
-                        .frame(maxWidth: .infinity).padding(.top, 8)
+                    if roomMessages.isEmpty {
+                        Text("Say something to the Cypher 🌿")
+                            .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
+                            .frame(maxWidth: .infinity).padding(.top, 8)
+                    }
                     ForEach(roomMessages) { m in
                         ChatBubble(message: m)
                             .id(m.id)

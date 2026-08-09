@@ -535,7 +535,12 @@ struct ExportView: View {
                 }
             }
         }
-        .sheet(isPresented: $showShare) {
+        .sheet(isPresented: $showShare, onDismiss: {
+            // The export is a point-in-time snapshot — don't leave it sitting
+            // in the temp dir after the share sheet goes away.
+            if let shareURL { try? FileManager.default.removeItem(at: shareURL) }
+            shareURL = nil
+        }) {
             if let shareURL { ShareSheet(items: [shareURL]) }
         }
         .alert("Clear all data?", isPresented: $showClearConfirm) {
@@ -546,10 +551,14 @@ struct ExportView: View {
         }
     }
 
+    private static let exportDateFormatter = ISO8601DateFormatter()
+
     /// Serializes everything into a single JSON file in the temp dir.
+    /// Returns nil (and shares nothing) if the write fails — previously a
+    /// failed write still handed a dead URL to the share sheet.
     private func makeExport() -> URL? {
         let payload = ExportPayload(
-            exportedAt: ISO8601DateFormatter().string(from: Date()),
+            exportedAt: Self.exportDateFormatter.string(from: Date()),
             user: session.userName,
             entries: session.entries,
             thoughts: session.thoughts
@@ -559,7 +568,11 @@ struct ExportView: View {
         encoder.dateEncodingStrategy = .iso8601
         guard let data = try? encoder.encode(payload) else { return nil }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("Sesh-Export.json")
-        try? data.write(to: url, options: .atomic)
+        do {
+            try data.write(to: url, options: .atomic)
+        } catch {
+            return nil
+        }
         return url
     }
 }

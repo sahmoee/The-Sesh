@@ -58,6 +58,8 @@ struct StartSessionView: View {
     @State private var selectedStrain: StrainProfile?
     @State private var method: SeshMethod = .joint
     @State private var mood: SeshMood = .relaxed
+    @State private var showAllStrains = false
+    @State private var searchResults: [StrainProfile] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -76,6 +78,14 @@ struct StartSessionView: View {
         }
         .overlay(alignment: .bottom) { startButton }
         .background(AppBackground())
+        .task(id: query) {
+            // Debounce: filter the catalog ~250ms after the last keystroke
+            // instead of on every keystroke during view update.
+            guard !query.isEmpty else { searchResults = []; return }
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled else { return }
+            searchResults = strains.strains.filter { $0.name.localizedCaseInsensitiveContains(query) }
+        }
     }
 
     private var header: some View {
@@ -120,7 +130,11 @@ struct StartSessionView: View {
             HStack {
                 Text("Recent Strains").font(.system(size: 17, weight: .bold)).foregroundStyle(Palette.text)
                 Spacer()
-                Text("See all").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.greenBright)
+                Button { withMotion { showAllStrains.toggle() } } label: {
+                    Text(showAllStrains ? "Show less" : "See all")
+                        .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.greenBright)
+                }
+                .buttonStyle(.plain)
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -225,10 +239,12 @@ struct StartSessionView: View {
     }
 
     /// The strains shown in Recent Strains (recent first, else the catalog head).
+    /// Search results come from the debounced task above, not a per-keystroke
+    /// filter of the whole catalog.
     private var displayStrains: [StrainProfile] {
         let all = strains.strains
-        if query.isEmpty { return Array(all.prefix(8)) }
-        return all.filter { $0.name.localizedCaseInsensitiveContains(query) }
+        if query.isEmpty { return showAllStrains ? all : Array(all.prefix(8)) }
+        return searchResults
     }
 
     private func startSession() {
@@ -270,7 +286,7 @@ struct AddSongScreen: View {
     @State private var query = ""
     @State private var results: [PlaylistTrack] = []
     @State private var searching = false
-    @State private var recentSearches: [String] = ["After Hours – The Weeknd", "Nights – Frank Ocean", "Redbone – Childish Gambino"]
+    @State private var recentSearches: [String] = []
     @State private var added: Set<String> = []
 
     enum Tab { case search, recent }
@@ -360,7 +376,16 @@ struct AddSongScreen: View {
         .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
     }
 
-    private var recentSearchesSection: some View {
+    @ViewBuilder private var recentSearchesSection: some View {
+        if recentSearches.isEmpty {
+            EmptyStateView(icon: "clock.arrow.circlepath", title: "No recent searches",
+                           message: "Songs you search for will show up here for quick re-adding.")
+        } else {
+            recentSearchesList
+        }
+    }
+
+    private var recentSearchesList: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Recent Searches").font(.system(size: 17, weight: .bold)).foregroundStyle(Palette.text)
             ForEach(recentSearches, id: \.self) { item in
@@ -443,7 +468,12 @@ struct AddSongScreen: View {
     }
 
     private func runSearch() {
-        guard !query.trimmingCharacters(in: .whitespaces).isEmpty else { results = []; return }
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { results = []; return }
+        // Record the search so Recent Searches reflects real activity.
+        recentSearches.removeAll { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
+        recentSearches.insert(trimmed, at: 0)
+        if recentSearches.count > 8 { recentSearches.removeLast(recentSearches.count - 8) }
         searching = true
         Task {
             let r = await playlists.search(query, on: .appleMusic)
@@ -468,6 +498,8 @@ struct SessionSummaryView: View {
     let durationSeconds: Int
     var moodLabel: String = "Relaxed"
     @State private var notes: String = ""
+    @State private var rating: Double = 7
+    @State private var confirmDiscard = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -480,6 +512,7 @@ struct SessionSummaryView: View {
                     row(icon: "clock", label: "Duration", trailing: valueText(durationString))
                     songRow
                     row(icon: "face.smiling", label: "Mood", trailing: pill(moodLabel))
+                    ratingCard
                     notesCard
                     Color.clear.frame(height: 90)
                 }
@@ -488,12 +521,18 @@ struct SessionSummaryView: View {
         }
         .overlay(alignment: .bottom) { saveButton }
         .background(AppBackground())
+        .confirmationDialog("Discard this sesh?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard Sesh", role: .destructive) { dismiss() }
+            Button("Keep Editing", role: .cancel) {}
+        } message: {
+            Text("This sesh won't be saved to your Journal.")
+        }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Button { dismiss() } label: {
+                Button { confirmDiscard = true } label: {
                     Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
                 }
                 .buttonStyle(.plain)
@@ -571,6 +610,21 @@ struct SessionSummaryView: View {
         .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
     }
 
+    private var ratingCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: "star").font(.system(size: 16)).foregroundStyle(Palette.textSecondary).frame(width: 24)
+                Text("Rating").font(.system(size: 16, weight: .medium)).foregroundStyle(Palette.text)
+                Spacer()
+            }
+            RatingSlider(value: $rating)
+                .padding(.leading, 36)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 16)
+        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
+        .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+    }
+
     private var notesCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -622,10 +676,8 @@ struct SessionSummaryView: View {
         strains.strains.first { $0.name.caseInsensitiveCompare(strainName) == .orderedSame }
     }
     private var startedString: String {
-        let f = DateFormatter(); f.dateFormat = "h:mm a"
-        let cal = Calendar.current
-        let prefix = cal.isDateInToday(startedAt) ? "Today, " : ""
-        return prefix + f.string(from: startedAt)
+        let prefix = Calendar.current.isDateInToday(startedAt) ? "Today, " : ""
+        return prefix + Fmt.time(startedAt)
     }
     private var durationString: String {
         let h = durationSeconds / 3600, m = (durationSeconds % 3600) / 60, s = durationSeconds % 60
@@ -637,7 +689,7 @@ struct SessionSummaryView: View {
         let entry = JournalEntry(
             strain: strainName.isEmpty ? "Sesh" : strainName,
             method: method,
-            rating: 8,
+            rating: min(10, max(1, rating)),
             mood: moodValue,
             notes: notes,
             sessionType: moodLabel,

@@ -16,10 +16,10 @@ import SwiftUI
 struct MusicStationsView: View {
     @Environment(AppSession.self) private var session
 
-    private var stations: [MusicStation] { session.musicStations() }
-
     var body: some View {
         ScrollView {
+            // Bind once per render — musicStations() regroups the whole history.
+            let stations = session.musicStations()
             if stations.isEmpty {
                 EmptyStateView(icon: "music.note.list", title: "No stations yet",
                                message: "Play music during your seshes with a source connected, and stations built from what you played will show up here.")
@@ -143,14 +143,7 @@ struct StashInventoryView: View {
                 Spacer()
                 Text(p.amountLine).font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
             }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Palette.field)
-                    Capsule().fill(low ? Palette.gold : Palette.greenBright)
-                        .frame(width: max(4, geo.size.width * CGFloat(ratio)))
-                }
-            }
-            .frame(height: 8)
+            GeometryFreeBar(fraction: ratio)
             Text("\(Fmt.currency(p.costPerUnit))/\(p.unit) · bought \(Fmt.shortDate(p.date))")
                 .font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
         }

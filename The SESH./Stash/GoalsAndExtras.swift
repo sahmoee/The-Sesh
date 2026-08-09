@@ -342,6 +342,7 @@ enum SeshJokes {
 // MARK: - Community prompts / Story time
 
 struct CommunityPromptView: View {
+    @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
     @State private var prompt: CommunityPrompt = CommunityPrompts.random()
     @State private var answer: String = ""
@@ -365,7 +366,7 @@ struct CommunityPromptView: View {
                         .foregroundStyle(Palette.text)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    TextField("Share your answer with the community...", text: $answer, axis: .vertical)
+                    TextField("Write your answer — it's saved to your High Thoughts...", text: $answer, axis: .vertical)
                         .lineLimit(4...10)
                         .textFieldStyle(.plain)
                         .foregroundStyle(Palette.text)
@@ -374,7 +375,7 @@ struct CommunityPromptView: View {
                         .overlay(RoundedRectangle(cornerRadius: Radius.lg).stroke(Palette.stroke, lineWidth: 1))
 
                     Button { submit() } label: {
-                        Text(submitted ? "Shared!" : "Share")
+                        Text(submitted ? "Saved to High Thoughts!" : "Save to High Thoughts")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Palette.onGreen)
                             .frame(maxWidth: .infinity).padding(.vertical, 15)
@@ -418,10 +419,13 @@ struct CommunityPromptView: View {
         Haptics.tap()
     }
     private func submit() {
-        guard !answer.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        let trimmed = answer.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        // Persist locally as a High Thought (with the prompt for context) —
+        // previously the answer was silently discarded.
+        session.addThought(HighThought(text: "\(prompt.question)\n\(trimmed)"))
         submitted = true
         Haptics.success()
-        // (Local for now; community sync can post this later via SeshAPI.)
     }
 }
 

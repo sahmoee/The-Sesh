@@ -129,20 +129,20 @@ extension ThemePalette {
     /// base, warm cream type, antique gold, burnt-orange energy, leaf green.
     /// Tuned to match the illustrated tile assets (transparent vintage art).
     static let apothecary = ThemePalette(
-        bgTop: Color(hex: "171C14"), bgBottom: Color(hex: "0E120C"),
-        heroTop: Color(hex: "1B2117"), heroBottom: Color(hex: "0A0D08"),
-        card: Color(hex: "202A1B"), cardElevated: Color(hex: "2A3624"),
-        field: Color(hex: "171C14"), stroke: Color(hex: "3A472D"), strokeSoft: Color(hex: "2A3624"),
+        bgTop: Color(hex: "17130F"), bgBottom: Color(hex: "0A0907"),
+        heroTop: Color(hex: "21180F"), heroBottom: Color(hex: "0A0907"),
+        card: Color(hex: "241B13"), cardElevated: Color(hex: "302318"),
+        field: Color(hex: "18130E"), stroke: Color(hex: "493521"), strokeSoft: Color(hex: "352719"),
         // warm dark panels stand in for the "cream" surface slots
         cream: Color(hex: "1E2616"), creamElevated: Color(hex: "27331D"), creamStroke: Color(hex: "3E4E2C"),
         onCream: Color(hex: "F1E4C9"), onCreamSoft: Color(hex: "B6A985"),
-        text: Color(hex: "F1E4C9"), textSecondary: Color(hex: "B6A985"), textTertiary: Color(hex: "877A52"),
-        green: Color(hex: "5C6B3F"), greenBright: Color(hex: "86A957"), greenDeep: Color(hex: "3A472D"),
+        text: Color(hex: "E9D9BB"), textSecondary: Color(hex: "BFA889"), textTertiary: Color(hex: "887252"),
+        green: Color(hex: "627141"), greenBright: Color(hex: "91A45E"), greenDeep: Color(hex: "3E492B"),
         onGreen: Color(hex: "F4F1E6"),
-        gold: Color(hex: "B99045"), goldSoft: Color(hex: "D0AE6A"), goldDeep: Color(hex: "5B4827"), goldRing: Color(hex: "C49A4E"),
-        purple: Color(hex: "372B42"), purpleStroke: Color(hex: "574868"),
-        ratingPill: Color(hex: "202A1B"), tabBar: Color(hex: "0C0F09"),
-        moodAngry: Color(hex: "C46A2D"), moodMeh: Color(hex: "B99045"), moodNeutral: Color(hex: "B99045"),
+        gold: Color(hex: "B88742"), goldSoft: Color(hex: "D3B06D"), goldDeep: Color(hex: "6B4A24"), goldRing: Color(hex: "B88742"),
+        purple: Color(hex: "3E2735"), purpleStroke: Color(hex: "674054"),
+        ratingPill: Color(hex: "241B13"), tabBar: Color(hex: "0E0D0A"),
+        moodAngry: Color(hex: "BF633A"), moodMeh: Color(hex: "B88742"), moodNeutral: Color(hex: "B88742"),
         moodGood: Color(hex: "9BAE5C"), moodGreat: Color(hex: "86A957"))
 
     /// The "Elevated" moodboard: warm cream canvas, sage & forest greens, a
@@ -237,10 +237,10 @@ final class ThemeManager {
         let saved = UserDefaults.standard.string(forKey: "sesh.theme.v1")
         let initial = ThemeChoice(rawValue: saved ?? "apothecary") ?? .apothecary
         self.choice = initial
-        // Icon style default: Illustrated Midnight for NEW installs (no saved
+        // Icon style default: Illustrated Vintage for NEW installs (no saved
         // value). Existing users keep whatever they previously had.
         let savedIcon = UserDefaults.standard.string(forKey: "sesh.iconStyle.v1")
-        self.iconStyle = IconStyle(rawValue: savedIcon ?? "midnight") ?? .midnight
+        self.iconStyle = IconStyle(rawValue: savedIcon ?? "apothecary") ?? .apothecary
         ActiveTheme.current = initial.palette
         CloudSync.startObserving(keys: ["sesh.theme.v1", "sesh.iconStyle.v1"]) { [weak self] in
             if let saved = UserDefaults.standard.string(forKey: "sesh.theme.v1"),
@@ -312,9 +312,26 @@ enum Palette {
 // MARK: - Corner radius tokens
 
 enum Radius {
+    static let xs: CGFloat = 8
     static let sm: CGFloat = 10
     static let md: CGFloat = 14
     static let lg: CGFloat = 18
     static let xl: CGFloat = 24
+    static let bubble: CGFloat = 26
     static let pill: CGFloat = 999
+}
+
+// MARK: - Spacing tokens
+
+/// Shared spacing scale. Screen gutters use `Spacing.gutter`; card interiors
+/// typically use `Spacing.lg`. Prefer these over hand-typed values so screens
+/// stay consistent.
+enum Spacing {
+    static let xs: CGFloat = 4
+    static let sm: CGFloat = 8
+    static let md: CGFloat = 14
+    static let lg: CGFloat = 18
+    static let xl: CGFloat = 20
+    /// Standard horizontal screen gutter.
+    static let gutter: CGFloat = 18
 }

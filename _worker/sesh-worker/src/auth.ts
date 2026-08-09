@@ -71,10 +71,16 @@ export async function verifySession(env: Env, token: string): Promise<SessionCla
   }
 }
 
-/** Extract and verify the caller's session. Null -> respond 401. */
+/** Extract and verify the caller's session. Null -> respond 401.
+ *  The `?token=` fallback exists only because WebSocket upgrades can't set an
+ *  Authorization header — restrict it to /ws paths so bearer tokens don't end
+ *  up in request logs for every other route. */
 export async function requireAuth(env: Env, request: Request): Promise<SessionClaims | null> {
   const h = request.headers.get("Authorization") || "";
-  const token = h.startsWith("Bearer ") ? h.slice(7) : new URL(request.url).searchParams.get("token") || "";
+  const url = new URL(request.url);
+  const token = h.startsWith("Bearer ")
+    ? h.slice(7)
+    : (url.pathname.endsWith("/ws") ? url.searchParams.get("token") || "" : "");
   return verifySession(env, token);
 }
 
@@ -113,7 +119,9 @@ export async function verifyAppleIdentityToken(env: Env, idToken: string): Promi
   if (header.alg !== "RS256" || !header.kid) return null;
   if (claims.iss !== APPLE_ISS) return null;
   if (!claims.exp || claims.exp < Math.floor(Date.now() / 1000)) return null;
-  if (env.APPLE_BUNDLE_ID && claims.aud !== env.APPLE_BUNDLE_ID) return null;
+  // Fail closed: without a configured audience we cannot validate `aud`, so
+  // reject rather than accept tokens minted for any other app.
+  if (!env.APPLE_BUNDLE_ID || claims.aud !== env.APPLE_BUNDLE_ID) return null;
   if (!claims.sub) return null;
 
   const jwk = (await appleJWKS()).find((k) => k.kid === header.kid);

@@ -60,7 +60,8 @@ struct StashView: View {
     }
 
     private func purchaseRow(_ p: Purchase) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let fraction = p.amount > 0 ? min(max(p.remaining / p.amount, 0.02), 1) : 0
+        return VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(p.strain).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
                 Spacer()
@@ -71,16 +72,20 @@ struct StashView: View {
                 Spacer()
                 Text(Fmt.shortDate(p.date)).font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
             }
-            // Remaining bar
+            // Remaining bar — clamped so an inconsistent remaining/amount can
+            // never scale the fill past the capsule.
             ZStack(alignment: .leading) {
                 Capsule().fill(Palette.field).frame(height: 6)
                 Capsule().fill(p.isEmpty ? Palette.textTertiary : Palette.green).frame(height: 6)
                     .frame(maxWidth: .infinity)
-                    .scaleEffect(x: p.amount > 0 ? max(0.02, p.remaining / p.amount) : 0, anchor: .leading)
+                    .scaleEffect(x: fraction, anchor: .leading)
             }
+            .accessibilityHidden(true)
         }
         .padding(.vertical, 4)
         .listRowSeparator(.hidden)
+        .accessibilityElement(children: .combine)
+        .accessibilityValue("\(Int((p.amount > 0 ? (min(max(p.remaining / p.amount, 0), 1)) : 0) * 100)) percent remaining")
     }
 }
 
@@ -97,8 +102,26 @@ struct AddPurchaseView: View {
     @State private var cost = ""
     @State private var date = Date()
 
+    /// Locale-aware currency-ish parsing. `Double("3,50")` returns nil and the
+    /// old digit-filter hack turned "3,50" into 350 — parse with the user's
+    /// locale instead, and block saving when the text can't be parsed at all.
+    private static let costFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.locale = .current
+        return f
+    }()
+
+    /// nil = unparseable input (save blocked). Empty input is a valid $0.
+    private var parsedCost: Double? {
+        let trimmed = cost.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return 0 }
+        guard let n = Self.costFormatter.number(from: trimmed)?.doubleValue, n >= 0 else { return nil }
+        return n
+    }
+
     private var canSave: Bool {
-        !strain.trimmingCharacters(in: .whitespaces).isEmpty && (Double(amount) ?? 0) > 0
+        !strain.trimmingCharacters(in: .whitespaces).isEmpty && (Double(amount) ?? 0) > 0 && parsedCost != nil
     }
 
     var body: some View {
@@ -180,11 +203,12 @@ struct AddPurchaseView: View {
     }
 
     private func save() {
+        guard let parsedCost else { return }
         let p = Purchase(date: date,
                          strain: strain.trimmingCharacters(in: .whitespaces),
                          amount: Double(amount) ?? 0,
                          unit: unit,
-                         cost: Double(cost.filter { "0123456789.".contains($0) }) ?? 0)
+                         cost: parsedCost)
         session.addPurchase(p)
         Haptics.success()
         dismiss()

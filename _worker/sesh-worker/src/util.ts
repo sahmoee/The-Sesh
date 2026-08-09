@@ -40,3 +40,51 @@ export function str(v: unknown, max = 1000): string {
 export function bool(v: unknown): boolean {
   return v === true;
 }
+
+// ---- Identity labels -------------------------------------------------------
+//
+// "You" is a SECOND-PERSON UI label: it is only ever correct on the device that
+// owns the identity. Persisting it as a display name — which both the app and
+// this Worker used to do as their empty-name fallback — means every OTHER
+// device renders that person's messages as "You". Nothing below ever returns
+// it.
+
+const SELF_LABELS = new Set(["you", "@you", "me", "@me", "myself", "self"]);
+
+/** True for placeholders that must never be persisted as someone's identity. */
+export function isSelfLabel(v: string): boolean {
+  return SELF_LABELS.has(v.trim().toLowerCase());
+}
+
+/** Stable 4-char tag for a uid (FNV-1a, unambiguous alphabet), e.g. "7K9F". */
+export function shortTag(uid: string): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < uid.length; i++) {
+    hash ^= uid.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  let out = "";
+  let n = hash;
+  for (let i = 0; i < 4; i++) {
+    out += alphabet[n % alphabet.length];
+    n = Math.floor(n / alphabet.length);
+  }
+  return out;
+}
+
+/** A human display name that is never a second-person placeholder. */
+export function displayName(name: unknown, handle: unknown, uid: string): string {
+  const n = str(name, 80).trim();
+  if (n && !isSelfLabel(n)) return n;
+  const h = str(handle, 40).trim().replace(/^@+/, "");
+  if (h && !isSelfLabel(h)) return h;
+  return `Sesher ${shortTag(uid)}`;
+}
+
+/** A handle that is never "@you". */
+export function displayHandle(handle: unknown, uid: string): string {
+  const h = str(handle, 40).trim().replace(/^@+/, "");
+  if (h && !isSelfLabel(h)) return `@${h}`;
+  return `@sesher${shortTag(uid).toLowerCase()}`;
+}

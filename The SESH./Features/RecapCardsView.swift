@@ -24,6 +24,15 @@ struct RecapCardsView: View {
     @State private var showTopStrain = true
     @State private var showSpend = false
     @State private var showThoughts = false
+    /// Rendered once per configuration change — ImageRenderer at 3x is far too
+    /// expensive to run on every body evaluation.
+    @State private var renderedCard = Image(systemName: "photo")
+
+    /// Everything that changes what the rendered card looks like.
+    private var cardConfiguration: [String] {
+        [period.rawValue, "\(showSessions)", "\(showTopStrain)", "\(showSpend)", "\(showThoughts)",
+         "\(session.entries.count)"]  // re-render if a sesh is logged while open
+    }
 
     private var entries: [JournalEntry] {
         let cutoff = Calendar.current.date(byAdding: .day, value: -period.days, to: Date())!
@@ -60,8 +69,8 @@ struct RecapCardsView: View {
                     Toggle("Spend", isOn: $showSpend).tint(Palette.green)
                     Toggle("Thoughts captured", isOn: $showThoughts).tint(Palette.green)
 
-                    ShareLink(item: renderCard(),
-                              preview: SharePreview("My SESH recap", image: renderCard())) {
+                    ShareLink(item: renderedCard,
+                              preview: SharePreview("My SESH recap", image: renderedCard)) {
                         HStack {
                             Image(systemName: "square.and.arrow.up")
                             Text("Share recap").font(.system(size: 16, weight: .semibold))
@@ -76,6 +85,8 @@ struct RecapCardsView: View {
             }
         }
         .navigationTitle("Recap Cards")
+        .onAppear { renderedCard = renderCard() }
+        .onChange(of: cardConfiguration) { renderedCard = renderCard() }
     }
 
     /// The card itself — also what gets rendered to an image.

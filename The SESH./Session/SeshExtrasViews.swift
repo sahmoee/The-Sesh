@@ -281,6 +281,7 @@ private struct AddPresetSheet: View {
 struct ToleranceView: View {
     @Environment(AppSession.self) private var session
     @State private var goalDays = 7
+    @State private var confirmEndBreak = false
 
     var body: some View {
         ScrollView {
@@ -296,7 +297,11 @@ struct ToleranceView: View {
         .background(AppBackground().ignoresSafeArea())
         .navigationTitle("Tolerance")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { goalDays = session.tBreakGoalDays }
+        .task { goalDays = session.tBreakGoalDays }
+        .confirmationDialog("End this T-Break?", isPresented: $confirmEndBreak, titleVisibility: .visible) {
+            Button("End Break", role: .destructive) { session.endTBreak(); Haptics.warning() }
+            Button("Keep Going", role: .cancel) {}
+        }
     }
 
     private var gauge: some View {
@@ -312,14 +317,17 @@ struct ToleranceView: View {
                 }
             }
             .padding(.top, 8)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Tolerance")
+            .accessibilityValue("\(session.toleranceLabel), \(Int(session.toleranceEstimate * 100)) percent")
         }
     }
 
     private var gaugeColor: Color {
         switch session.toleranceEstimate {
         case ..<0.2: return Palette.greenBright
-        case ..<0.45: return Palette.gold
-        case ..<0.7: return Palette.gold
+        case ..<0.45: return Palette.gold.opacity(0.65)   // moderate — lighter gold
+        case ..<0.7: return Palette.gold                  // elevated — full gold
         default: return Palette.moodAngry
         }
     }
@@ -354,11 +362,14 @@ struct ToleranceView: View {
                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.greenBright)
             }
             Button(role: .destructive) {
-                session.endTBreak(); Haptics.warning()
+                confirmEndBreak = true
             } label: {
+                // .plain drops the destructive role's red — tint it explicitly.
                 Text("End Break").font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Palette.moodAngry)
                     .frame(maxWidth: .infinity).padding(.vertical, 11)
                     .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.field))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.md).stroke(Palette.moodAngry.opacity(0.35), lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
@@ -373,11 +384,12 @@ struct ToleranceView: View {
 struct BudgetView: View {
     @Environment(AppSession.self) private var session
     @State private var budgetText = ""
+    @State private var toast: String?
 
     var body: some View {
         ScrollView {
             VStack(spacing: 18) {
-                if session.hasBudget { summary } 
+                if session.hasBudget { summary }
                 editor
             }
             .padding(16)
@@ -385,7 +397,8 @@ struct BudgetView: View {
         .background(AppBackground().ignoresSafeArea())
         .navigationTitle("Monthly Budget")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { if session.hasBudget { budgetText = String(Int(session.monthlyBudget)) } }
+        .task { if session.hasBudget { budgetText = String(Int(session.monthlyBudget)) } }
+        .toast($toast)
     }
 
     private var summary: some View {
@@ -420,7 +433,8 @@ struct BudgetView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Set your monthly budget").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
             HStack {
-                Text("$").font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.textSecondary)
+                Text(Locale.current.currencySymbol ?? "$")
+                    .font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.textSecondary)
                 TextField("0", text: $budgetText)
                     .keyboardType(.numberPad)
                     .font(.system(size: 18))
@@ -428,8 +442,7 @@ struct BudgetView: View {
             .padding(12)
             .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.field))
             Button {
-                session.monthlyBudget = Double(budgetText) ?? 0
-                Haptics.success()
+                saveBudget()
             } label: {
                 Text("Save Budget").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.onGreen)
                     .frame(maxWidth: .infinity).padding(.vertical, 12)
@@ -440,6 +453,20 @@ struct BudgetView: View {
         .padding(16)
         .background(RoundedRectangle(cornerRadius: Radius.lg).fill(Palette.card))
         .overlay(RoundedRectangle(cornerRadius: Radius.lg).stroke(Palette.stroke, lineWidth: 1))
+    }
+
+    /// Validate the typed amount instead of silently zeroing the budget on bad
+    /// input, and confirm the outcome either way.
+    private func saveBudget() {
+        let normalized = budgetText.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces)
+        guard let value = Double(normalized), value > 0 else {
+            Haptics.warning()
+            toast = "Enter a valid amount"
+            return
+        }
+        session.monthlyBudget = value
+        Haptics.success()
+        toast = "Budget saved · \(Fmt.currency(value))"
     }
 }
 

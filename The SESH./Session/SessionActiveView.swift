@@ -14,7 +14,6 @@
 //
 
 import SwiftUI
-import Combine
 
 /// Quick action to perform when the active session screen opens (driven by the
 /// home quick-action tiles while a sesh is live).
@@ -33,14 +32,16 @@ struct SessionActiveView: View {
     /// An action to trigger as soon as the screen appears.
     var initialAction: SessionQuickAction = .none
 
-    @State private var now = Date()
     @State private var showSongSearch = false
     @State private var selectedType: SessionType?
-    @State private var showSummary = false
     @State private var summaryData: SummaryData?
     @State private var showNotes = false
     @State private var showChangeMethod = false
-    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    @State private var confirmEnd = false
+
+    /// Delay before honoring a quick action passed from the home tiles, so the
+    /// screen settles before a sheet/dialog is presented.
+    private static let initialActionDelay: Duration = .milliseconds(300)
 
     private var live: LiveSeshState? { session.liveSesh }
 
@@ -53,35 +54,46 @@ struct SessionActiveView: View {
                 noSessionState
             }
         }
-        .onReceive(ticker) { now = $0 }
-        .onAppear {
+        .task {
             selectedType = live?.sessionType
-            // Honor a quick action passed from the home tiles.
+            // Honor a quick action passed from the home tiles. The sleep is
+            // cancelled automatically if the view goes away first.
             switch initialAction {
-            case .addSong: DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showSongSearch = true }
-            case .end:     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { endSession() }
-            case .notes:   DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { showNotes = true }
-            case .changeMethod: DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { showChangeMethod = true }
+            case .addSong:
+                try? await Task.sleep(for: Self.initialActionDelay)
+                showSongSearch = true
+            case .end:
+                try? await Task.sleep(for: Self.initialActionDelay)
+                confirmEnd = true
+            case .notes:
+                try? await Task.sleep(for: Self.initialActionDelay)
+                showNotes = true
+            case .changeMethod:
+                try? await Task.sleep(for: Self.initialActionDelay)
+                showChangeMethod = true
             case .mood, .logThought, .none: break
             }
+        }
+        .confirmationDialog("End this sesh?", isPresented: $confirmEnd, titleVisibility: .visible) {
+            Button("End Sesh", role: .destructive) { endSession() }
+            Button("Keep Going", role: .cancel) {}
         }
         .sheet(isPresented: $showSongSearch) { songSearchSheet }
         .sheet(isPresented: $showNotes) { notesSheet }
         .sheet(isPresented: $showChangeMethod) { changeMethodSheet }
-        .fullScreenCover(isPresented: $showSummary, onDismiss: { dismiss() }) {
-            if let d = summaryData {
-                SessionSummaryView(
-                    strainName: d.strainName,
-                    method: d.method,
-                    startedAt: d.startedAt,
-                    durationSeconds: d.durationSeconds,
-                    moodLabel: d.moodLabel)
-            }
+        .fullScreenCover(item: $summaryData, onDismiss: { dismiss() }) { d in
+            SessionSummaryView(
+                strainName: d.strainName,
+                method: d.method,
+                startedAt: d.startedAt,
+                durationSeconds: d.durationSeconds,
+                moodLabel: d.moodLabel)
         }
     }
 
     /// Snapshot of the ended sesh, handed to the summary screen.
-    struct SummaryData {
+    struct SummaryData: Identifiable {
+        let id = UUID()
         let strainName: String
         let method: String
         let startedAt: Date
@@ -119,7 +131,7 @@ struct SessionActiveView: View {
             }
             Spacer()
             Menu {
-                Button("End Session", role: .destructive) { endSession() }
+                Button("End Session", role: .destructive) { confirmEnd = true }
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
@@ -157,30 +169,32 @@ struct SessionActiveView: View {
     // MARK: Timer ring over strain image
 
     private func timerRing(_ live: LiveSeshState) -> some View {
-        let elapsed = now.timeIntervalSince(live.startedAt)
-        // The ring sweeps once per 10 minutes as a gentle progress motif.
-        let progress = (elapsed.truncatingRemainder(dividingBy: 600)) / 600
-        return ZStack {
-            Circle()
-                .stroke(Palette.stroke.opacity(0.5), lineWidth: 6)
-                .frame(width: 240, height: 240)
-            Circle()
-                .trim(from: 0, to: progress)
-                .stroke(Palette.greenBright, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .frame(width: 240, height: 240)
-                .animation(.linear(duration: 1), value: progress)
-            strainImageCircle(live)
-            VStack(spacing: 2) {
-                Spacer()
-                Text(timeString(elapsed))
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .monospacedDigit()
-                    .shadow(color: .black.opacity(0.5), radius: 3)
-                    .padding(.bottom, 18)
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let elapsed = context.date.timeIntervalSince(live.startedAt)
+            // The ring sweeps once per 10 minutes as a gentle progress motif.
+            let progress = (elapsed.truncatingRemainder(dividingBy: 600)) / 600
+            ZStack {
+                Circle()
+                    .stroke(Palette.stroke.opacity(0.5), lineWidth: 6)
+                    .frame(width: 240, height: 240)
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(Palette.greenBright, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 240, height: 240)
+                    .animation(.linear(duration: 1), value: progress)
+                strainImageCircle(live)
+                VStack(spacing: 2) {
+                    Spacer()
+                    Text(seshDuration(elapsed))
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .monospacedDigit()
+                        .shadow(color: .black.opacity(0.5), radius: 3)
+                        .padding(.bottom, 18)
+                }
+                .frame(width: 220, height: 220)
             }
-            .frame(width: 220, height: 220)
         }
         .padding(.vertical, 4)
     }
@@ -314,7 +328,7 @@ struct SessionActiveView: View {
     // MARK: End
 
     private var endButton: some View {
-        Button { endSession() } label: {
+        Button { confirmEnd = true } label: {
             Text("End Session")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Palette.moodAngry)
@@ -363,7 +377,9 @@ struct SessionActiveView: View {
         // assignment to nil leaves the UserDefaults key, which would restore the
         // sesh on next launch.
         session.clearLiveSesh()
-        showSummary = true
+        // Setting summaryData presents the summary cover; with no live state to
+        // summarize there's nothing to show, so just close the screen.
+        if summaryData == nil { dismiss() }
     }
 
     /// Map an internal SessionType to a friendly mood label for the summary.
@@ -412,12 +428,6 @@ struct SessionActiveView: View {
         strains.strains.first { $0.name.caseInsensitiveCompare(live.strainName) == .orderedSame }
     }
 
-    private func timeString(_ t: TimeInterval) -> String {
-        let s = Int(t)
-        let h = s / 3600, m = (s % 3600) / 60, sec = s % 60
-        return h > 0 ? String(format: "%d:%02d:%02d", h, m, sec)
-                     : String(format: "%02d:%02d", m, sec)
-    }
 }
 
 /// A lightweight song search used from the Session Active screen. Lets the user
@@ -426,12 +436,19 @@ struct SessionActiveView: View {
 /// track to a playlist so a session soundtrack can be built.
 struct SessionSongSearch: View {
     @Environment(PlaylistStore.self) private var playlists
-    @Environment(\.dismiss) private var dismiss
+    @State private var targetPlaylistID: String?
 
     var body: some View {
-        // Ensure a "Session Soundtrack" playlist exists to receive picks.
-        let target = ensureSessionPlaylist()
-        AddSongScreen(playlistID: target)
+        // Ensure a "Session Soundtrack" playlist exists to receive picks. The
+        // (possibly mutating) lookup runs in .task, not during view update.
+        Group {
+            if let targetPlaylistID {
+                AddSongScreen(playlistID: targetPlaylistID)
+            } else {
+                AppBackground()
+            }
+        }
+        .task { targetPlaylistID = ensureSessionPlaylist() }
     }
 
     private func ensureSessionPlaylist() -> String {

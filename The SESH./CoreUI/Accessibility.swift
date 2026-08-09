@@ -4,7 +4,7 @@
 //
 //  (#App10) Accessibility primitives. The app's typography is fixed-size
 //  `.system(size:)` throughout; these helpers are the migration path:
-//    - .seshFont(size:weight:design:) — same look, but scales with the user's
+//    - .seshScaled(size:weight:design:) — same look, but scales with the user's
 //      Dynamic Type setting (relative to .body), capped at accessibility2 so
 //      dense cards degrade gracefully instead of exploding.
 //    - .minimumTapTarget() — enforces the 44×44pt HIG minimum.
@@ -28,7 +28,8 @@ extension Font {
     /// `.system(size:weight:design:)`.
     static func seshScaled(_ size: CGFloat, weight: Font.Weight = .regular,
                            design: Font.Design = .default) -> Font {
-        .system(size: size, weight: weight, design: design)
+        .system(size: UIFontMetrics(forTextStyle: .body).scaledValue(for: size),
+                weight: weight, design: design)
     }
 }
 

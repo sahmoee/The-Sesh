@@ -55,6 +55,9 @@ struct StatusPill: View {
         } label: {
             pill
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Status: \(social.myStatus.shortLabel)")
+        .accessibilityHint("Opens the status picker")
         .alert("Set a custom status", isPresented: $showCustom) {
             CustomStatusField { text in
                 let trimmed = text.trimmingCharacters(in: .whitespaces)
@@ -103,6 +106,8 @@ private struct CustomStatusField: View {
 
     var body: some View {
         TextField("e.g. Wake n bake", text: $text)
-        Button("Set") { onSubmit(text) }
+            .autocorrectionDisabled()
+            .submitLabel(.done)
+        Button("Set") { onSubmit(text); text = "" }
     }
 }

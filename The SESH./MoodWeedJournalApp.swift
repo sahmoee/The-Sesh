@@ -13,6 +13,8 @@ struct SeshApp: App {
     @State private var strains = StrainStore()
     @State private var social = SocialStore()
     @State private var wishlist = WishlistStore()
+    @State private var comparisonHistory = ComparisonHistoryStore()
+    @State private var lounge = LoungeFeedStore()
     @State private var theme = ThemeManager()
     @State private var auth = AuthManager()
     @State private var strainImages = StrainImageStore()
@@ -38,6 +40,8 @@ struct SeshApp: App {
             .environment(strains)
             .environment(social)
             .environment(wishlist)
+            .environment(comparisonHistory)
+            .environment(lounge)
             .environment(theme)
             .environment(auth)
             .environment(strainImages)
@@ -62,6 +66,7 @@ struct SeshApp: App {
                 scrobbler.session = session
                 scrobbler.configure(identity: social.identitySnapshot)
                 spotify.configure(identity: social.identitySnapshot)
+                lounge.configure(identity: social.identitySnapshot)
                 playlists.spotify = spotify
                 playlists.configure(identity: social.identitySnapshot)
                 scrobbler.start()

@@ -9,7 +9,7 @@
 // Rate limiting lives here too (per-user, in-DO, strongly consistent) instead
 // of the old KV token bucket that raced with itself.
 
-import { now, str } from "./util";
+import { displayHandle, displayName, isSelfLabel, json, now, str } from "./util";
 
 interface StoredMessage {
   id: string;
@@ -72,10 +72,19 @@ export class RoomDO implements DurableObject {
       return new Response(null, { status: 101, webSocket: pair[0] });
     }
 
+    // GET /presence — live occupancy from the hibernation API (SESH-RL-001-R2
+    // Phase 4: the Lounge shows how many people are in a live post's room).
+    if (request.method === "GET" && path === "/presence") {
+      const count = Math.max(0, this.state.getWebSockets().length);
+      return new Response(JSON.stringify({ count }),
+        { headers: { "Content-Type": "application/json" } });
+    }
+
     // GET /messages?before=<ISO>&limit=N  (blocked ids passed by the router)
     if (request.method === "GET" && path === "/messages") {
       const before = url.searchParams.get("before");
-      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100", 10) || 100, 200);
+      // Clamp: a negative/zero/garbage limit must never reach DO storage (throws).
+      const limit = Math.max(1, Math.min(parseInt(url.searchParams.get("limit") || "100", 10) || 100, 200));
       let blocked: string[] = [];
       try { blocked = JSON.parse(request.headers.get("x-blocked") || "[]"); } catch { blocked = []; }
       const blockedSet = new Set(blocked);
@@ -88,7 +97,18 @@ export class RoomDO implements DurableObject {
         .filter((m) => !blockedSet.has(m.senderID))
         .slice(0, limit)
         .reverse() // oldest -> newest
-        .map((m) => ({ ...m, isMe: m.senderID === uid }));
+        // Repair on read: messages written before the sender-name fix are
+        // stored with the literal "You", which every other device then showed
+        // as the author. Re-derive a real label for them instead of forcing a
+        // storage migration — the stored rows stay untouched.
+        .map((m) => ({
+          ...m,
+          senderHandle: displayHandle(m.senderHandle, m.senderID),
+          senderName: isSelfLabel(m.senderName || "")
+            ? displayName("", m.senderHandle, m.senderID)
+            : displayName(m.senderName, m.senderHandle, m.senderID),
+          isMe: m.senderID === uid,
+        }));
       return new Response(JSON.stringify(page), { headers: { "Content-Type": "application/json" } });
     }
 
@@ -111,9 +131,15 @@ export class RoomDO implements DurableObject {
       }
       await this.state.storage.put(`idem:${idemKey}`, Date.now());
 
+      // NEVER store "You" (or any other second-person placeholder) as the
+      // author: this record is what every OTHER device renders. `displayName`
+      // falls back to the handle, then to a stable "Sesher <tag>" derived from
+      // the uid, so a nameless account still reads as a distinct person.
       const msg: StoredMessage = {
-        id, roomID, senderID: uid, senderHandle: handle || "@you",
-        senderName: name || "You", text: str(body.text, 1000), sentAt: now(),
+        id, roomID, senderID: uid,
+        senderHandle: displayHandle(handle, uid),
+        senderName: displayName(name, handle, uid),
+        text: str(body.text, 1000), sentAt: now(),
       };
       await this.state.storage.put(`msg:${msg.sentAt}:${id}`, msg);
       this.broadcast(msg);
@@ -132,6 +158,6 @@ export class RoomDO implements DurableObject {
         { headers: { "Content-Type": "application/json" } });
     }
 
-    return new Response("not found", { status: 404 });
+    return json({ error: "not_found" }, 404);
   }
 }

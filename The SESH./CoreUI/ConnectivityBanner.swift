@@ -33,7 +33,10 @@ struct ConnectivityBanner: View {
                     Button {
                         guard !retrying else { return }
                         retrying = true
-                        Task { await retry(); retrying = false }
+                        Task {
+                            defer { retrying = false }
+                            await retry()
+                        }
                     } label: {
                         if retrying {
                             ProgressView().controlSize(.small)
@@ -42,6 +45,7 @@ struct ConnectivityBanner: View {
                         }
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Retry")
                 }
             }
             .foregroundStyle(Palette.textSecondary)

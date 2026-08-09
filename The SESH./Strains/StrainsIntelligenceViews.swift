@@ -114,6 +114,7 @@ struct StrainMultiPicker: View {
 struct CompareStrainsView: View {
     @Environment(AppSession.self) private var session
     @Environment(StrainStore.self) private var strains
+    @Environment(ComparisonHistoryStore.self) private var history
     @Environment(\.dismiss) private var dismiss
     @State private var picks: [String] = []
 
@@ -136,8 +137,10 @@ struct CompareStrainsView: View {
                             .font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
                             .padding(.horizontal, 18)
 
-                        DarkCard { StrainMultiPicker(selected: $picks, max: 4) }
+                        DarkCard { StrainMultiPicker(selected: $picks, max: 6) }
                             .padding(.horizontal, 18)
+
+                        recentComparisons
 
                         if picks.count >= 2 {
                             comparisonGrid
@@ -150,6 +153,7 @@ struct CompareStrainsView: View {
                         Color.clear.frame(height: 40)
                     }
                 }
+                .onChange(of: picks) { _, newPicks in history.record(newPicks) }
             }
         }
     }
@@ -217,6 +221,56 @@ struct CompareStrainsView: View {
     }
     private var favoriteValues: [String] {
         stats.map { (s: StrainPersonalStats) -> String in s.isFavorite ? "Yes" : "No" }
+    }
+
+    /// Past comparisons, newest first. Tap a card to reload that set; tap the
+    /// ✕ to drop one, or Clear to wipe the list. Hidden when there's no history.
+    @ViewBuilder private var recentComparisons: some View {
+        if !history.records.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("PREVIOUSLY COMPARED")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Palette.textTertiary).tracking(0.5)
+                    Spacer()
+                    Button("Clear") { history.clear(); Haptics.warning() }
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Palette.textSecondary)
+                        .buttonStyle(.plain)
+                }
+                ForEach(history.records) { rec in
+                    DarkCard(padding: 12) {
+                        HStack(spacing: 10) {
+                            Button {
+                                picks = rec.strains
+                                Haptics.selection()
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "clock.arrow.circlepath")
+                                        .font(.system(size: 14)).foregroundStyle(Palette.green)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(rec.strains.joined(separator: " · "))
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundStyle(Palette.text).lineLimit(1)
+                                        Text("\(rec.strains.count) strains · \(Fmt.relative(rec.comparedAt))")
+                                            .font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
+                                    }
+                                    Spacer(minLength: 0)
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            Button { history.remove(rec); Haptics.warning() } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 15)).foregroundStyle(Palette.textTertiary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 18)
+        }
     }
 
     private var comparisonGrid: some View {

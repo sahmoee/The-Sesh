@@ -85,6 +85,7 @@ struct AppearanceView: View {
                 HStack(spacing: 4) {
                     if selected {
                         Image(systemName: "checkmark.circle.fill").font(.system(size: 12)).foregroundStyle(Palette.gold)
+                            .accessibilityHidden(true)
                     }
                     Text(choice.label).font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(selected ? Palette.text : Palette.textSecondary)
@@ -95,6 +96,7 @@ struct AppearanceView: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     // MARK: - Icon style
@@ -129,6 +131,7 @@ struct AppearanceView: View {
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 18))
                     .foregroundStyle(selected ? Palette.greenBright : Palette.textTertiary)
+                    .accessibilityHidden(true)
             }
             .padding(12)
             .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
@@ -136,6 +139,7 @@ struct AppearanceView: View {
                 .stroke(selected ? Palette.greenBright : Palette.stroke, lineWidth: selected ? 2 : 1))
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     /// A small three-icon preview of a given icon style.

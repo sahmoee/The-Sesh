@@ -14,6 +14,9 @@ import SwiftUI
 struct ListenView: View {
     @Environment(PlaylistStore.self) private var playlists
     @Environment(ThemeManager.self) private var theme
+    /// Set when a vibe tile is tapped: the playlist is created-or-found in the
+    /// button action (never during view update) and then navigated to.
+    @State private var vibeDestination: VibeDestination?
 
     /// The four vibes shown as tiles, each tied to an asset + a playlist name.
     private let vibes: [Vibe] = [
@@ -37,6 +40,9 @@ struct ListenView: View {
                 }
             }
             .background(AppBackground())
+            .navigationDestination(item: $vibeDestination) { dest in
+                PlaylistDetailView(playlistID: dest.id)
+            }
         }
     }
 
@@ -62,8 +68,9 @@ struct ListenView: View {
             }
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                 ForEach(vibes) { vibe in
-                    NavigationLink {
-                        PlaylistDetailView(playlistID: playlistID(for: vibe))
+                    Button {
+                        // Create-or-find on tap so rendering never mutates state.
+                        vibeDestination = VibeDestination(id: playlistID(for: vibe))
                     } label: {
                         vibeTile(vibe)
                     }
@@ -169,6 +176,11 @@ struct ListenView: View {
         }
         return playlists.createPlaylist(name: name, autoCollect: false).id
     }
+}
+
+/// Identifiable wrapper for `navigationDestination(item:)` on a playlist id.
+private struct VibeDestination: Identifiable, Hashable {
+    let id: String
 }
 
 /// A "vibe" entry for the Listen screen.

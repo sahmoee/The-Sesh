@@ -124,6 +124,10 @@ struct JourneyMilestonesView: View {
     @Environment(\.dismiss) private var dismiss
     private let cols = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
+    /// Built off the render path: computing every milestone walks all entries,
+    /// which is too much work to redo on each body evaluation.
+    @State private var all: [Milestone] = []
+
     var body: some View {
         ZStack {
             AppBackground()
@@ -131,7 +135,6 @@ struct JourneyMilestonesView: View {
                 ScreenHeader(title: "Journey", onBack: { dismiss() })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
 
-                let all = JourneyBuilder.build(session, social: social)
                 let earned = all.count(where: { $0.earned })
                 Text("\(earned) of \(all.count) milestones")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
@@ -161,6 +164,9 @@ struct JourneyMilestonesView: View {
                 }
             }
         }
+        .task(id: [session.entries.count, session.thoughts.count, social.friends.count]) {
+            all = JourneyBuilder.build(session, social: social)
+        }
     }
 }
 
@@ -174,12 +180,17 @@ struct MilestoneMedallion: View {
                 Image(systemName: item.earned ? item.symbol : "lock.fill")
                     .font(.system(size: 25)).foregroundStyle(item.earned ? item.tint : Palette.textTertiary)
             }
-            .accessibilityLabel(item.earned ? "\(item.title), earned" : "\(item.title), locked")
             Text(item.title).font(.system(size: 11.5, weight: .medium))
                 .foregroundStyle(item.earned ? Palette.text : Palette.textSecondary)
                 .multilineTextAlignment(.center).lineLimit(2)
             Text(item.detail).font(.system(size: 10)).foregroundStyle(Palette.textSecondary)
         }
+        // One VoiceOver stop per medallion instead of three (same pattern as
+        // PersonalRecordsView.recordCard).
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(item.earned
+                            ? "\(item.title), earned"
+                            : "\(item.title), locked, \(item.detail)")
     }
 }
 
@@ -199,14 +210,22 @@ struct RecordRow: Identifiable {
     var tint: Color = Palette.gold
 }
 
+/// Single home for the two duration renderings this screen needs, so each
+/// record group doesn't grow its own copy.
+private enum DurationFmt {
+    /// "1h 5m" from a minute count.
+    static func minutes(_ m: Int) -> String {
+        m >= 60 ? "\(m / 60)h \(m % 60)m" : "\(m)m"
+    }
+    /// "1m 05s" from a second count.
+    static func seconds(_ s: Int) -> String {
+        s >= 60 ? String(format: "%dm %02ds", s / 60, s % 60) : "\(s)s"
+    }
+}
+
 struct PersonalRecordsView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
-
-    private func fmtDuration(_ minutes: Int) -> String {
-        if minutes >= 60 { return "\(minutes / 60)h \(minutes % 60)m" }
-        return "\(minutes)m"
-    }
 
     var body: some View {
         ZStack {
@@ -236,16 +255,15 @@ struct PersonalRecordsView: View {
     // MARK: Record groups
 
     private var rollingRecords: [RecordRow] {
-        func fmt(_ s: Int) -> String { s >= 60 ? String(format: "%dm %02ds", s / 60, s % 60) : "\(s)s" }
         var rows: [RecordRow] = []
         if let b = session.fastestBluntRoll {
-            rows.append(RecordRow(icon: "bolt.fill", title: "Fastest Blunt Rolled", value: fmt(b), tint: Palette.gold))
+            rows.append(RecordRow(icon: "bolt.fill", title: "Fastest Blunt Rolled", value: DurationFmt.seconds(b), tint: Palette.gold))
         } else {
             rows.append(RecordRow(icon: "bolt.fill", title: "Fastest Blunt Rolled", value: nil,
                                   sub: "Time a blunt roll from the live sesh screen"))
         }
         if let j = session.fastestJointRoll {
-            rows.append(RecordRow(icon: "bolt.fill", title: "Fastest Joint Rolled", value: fmt(j), tint: Palette.gold))
+            rows.append(RecordRow(icon: "bolt.fill", title: "Fastest Joint Rolled", value: DurationFmt.seconds(j), tint: Palette.gold))
         } else {
             rows.append(RecordRow(icon: "bolt.fill", title: "Fastest Joint Rolled", value: nil,
                                   sub: "Time a joint roll from the live sesh screen"))
@@ -256,12 +274,12 @@ struct PersonalRecordsView: View {
     private var sessionRecords: [RecordRow] {
         var rows: [RecordRow] = []
         if let l = session.longestSesh {
-            rows.append(RecordRow(icon: "arrow.up.right", title: "Longest sesh", value: fmtDuration(l.minutes), sub: l.strain, tint: Palette.greenBright))
+            rows.append(RecordRow(icon: "arrow.up.right", title: "Longest sesh", value: DurationFmt.minutes(l.minutes), sub: l.strain, tint: Palette.greenBright))
         } else {
             rows.append(RecordRow(icon: "arrow.up.right", title: "Longest sesh", value: nil, sub: "Use the live Start sesh timer to set this"))
         }
         if let s = session.shortestSesh {
-            rows.append(RecordRow(icon: "arrow.down.right", title: "Shortest sesh", value: fmtDuration(s.minutes), sub: s.strain, tint: Palette.green))
+            rows.append(RecordRow(icon: "arrow.down.right", title: "Shortest sesh", value: DurationFmt.minutes(s.minutes), sub: s.strain, tint: Palette.green))
         } else {
             rows.append(RecordRow(icon: "arrow.down.right", title: "Shortest sesh", value: nil, sub: "Use the live Start sesh timer to set this"))
         }
@@ -318,18 +336,18 @@ struct PersonalRecordsView: View {
     private var spendingRecords: [RecordRow] {
         var rows: [RecordRow] = []
         if let h = session.highestPurchase {
-            rows.append(RecordRow(icon: "arrow.up", title: "Highest Purchase", value: String(format: "$%.0f", h), tint: Palette.gold))
+            rows.append(RecordRow(icon: "arrow.up", title: "Highest Purchase", value: Fmt.currency0(h), tint: Palette.gold))
         } else {
             rows.append(RecordRow(icon: "arrow.up", title: "Highest Purchase", value: nil, sub: "Add a price to a sesh to set this"))
         }
         if let c = session.cheapestPurchase {
-            rows.append(RecordRow(icon: "arrow.down", title: "Cheapest Purchase", value: String(format: "$%.0f", c), tint: Palette.green))
+            rows.append(RecordRow(icon: "arrow.down", title: "Cheapest Purchase", value: Fmt.currency0(c), tint: Palette.green))
         } else {
             rows.append(RecordRow(icon: "arrow.down", title: "Cheapest Purchase", value: nil, sub: "Add a price to a sesh to set this"))
         }
         if let m = session.monthlySpendExtremes {
-            rows.append(RecordRow(icon: "calendar.badge.plus", title: "Biggest Monthly Spend", value: String(format: "$%.0f", m.high), tint: Palette.gold))
-            rows.append(RecordRow(icon: "calendar.badge.minus", title: "Lowest Monthly Spend", value: String(format: "$%.0f", m.low), tint: Palette.green))
+            rows.append(RecordRow(icon: "calendar.badge.plus", title: "Biggest Monthly Spend", value: Fmt.currency0(m.high), tint: Palette.gold))
+            rows.append(RecordRow(icon: "calendar.badge.minus", title: "Lowest Monthly Spend", value: Fmt.currency0(m.low), tint: Palette.green))
         } else {
             rows.append(RecordRow(icon: "calendar.badge.plus", title: "Biggest Monthly Spend", value: nil, sub: "Add prices to set this"))
             rows.append(RecordRow(icon: "calendar.badge.minus", title: "Lowest Monthly Spend", value: nil, sub: "Add prices to set this"))
@@ -388,6 +406,7 @@ struct YearlyRecapView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var year = Calendar.current.component(.year, from: Date())
     @State private var shareItem: [Any]? = nil
+    @State private var shareError: String?
 
     private var availableYears: [Int] {
         let ys = session.yearsWithData
@@ -428,6 +447,7 @@ struct YearlyRecapView: View {
         .sheet(isPresented: Binding(get: { shareItem != nil }, set: { if !$0 { shareItem = nil } })) {
             if let items = shareItem { ShareSheet(items: items) }
         }
+        .toast($shareError, systemImage: "exclamationmark.triangle.fill")
     }
 
     @ViewBuilder private var yearSwitcher: some View {
@@ -456,8 +476,12 @@ struct YearlyRecapView: View {
         renderer.scale = 3
         if let img = renderer.uiImage {
             shareItem = [img]
+            Haptics.tap()
+        } else {
+            // Rendering can fail (e.g. low memory) — say so instead of a dead tap.
+            shareError = "Couldn't render your recap card. Try again."
+            Haptics.warning()
         }
-        Haptics.tap()
     }
 }
 
@@ -493,7 +517,7 @@ struct RecapCard: View {
                 recapRow("sparkles", "Favorite Effect", recap.favoriteEffect ?? "—", Palette.gold)
                 recapRow("calendar", "Most Active Month", recap.mostActiveMonth ?? "—", Palette.greenBright)
                 recapRow("square.grid.2x2.fill", "Unique Strains", "\(recap.uniqueStrains)", Palette.green)
-                recapRow("dollarsign.circle.fill", "Money Spent", String(format: "$%.0f", recap.moneySpent), Palette.gold)
+                recapRow("dollarsign.circle.fill", "Money Spent", Fmt.currency0(recap.moneySpent), Palette.gold)
                 recapRow("person.2.fill", "Top Cyph Friend", recap.topCyphFriend ?? "Coming soon", Palette.textTertiary)
             }
 
@@ -594,6 +618,9 @@ struct SecretBadgesView: View {
     @Environment(\.dismiss) private var dismiss
     private let cols = [GridItem(.flexible()), GridItem(.flexible())]
 
+    /// Built off the render path — badge conditions walk every entry.
+    @State private var all: [SecretBadge] = []
+
     var body: some View {
         ZStack {
             AppBackground()
@@ -601,7 +628,6 @@ struct SecretBadgesView: View {
                 ScreenHeader(title: "Secret Badges", onBack: { dismiss() })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 6)
 
-                let all = SecretBadgeBuilder.build(session)
                 let found = all.count(where: { $0.earned })
                 Text("\(found) of \(all.count) discovered")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
@@ -614,6 +640,9 @@ struct SecretBadgesView: View {
                     .padding(.horizontal, 18).padding(.bottom, 28)
                 }
             }
+        }
+        .task(id: [session.entries.count, session.thoughts.count]) {
+            all = SecretBadgeBuilder.build(session)
         }
     }
 
@@ -730,14 +759,15 @@ struct PersonalityProfileView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
 
+    /// Scored off the render path — trait scoring walks every entry.
+    @State private var traits: [PersonalityTrait] = []
+
     var body: some View {
         ZStack {
             AppBackground()
             VStack(spacing: 0) {
                 ScreenHeader(title: "Smoking Style", onBack: { dismiss() })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 10)
-
-                let traits = PersonalityEngine.traits(session)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
@@ -774,6 +804,9 @@ struct PersonalityProfileView: View {
                     .padding(.horizontal, 18).padding(.bottom, 28)
                 }
             }
+        }
+        .task(id: [session.entries.count, session.thoughts.count]) {
+            traits = PersonalityEngine.traits(session)
         }
     }
 

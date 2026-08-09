@@ -182,6 +182,8 @@ struct PrivacySafetyHubView: View {
                             "Check-in reminders & guidance") { SafetySettingsView() }
                     hubLink("text.book.closed.fill", "Community Rules",
                             "What's OK in Cyphers and chat") { CommunityRulesView() }
+                    hubLink("doc.text.fill", "Policies & Support",
+                            "Privacy, license, and help") { SeshLegalLinksView() }
                 }
                 .padding(16)
             }
@@ -327,6 +329,8 @@ struct SafetySettingsView: View {
 // MARK: - Community rules (#App17)
 
 struct CommunityRulesView: View {
+    private static let appealsURL = URL(string: "mailto:appeals@thesesh.app?subject=Moderation%20appeal")
+
     var body: some View {
         ZStack {
             AppBackground()
@@ -343,17 +347,19 @@ struct CommunityRulesView: View {
                     FieldLabel(text: "Enforcement").padding(.top, 8)
                     Text("Reports are reviewed against these rules. Repeated or severe violations remove access to Community features. If you believe a decision was wrong, contact us and we'll take a second look.")
                         .font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
-                    Link(destination: URL(string: "mailto:appeals@thesesh.app?subject=Moderation%20appeal")!) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "envelope.fill")
-                                .font(.system(size: 14)).foregroundStyle(Palette.greenBright)
-                            Text("Contact / appeal a decision")
-                                .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
+                    if let appealsURL = Self.appealsURL {
+                        Link(destination: appealsURL) {
+                            HStack(spacing: 10) {
+                                Image(systemName: "envelope.fill")
+                                    .font(.system(size: 14)).foregroundStyle(Palette.greenBright)
+                                Text("Contact / appeal a decision")
+                                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text)
+                            }
+                            .padding(12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+                            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
                         }
-                        .padding(12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-                        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
                     }
                 }
                 .padding(16)

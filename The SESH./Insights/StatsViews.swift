@@ -163,11 +163,19 @@ struct StatsView: View {
             }
             HStack(spacing: 12) {
                 statBox(session.daysSinceLastSesh.map { $0 == 0 ? "Today" : "\($0)d" } ?? "—", "Since Last")
-                statBox("\(session.currentStreak)", "Day Streak")
+                statBox(averageDurationText, "Avg Duration")
             }
             ToleranceCard()
             championsCard
         }
+    }
+
+    /// Average logged session length (replaces the duplicated "Day Streak" box).
+    private var averageDurationText: String {
+        let durations = session.entries.compactMap(\.durationMinutes)
+        guard !durations.isEmpty else { return "—" }
+        let avg = Double(durations.reduce(0, +)) / Double(durations.count)
+        return "\(Int(avg.rounded()))m"
     }
 
     /// Your Current Champions — the reigning strain for each Favorites reason.
@@ -274,13 +282,18 @@ struct StatsView: View {
 struct SpendBarChart: View {
     let data: [(label: String, amount: Double)]
     private var maxVal: Double { max(60, (data.map(\.amount).max() ?? 0)) }
+    /// Evenly spaced y-axis labels derived from the actual bar scale.
+    private var axisValues: [Int] {
+        let top = Int(maxVal.rounded())
+        return [top, top * 2 / 3, top / 3, 0]
+    }
 
     var body: some View {
         VStack(spacing: 6) {
             HStack(alignment: .bottom, spacing: 10) {
                 // y-axis labels
                 VStack(alignment: .trailing, spacing: 0) {
-                    ForEach([60, 40, 20, 0], id: \.self) { v in
+                    ForEach(axisValues, id: \.self) { v in
                         Text("$\(v)").font(.system(size: 10)).foregroundStyle(Palette.textTertiary)
                         if v != 0 { Spacer() }
                     }

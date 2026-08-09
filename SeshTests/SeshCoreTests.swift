@@ -98,6 +98,87 @@ import Foundation
     }
 }
 
+// MARK: - Currency formatting (Fmt)
+
+@Suite struct CurrencyFormattingTests {
+    /// Whole amounts take the no-fraction branch (same output as currency0);
+    /// fractional amounts keep their cents. Compared through the formatters
+    /// themselves so the test is locale-independent.
+    @Test func wholeAmountsDropFractionDigits() {
+        #expect(Fmt.currency(20.0) == Fmt.currency0(20.0))
+        #expect(Fmt.currency(0.0) == Fmt.currency0(0.0))
+    }
+
+    @Test func fractionalAmountsKeepCents() {
+        let s = Fmt.currency(19.99)
+        #expect(s.contains("99"))
+        // currency0 rounds 19.99 to a whole 20 — the full formatter must not.
+        #expect(s != Fmt.currency0(19.99))
+    }
+}
+
+// MARK: - Outbox bounding (#C5)
+
+@Suite @MainActor struct OutboxTrimTests {
+    /// Over-filling the outbox must drop the OLDEST operations, keeping the
+    /// newest `maxQueued` (500). Verified through the persisted queue file,
+    /// which enqueue() rewrites synchronously.
+    @Test func maxQueuedTrimDropsOldest() throws {
+        let outbox = OfflineOutbox.shared
+        outbox.cancelReplay()
+
+        let total = 505
+        for i in 0..<total {
+            outbox.enqueue(path: "/api/test/trim", body: Data("{}".utf8), key: "trim-\(i)")
+        }
+        outbox.cancelReplay()
+
+        #expect(outbox.pendingCount == 500)
+
+        // The persisted file mirrors the in-memory queue after every enqueue.
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let data = try Data(contentsOf: dir.appendingPathComponent("sesh-outbox.json"))
+        let saved = try JSONDecoder().decode([OutboxOperation].self, from: data)
+        let ids = Set(saved.map(\.id))
+        #expect(saved.count == 500)
+        #expect(!ids.contains("trim-0"))            // oldest dropped
+        #expect(!ids.contains("trim-4"))            // ...all 5 overflowed
+        #expect(ids.contains("trim-5"))             // first survivor
+        #expect(ids.contains("trim-\(total - 1)"))  // newest kept
+    }
+}
+
+// MARK: - JournalEntry.companionLine
+
+@Suite struct CompanionLineTests {
+    private func entry(companions: [String]?) -> JournalEntry {
+        JournalEntry(strain: "Blue Dream", method: "Joint", rating: 8,
+                     mood: nil, smokeAgain: nil, category: nil, notes: "",
+                     price: nil, photoName: nil, sessionType: nil,
+                     durationMinutes: nil, companions: companions, effects: nil,
+                     attachedThoughtID: nil, moodBefore: nil, moodAfter: nil,
+                     amount: nil, amountUnit: nil)
+    }
+
+    @Test func nilOrEmptyIsSolo() {
+        #expect(entry(companions: nil).companionLine == nil)
+        #expect(entry(companions: []).companionLine == nil)
+    }
+
+    @Test func singleCompanion() {
+        #expect(entry(companions: ["Jessie"]).companionLine == "Smoked with Jessie")
+    }
+
+    @Test func twoCompanionsUseAmpersand() {
+        #expect(entry(companions: ["Jessie", "Sarah"]).companionLine == "Smoked with Jessie & Sarah")
+    }
+
+    @Test func manyCompanionsCommaThenAmpersand() {
+        #expect(entry(companions: ["A", "B", "C"]).companionLine == "Smoked with A, B & C")
+        #expect(entry(companions: ["A", "B", "C", "D"]).companionLine == "Smoked with A, B, C & D")
+    }
+}
+
 // MARK: - Session token claims (#C1)
 
 @Suite struct SessionTokenTests {

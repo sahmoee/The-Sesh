@@ -190,6 +190,9 @@ final class StrainImageStore {
 
     private func store(_ image: UIImage, for id: String) {
         memoryCache[id] = image
+        // LRU: re-storing an id must move it to the tail, not duplicate it —
+        // duplicate entries make eviction evict the wrong (still-hot) images.
+        cacheOrder.removeAll { $0 == id }
         cacheOrder.append(id)
         if cacheOrder.count > memoryLimit {
             let evict = cacheOrder.removeFirst()

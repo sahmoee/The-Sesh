@@ -22,6 +22,8 @@ struct ActiveSeshCard: View {
     var onChangeMethod: () -> Void = {}
     var onEnd: () -> Void = {}
 
+    @State private var confirmEnd = false
+
     private var live: LiveSeshState? { session.liveSesh }
     private var strain: StrainProfile? {
         guard let name = live?.strainName, !name.isEmpty else { return nil }
@@ -34,26 +36,23 @@ struct ActiveSeshCard: View {
         return "Currently \(phrase)"
     }
 
-    private func elapsed(_ since: Date) -> String {
-        let secs = max(0, Int(Date().timeIntervalSince(since)))
-        return String(format: "%02d:%02d", secs / 60, secs % 60)
-    }
-
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { _ in
-            VStack(spacing: 14) {
-                topRow
-                actionRow
-            }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                    .fill(Palette.card)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                    .stroke(Palette.greenBright.opacity(0.35), lineWidth: 1)
-            )
+        VStack(spacing: 14) {
+            topRow
+            actionRow
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                .fill(Palette.card)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                .stroke(Palette.greenBright.opacity(0.35), lineWidth: 1)
+        )
+        .confirmationDialog("End this sesh?", isPresented: $confirmEnd, titleVisibility: .visible) {
+            Button("End Sesh", role: .destructive) { onEnd() }
+            Button("Keep Going", role: .cancel) {}
         }
     }
 
@@ -85,9 +84,13 @@ struct ActiveSeshCard: View {
                 }
 
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(elapsed(live?.startedAt ?? Date()))
-                        .font(.system(size: 34, weight: .bold)).monospacedDigit()
-                        .foregroundStyle(Palette.text)
+                    // Only this readout needs the 1s clock — keep the TimelineView
+                    // tight so the rest of the card doesn't re-evaluate every second.
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        Text(seshDuration(max(0, context.date.timeIntervalSince(live?.startedAt ?? context.date))))
+                            .font(.system(size: 34, weight: .bold)).monospacedDigit()
+                            .foregroundStyle(Palette.text)
+                    }
                     Text("active").font(.system(size: 13)).foregroundStyle(Palette.greenBright)
                 }
             }
@@ -97,8 +100,10 @@ struct ActiveSeshCard: View {
                     Image(systemName: "arrow.up.left.and.arrow.down.right")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Palette.textSecondary)
+                        .minimumTapTarget()
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Expand session")
                 Spacer()
                 strainArt
             }
@@ -119,8 +124,9 @@ struct ActiveSeshCard: View {
         HStack(spacing: 10) {
             actionButton("Log Thought", "brain.head.profile", Palette.text, action: onLogThought)
             actionButton("Change", "arrow.triangle.2.circlepath", Palette.text, action: onChangeMethod)
-            actionButton("End Sesh", "xmark.circle", Palette.moodAngry, action: onEnd)
+            actionButton("End Sesh", "xmark.circle", Palette.moodAngry, action: { confirmEnd = true })
         }
+        .accessibilityElement(children: .combine)
     }
 
     private func actionButton(_ title: String, _ icon: String, _ tint: Color, action: @escaping () -> Void) -> some View {

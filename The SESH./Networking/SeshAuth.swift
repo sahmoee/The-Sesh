@@ -19,6 +19,7 @@
 
 import Foundation
 import Security
+import AuthenticationServices
 import DeviceCheck
 
 @MainActor
@@ -62,14 +63,44 @@ final class SeshAuth {
                                      "handle": handle, "name": name, "code": code])
     }
 
-    /// Called by SeshAPI after a 401. Guests re-exchange silently; Apple users
-    /// keep their token until the next sign-in produces a fresh identity token.
+    /// Called by SeshAPI after a 401. Guests re-exchange from the stored device
+    /// id. Apple users, if their credential is still authorized, get a FRESH
+    /// identity token and re-exchange — this is what survives a SESSION_SECRET
+    /// rotation or a normal token expiry without a hard logout.
     func refreshIfNeeded() async -> Bool {
         if let deviceID = lastGuestDeviceID {
             return await exchangeGuest(deviceID: deviceID, handle: lastHandle,
                                        name: lastName, code: lastCode)
         }
+        if let appleUserID = UserDefaults.standard.string(forKey: "sesh.apple.userID"),
+           !appleUserID.isEmpty {
+            return await reexchangeApple(userID: appleUserID)
+        }
         return false
+    }
+
+    /// Re-mint a session for an existing Sign in with Apple user.
+    ///
+    /// `getCredentialState` is a cheap, silent check: only if the user is still
+    /// signed in with Apple do we ask for a fresh identity token. For an
+    /// authorized user that request is typically frictionless (no sign-in sheet;
+    /// at most a quick system confirmation). If the credential was revoked or is
+    /// gone, we return false and the app falls back to the normal sign-in screen —
+    /// which is correct, because at that point the user really did sign out.
+    private func reexchangeApple(userID: String) async -> Bool {
+        let provider = ASAuthorizationAppleIDProvider()
+        let state: ASAuthorizationAppleIDProvider.CredentialState =
+            await withCheckedContinuation { cont in
+                provider.getCredentialState(forUserID: userID) { state, _ in
+                    cont.resume(returning: state)
+                }
+            }
+        guard state == .authorized else { return false }
+        guard let identityToken = await AppleReauth.freshIdentityToken() else { return false }
+        // handle/name/code are profile hints only; the Worker binds the session to
+        // the verified Apple `sub` in the identity token, so empty hints are fine.
+        return await exchangeApple(identityToken: identityToken,
+                                   handle: lastHandle, name: lastName, code: lastCode)
     }
 
     func signOut() {
@@ -82,6 +113,20 @@ final class SeshAuth {
 
     private func remember(handle: String, name: String, code: String) {
         lastHandle = handle; lastName = name; lastCode = code
+    }
+
+    /// Adopt a session the Worker re-minted for the SAME verified uid — used
+    /// after a profile (display name / handle) update, so the name carried in
+    /// the session claims, and therefore stamped onto outgoing chat messages,
+    /// matches what the user actually set. No re-authentication is involved:
+    /// the Worker only issues this in response to an already-valid session.
+    func adoptRefreshedSession(token newToken: String, uid newUID: String,
+                               handle: String, name: String, code: String) {
+        guard !newToken.isEmpty else { return }
+        remember(handle: handle, name: name, code: code)
+        token = newToken
+        uid = newUID
+        Self.keychainWrite(newToken)
     }
 
     private func exchange(path: String, body: [String: String]) async -> Bool {
@@ -154,5 +199,55 @@ final class SeshAuth {
 
     private static func keychainDelete() {
         SecItemDelete(query() as CFDictionary)
+    }
+}
+
+// MARK: - Silent Sign in with Apple re-request
+
+/// Runs one Sign in with Apple request and returns the fresh identity token,
+/// or nil on failure.
+@MainActor
+private final class AppleReauth: NSObject,
+    ASAuthorizationControllerDelegate,
+    ASAuthorizationControllerPresentationContextProviding {
+
+    static func freshIdentityToken() async -> String? {
+        await AppleReauth().run()
+    }
+
+    private var continuation: CheckedContinuation<String?, Never>?
+
+    private func run() async -> String? {
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        request.requestedScopes = []          // name/email already stored; don't re-ask
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        return await withCheckedContinuation { cont in
+            self.continuation = cont
+            controller.performRequests()
+        }
+    }
+
+    func authorizationController(controller: ASAuthorizationController,
+                                didCompleteWithAuthorization authorization: ASAuthorization) {
+        let token = (authorization.credential as? ASAuthorizationAppleIDCredential)?
+            .identityToken
+            .flatMap { String(data: $0, encoding: .utf8) }
+        continuation?.resume(returning: token)
+        continuation = nil
+    }
+
+    func authorizationController(controller: ASAuthorizationController,
+                                didCompleteWithError error: Error) {
+        continuation?.resume(returning: nil)
+        continuation = nil
+    }
+
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let window = scenes.flatMap(\.windows).first(where: \.isKeyWindow)
+            ?? scenes.first?.windows.first
+        return window ?? ASPresentationAnchor()
     }
 }

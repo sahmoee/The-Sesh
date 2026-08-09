@@ -168,6 +168,14 @@ final class SeshDataStore {
     /// True only if SwiftData is completely unavailable (no container at all).
     /// The app still launches; persistence simply no-ops.
     private(set) var isUnavailable = false
+    /// True when the durable store opened at the secondary location because the
+    /// primary one refused to open. Data IS saved; it just lives elsewhere.
+    private(set) var isUsingFallbackLocation = false
+    /// Last container-open failure, kept for diagnostics.
+    var lastFailure: String? { Self.lastFailureDescription }
+    private static var lastFailureDescription: String?
+
+    private static let log = Logger(subsystem: "com.sowens.The-SESH-", category: "persistence")
 
     init() {
         let schema = Schema(SeshSchemaV1.models)
@@ -182,28 +190,72 @@ final class SeshDataStore {
             container = onDiskNoPlan
             return
         }
-        // 3) In-memory with the real schema so the app LAUNCHES (session-only data).
+        // 3) Still on DISK, at a private secondary location. The default store
+        //    file can be left in an unopenable state (an interrupted migration,
+        //    a schema the running build can't read, a partially written WAL) and
+        //    once that happens every launch used to drop straight to memory-only
+        //    — i.e. silent, permanent data loss. A second store file is strictly
+        //    better than no store at all: the working set is re-seeded from
+        //    UserDefaults/iCloud on the next launch and is durable from then on.
+        //    The original file is never touched, so nothing is destroyed and a
+        //    later build can still recover it.
+        if let url = Self.fallbackStoreURL,
+           let relocated = Self.makeContainer(schema: schema, inMemory: false, migrate: false, url: url) {
+            isUsingFallbackLocation = true
+            Self.log.error("Primary SwiftData store unopenable — using fallback store at \(url.lastPathComponent, privacy: .public)")
+            container = relocated
+            return
+        }
+        // 4) In-memory with the real schema so the app LAUNCHES (session-only data).
         isEphemeral = true
         if let mem = Self.makeContainer(schema: schema, inMemory: true, migrate: false) {
             container = mem
             return
         }
-        // 4) In-memory with an EMPTY schema — nothing to fail on.
+        // 5) In-memory with an EMPTY schema — nothing to fail on.
         if let empty = Self.makeContainer(schema: Schema([]), inMemory: true, migrate: false) {
             container = empty
             return
         }
-        // 5) Truly nothing worked. Do NOT trap — leave container nil, flag it,
+        // 6) Truly nothing worked. Do NOT trap — leave container nil, flag it,
         //    and let the app run with persistence disabled. (Previously a `try!`
         //    here crashed the app on launch.)
         isUnavailable = true
         container = nil
     }
 
+    /// Secondary on-disk location, used only when the default store won't open.
+    private static var fallbackStoreURL: URL? {
+        guard let dir = try? FileManager.default.url(for: .applicationSupportDirectory,
+                                                     in: .userDomainMask,
+                                                     appropriateFor: nil, create: true) else { return nil }
+        return dir.appendingPathComponent("SeshLocalStore.store")
+    }
+
     /// Build a ModelContainer, returning nil on failure instead of throwing, so
     /// the initializer can fall through a recovery chain and NEVER trap.
-    private static func makeContainer(schema: Schema, inMemory: Bool, migrate: Bool) -> ModelContainer? {
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory)
+    ///
+    /// `cloudKitDatabase: .none` is the important part. The app ships the
+    /// CloudKit + iCloud-container entitlements (for CloudDocuments and the
+    /// key-value sync in CloudSync.swift), and SwiftData's DEFAULT is
+    /// `.automatic` — which means "mirror this store to CloudKit if the app is
+    /// entitled to". CloudKit mirroring forbids `@Attribute(.unique)`, and every
+    /// model here has one (SDJournalEntry.id, SDThought.id, SDRecord.key), so
+    /// the on-disk container threw on EVERY launch and the app silently fell
+    /// through to the memory-only branch — which is exactly the "Storage
+    /// unavailable — data won't be saved after you close the app" banner.
+    /// Cross-device sync does not depend on this store (it goes through
+    /// NSUbiquitousKeyValueStore + the Worker), so mirroring is explicitly off.
+    private static func makeContainer(schema: Schema, inMemory: Bool, migrate: Bool,
+                                      url: URL? = nil) -> ModelContainer? {
+        let config: ModelConfiguration
+        if let url {
+            config = ModelConfiguration(schema: schema, url: url, allowsSave: true,
+                                       cloudKitDatabase: ModelConfiguration.CloudKitDatabase.none)
+        } else {
+            config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory,
+                                       cloudKitDatabase: ModelConfiguration.CloudKitDatabase.none)
+        }
         do {
             if migrate {
                 return try ModelContainer(for: schema, migrationPlan: SeshMigrationPlan.self, configurations: config)
@@ -211,8 +263,9 @@ final class SeshDataStore {
                 return try ModelContainer(for: schema, configurations: config)
             }
         } catch {
-            Logger(subsystem: "com.sowens.The-SESH-", category: "persistence")
-                .error("ModelContainer init failed (inMemory=\(inMemory), migrate=\(migrate)): \(String(describing: error), privacy: .public)")
+            let described = String(describing: error)
+            lastFailureDescription = described
+            log.error("ModelContainer init failed (inMemory=\(inMemory), migrate=\(migrate), custom url=\(url != nil)): \(described, privacy: .public)")
             return nil
         }
     }

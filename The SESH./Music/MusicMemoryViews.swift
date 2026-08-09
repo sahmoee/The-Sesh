@@ -19,6 +19,12 @@ struct MusicMemoryView: View {
     @State private var tab = "History"
     private let tabs = ["History", "Top Songs", "By Strain"]
 
+    // Aggregations hoisted out of the ForEach loops (they group/sort the whole
+    // play history) and refreshed only when the play list changes.
+    @State private var historyItems: [StrainSongPlay] = []
+    @State private var topSongItems: [SongTally] = []
+    @State private var pairingItems: [StrainMusicPairing] = []
+
     var body: some View {
         ZStack {
             AppBackground()
@@ -45,6 +51,12 @@ struct MusicMemoryView: View {
                 }
             }
         }
+        .task(id: session.songPlays.count) {
+            let plays = session.songPlays
+            historyItems = MusicMemory.history(plays)
+            topSongItems = MusicMemory.topSongs(plays)
+            pairingItems = MusicMemory.pairings(plays)
+        }
     }
 
     private var emptyState: some View {
@@ -60,7 +72,7 @@ struct MusicMemoryView: View {
     }
 
     private var history: some View {
-        ForEach(MusicMemory.history(session.songPlays)) { play in
+        ForEach(historyItems) { play in
             HStack(spacing: 12) {
                 artwork(play.artworkURL)
                 VStack(alignment: .leading, spacing: 2) {
@@ -72,7 +84,7 @@ struct MusicMemoryView: View {
                     }
                 }
                 Spacer()
-                Text(relative(play.date)).font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
+                Text(Fmt.relative(play.date)).font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
             }
             .padding(12)
             .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.card))
@@ -81,7 +93,7 @@ struct MusicMemoryView: View {
     }
 
     private var topSongs: some View {
-        ForEach(Array(MusicMemory.topSongs(session.songPlays).enumerated()), id: \.element.id) { idx, song in
+        ForEach(Array(topSongItems.enumerated()), id: \.element.id) { idx, song in
             HStack(spacing: 12) {
                 Text("\(idx + 1)").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.gold).frame(width: 22)
                 artwork(song.artworkURL)
@@ -99,7 +111,7 @@ struct MusicMemoryView: View {
     }
 
     private var byStrain: some View {
-        ForEach(MusicMemory.pairings(session.songPlays)) { pairing in
+        ForEach(pairingItems) { pairing in
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text(pairing.strainName).font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.text)
@@ -137,10 +149,6 @@ struct MusicMemoryView: View {
         }
     }
 
-    private func relative(_ date: Date) -> String {
-        let f = RelativeDateTimeFormatter(); f.unitsStyle = .abbreviated
-        return f.localizedString(for: date, relativeTo: Date())
-    }
 }
 
 // MARK: - Identity (Me)
@@ -148,6 +156,10 @@ struct MusicMemoryView: View {
 struct MusicIdentityView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
+
+    // Hoisted aggregations, refreshed only when the play list changes.
+    @State private var breakdown: [(vibe: SessionType, count: Int)] = []
+    @State private var pairingItems: [StrainMusicPairing] = []
 
     var body: some View {
         ZStack {
@@ -170,6 +182,11 @@ struct MusicIdentityView: View {
                 }
             }
         }
+        .task(id: session.songPlays.count) {
+            let plays = session.songPlays
+            breakdown = MusicMemory.vibeBreakdown(plays)
+            pairingItems = MusicMemory.pairings(plays, limit: 8)
+        }
     }
 
     private var emptyState: some View {
@@ -189,7 +206,6 @@ struct MusicIdentityView: View {
             Text("Your sesh vibes").font(.system(size: 17, weight: .bold)).foregroundStyle(Palette.text)
             Text("The moods you reach for most when the music's on.")
                 .font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
-            let breakdown = MusicMemory.vibeBreakdown(session.songPlays)
             let total = max(1, breakdown.map(\.count).reduce(0, +))
             ForEach(breakdown, id: \.vibe) { item in
                 VStack(alignment: .leading, spacing: 4) {
@@ -199,14 +215,7 @@ struct MusicIdentityView: View {
                         Text("\(Int(Double(item.count) / Double(total) * 100))%")
                             .font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.purple)
                     }
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(Palette.field).frame(height: 8)
-                            Capsule().fill(Palette.purple)
-                                .frame(width: geo.size.width * CGFloat(item.count) / CGFloat(total), height: 8)
-                        }
-                    }
-                    .frame(height: 8)
+                    GeometryFreeBar(fraction: Double(item.count) / Double(total))
                 }
             }
         }
@@ -217,7 +226,7 @@ struct MusicIdentityView: View {
             Text("Strain pairings").font(.system(size: 17, weight: .bold)).foregroundStyle(Palette.text)
             Text("What you play with each strain.")
                 .font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
-            ForEach(MusicMemory.pairings(session.songPlays, limit: 8)) { pairing in
+            ForEach(pairingItems) { pairing in
                 VStack(alignment: .leading, spacing: 6) {
                     Text(pairing.strainName).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.greenBright)
                     ForEach(pairing.topSongs) { song in

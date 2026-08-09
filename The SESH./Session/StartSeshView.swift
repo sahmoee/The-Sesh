@@ -38,8 +38,15 @@ struct StartSeshView: View {
     enum Phase { case setup, live, save }
     @State private var phase: Phase = .setup
 
+    /// Who's joining the sesh (typed options instead of raw string literals).
+    enum JoinMode: String, CaseIterable {
+        case justMe = "Just Me"
+        case inviteFriends = "Invite Friends"
+        case existingCyph = "Existing Cyph"
+    }
+
     // Setup
-    @State private var whoJoining = "Just Me"
+    @State private var whoJoining: JoinMode = .justMe
     @State private var sessionType: SessionType = .relaxing
     @State private var privacy: CypherVisibility = .friends
     @State private var invited: Set<String> = []
@@ -70,7 +77,7 @@ struct StartSeshView: View {
             case .save:  saveView
             }
         }
-        .onAppear(perform: restoreIfNeeded)
+        .task { restoreIfNeeded() }
         .fullScreenCover(isPresented: $showRollComplete) { rollCompleteCover }
     }
 
@@ -195,7 +202,7 @@ struct StartSeshView: View {
                 .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    pickerSection("Who's Joining?", ["Just Me", "Invite Friends", "Existing Cyph"], $whoJoining)
+                    pickerSection("Who's Joining?", JoinMode.allCases, $whoJoining)
                     inviteSection
                     sessionTypeSection
                     pickerSection2("Privacy",
@@ -210,7 +217,7 @@ struct StartSeshView: View {
     }
 
     @ViewBuilder private var inviteSection: some View {
-        if whoJoining == "Invite Friends" {
+        if whoJoining == .inviteFriends {
             VStack(alignment: .leading, spacing: 8) {
                 FieldLabel(text: "Invite")
                 FlowLayout(spacing: 8) {
@@ -264,13 +271,13 @@ struct StartSeshView: View {
         persistLive()
     }
 
-    private func pickerSection(_ title: String, _ options: [String], _ binding: Binding<String>) -> some View {
+    private func pickerSection(_ title: String, _ options: [JoinMode], _ binding: Binding<JoinMode>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             FieldLabel(text: title)
             HStack(spacing: 8) {
                 ForEach(options, id: \.self) { opt in
                     Button { binding.wrappedValue = opt; Haptics.selection() } label: {
-                        Text(opt).font(.system(size: 13, weight: .medium))
+                        Text(opt.rawValue).font(.system(size: 13, weight: .medium))
                             .foregroundStyle(binding.wrappedValue == opt ? Palette.onGreen : Palette.text)
                             .frame(maxWidth: .infinity).padding(.vertical, 10)
                             .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
@@ -311,13 +318,17 @@ struct StartSeshView: View {
                 Button { dismiss() } label: {
                     Image(systemName: "xmark").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.textSecondary)
                 }.buttonStyle(.plain)
+                .accessibilityLabel("Close")
+                .accessibilityHint("Your sesh keeps running")
                 Spacer()
                 VStack(spacing: 1) {
                     Text(sessionType.emoji + " " + sessionType.rawValue).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.text)
                     Text(seshDuration(elapsed)).font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.gold).monospacedDigit()
                 }
                 Spacer()
-                Image(systemName: "xmark").font(.system(size: 16)).foregroundStyle(.clear)
+                // Invisible spacer balancing the close button; not an image so it
+                // stays out of the accessibility tree.
+                Color.clear.frame(width: 16, height: 16)
             }
             .padding(.horizontal, 18).padding(.top, 14).padding(.bottom, 8)
 
@@ -338,12 +349,21 @@ struct StartSeshView: View {
                 }
             }
         }
-        .onAppear { startTimer() }
+        .task {
+            // Elapsed ticker: cancelled automatically when the live view goes away.
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard phase == .live, stage != .finished else { continue }
+                elapsed = Date().timeIntervalSince(startedAt)
+            }
+        }
     }
 
     private var orderedStages: [SeshStage] { SeshStage.allCases }
     private func isDone(_ s: SeshStage) -> Bool {
-        orderedStages.firstIndex(of: s)! < orderedStages.firstIndex(of: stage)!
+        guard let sIdx = orderedStages.firstIndex(of: s),
+              let curIdx = orderedStages.firstIndex(of: stage) else { return false }
+        return sIdx < curIdx
     }
 
     private var accordionStepper: some View {
@@ -485,6 +505,16 @@ struct StartSeshView: View {
                 }
             }
         }
+        .task(id: rollStartedAt) {
+            // Roll ticker: restarts when a roll begins, cancels when it stops
+            // (rollStartedAt changes) or the view goes away.
+            guard let start = rollStartedAt else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard rollStartedAt == start else { return }
+                rollElapsed = Date().timeIntervalSince(start)
+            }
+        }
     }
 
     private var thoughtContent: some View {
@@ -501,7 +531,7 @@ struct StartSeshView: View {
 
             if showThoughtField {
                 // Already-captured thoughts
-                ForEach(Array(capturedThoughts.enumerated()), id: \.offset) { idx, t in
+                ForEach(Array(capturedThoughts.enumerated()), id: \.element) { idx, t in
                     HStack(spacing: 8) {
                         Image(systemName: "quote.opening").font(.system(size: 11)).foregroundStyle(Palette.gold)
                         Text(t).font(.system(size: 13)).foregroundStyle(Palette.text).lineLimit(2)
@@ -541,7 +571,9 @@ struct StartSeshView: View {
     /// Capture the current draft as a thought and keep the field ready for the next.
     private func captureThought() {
         let t = attachedThought.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !t.isEmpty else { return }
+        // Skip empties and exact duplicates (thoughts are identified by their
+        // text in the list, so entries must stay unique).
+        guard !t.isEmpty, !capturedThoughts.contains(t) else { return }
         capturedThoughts.append(t)
         attachedThought = ""
         thoughtFieldFocused = true   // keep focus for an immediate next thought
@@ -570,19 +602,13 @@ struct StartSeshView: View {
 
     private var nextLabel: String {
         let all = orderedStages
-        let idx = all.firstIndex(of: stage)!
+        let idx = all.firstIndex(of: stage) ?? 0
         return idx + 1 < all.count ? "Next: \(all[idx + 1].rawValue)" : "Finish"
     }
 
     private func startRoll() {
         rollStartedAt = Date(); rollElapsed = 0; rollFinalSeconds = nil
         Haptics.tap()
-        Task {
-            while rollStartedAt != nil {
-                try? await Task.sleep(for: .seconds(1))
-                if let start = rollStartedAt { rollElapsed = Date().timeIntervalSince(start) }
-            }
-        }
     }
 
     private func stopRoll() {
@@ -610,15 +636,6 @@ struct StartSeshView: View {
         Haptics.tap()
         social.setMyActivity(stage.activity, detail: strainName.isEmpty ? nil : strainName)
         persistLive()
-    }
-
-    private func startTimer() {
-        Task {
-            while phase == .live && stage != .finished {
-                try? await Task.sleep(for: .seconds(1))
-                elapsed = Date().timeIntervalSince(startedAt)
-            }
-        }
     }
 }
 

@@ -17,14 +17,16 @@ import UIKit
 /// Persists captured images to Documents/SeshPhotos and hands back a stable
 /// filename to store on the model. Keeps the JSON small (no base64 blobs).
 enum PhotoStore {
-    nonisolated private static var folder: URL {
+    /// Cached once — the old computed property hit the filesystem (exists check
+    /// + create) on every access.
+    nonisolated private static let folder: URL = {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("SeshPhotos", isDirectory: true)
         if !FileManager.default.fileExists(atPath: dir.path) {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
         return dir
-    }
+    }()
 
     nonisolated static func url(for name: String) -> URL { folder.appendingPathComponent(name) }
 
@@ -101,9 +103,11 @@ struct StoredImage: View {
     private var taskKey: String { "\(name ?? "")|\(strainID ?? "")" }
 
     /// Stable BudThumb seed: prefer the strain id, else the photo name, else 0.
+    /// Routed through StrainImageStore.budIndex so it's identical across
+    /// launches (String.hashValue is per-launch randomized, and abs() can trap).
     private var budSeed: Int {
-        if let strainID, !strainID.isEmpty { return abs(strainID.hashValue % 60) }
-        if let name, !name.isEmpty { return abs(name.hashValue % 60) }
+        if let strainID, !strainID.isEmpty { return StrainImageStore.budIndex(for: strainID) }
+        if let name, !name.isEmpty { return StrainImageStore.budIndex(for: name) }
         return 0
     }
 
@@ -166,6 +170,7 @@ struct PhotoField: View {
     @State private var showDialog = false
     @State private var showCamera = false
     @State private var pickerItem: PhotosPickerItem?
+    @State private var loadFailed = false
 
     var body: some View {
         Button { showDialog = true } label: {
@@ -205,13 +210,27 @@ struct PhotoField: View {
         .onChange(of: pickerItem) { _, newItem in
             guard let newItem else { return }
             Task {
-                if let data = try? await newItem.loadTransferable(type: Data.self),
-                   let img = UIImage(data: data),
-                   let saved = PhotoStore.save(img) {
+                // Reset the selection when done so re-picking the same photo
+                // fires onChange again.
+                defer { pickerItem = nil }
+                do {
+                    guard let data = try await newItem.loadTransferable(type: Data.self),
+                          let img = UIImage(data: data),
+                          let saved = PhotoStore.save(img) else {
+                        loadFailed = true
+                        return
+                    }
                     PhotoStore.delete(photoName)
-                    await MainActor.run { photoName = saved }
+                    photoName = saved
+                } catch {
+                    loadFailed = true
                 }
             }
+        }
+        .alert("Couldn't add photo", isPresented: $loadFailed) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("That photo couldn't be loaded. Try picking a different one.")
         }
     }
 }
@@ -282,6 +301,8 @@ struct StrainPhotoButton: View {
         .onChange(of: pickerItem) { _, newItem in
             guard let newItem else { return }
             Task {
+                // Reset so re-picking the same photo fires onChange again.
+                defer { pickerItem = nil }
                 if let data = try? await newItem.loadTransferable(type: Data.self),
                    let img = UIImage(data: data) {
                     await MainActor.run {

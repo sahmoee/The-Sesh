@@ -16,8 +16,16 @@ struct TolerancePlannerView: View {
     /// Weekday numbers (1 = Sunday … 7 = Saturday) chosen as rest days.
     @State private var restDays: Set<Int> = TolerancePlan.restDays
     @State private var remindersOn = TolerancePlan.remindersOn
+    @State private var reminderMessage: String?
 
     private static let daySymbols = Calendar.current.shortWeekdaySymbols
+
+    /// Weekday numbers (1 = Sunday … 7 = Saturday) in the user's locale order —
+    /// a Monday-first locale shouldn't see a Sunday-first picker.
+    private static let weekdayOrder: [Int] = {
+        let first = Calendar.current.firstWeekday
+        return (0..<7).map { ((first - 1 + $0) % 7) + 1 }
+    }()
 
     // MARK: derived stats
 
@@ -59,7 +67,7 @@ struct TolerancePlannerView: View {
 
                     FieldLabel(text: "Weekly rest days")
                     HStack(spacing: 6) {
-                        ForEach(1...7, id: \.self) { day in
+                        ForEach(Self.weekdayOrder, id: \.self) { day in
                             let on = restDays.contains(day)
                             Button {
                                 if on { restDays.remove(day) } else { restDays.insert(day) }
@@ -73,7 +81,7 @@ struct TolerancePlannerView: View {
                                     .padding(.vertical, 10)
                                     .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
                                         .fill(on ? Palette.green : Palette.field))
-                                    .foregroundStyle(on ? .white : Palette.textSecondary)
+                                    .foregroundStyle(on ? Palette.onGreen : Palette.textSecondary)
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel("\(Self.daySymbols[day - 1]) rest day")
@@ -91,8 +99,25 @@ struct TolerancePlannerView: View {
                     }
                     .tint(Palette.green)
                     .onChange(of: remindersOn) { _, on in
-                        TolerancePlan.remindersOn = on
-                        if on { TolerancePlan.scheduleReminders() } else { TolerancePlan.cancelReminders() }
+                        if on {
+                            // Scheduling without permission silently does
+                            // nothing — ask first, and revert if denied.
+                            Task {
+                                let granted = (try? await UNUserNotificationCenter.current()
+                                    .requestAuthorization(options: [.alert, .sound])) ?? false
+                                if granted {
+                                    TolerancePlan.remindersOn = true
+                                    TolerancePlan.scheduleReminders()
+                                } else {
+                                    remindersOn = false
+                                    TolerancePlan.remindersOn = false
+                                    reminderMessage = "Notifications are off for The SESH — enable them in Settings to get rest-day reminders."
+                                }
+                            }
+                        } else {
+                            TolerancePlan.remindersOn = false
+                            TolerancePlan.cancelReminders()
+                        }
                     }
 
                     Text("Taking breaks tends to bring effects back at lower amounts for many people. This is a planning tool, not medical advice — do what works for you.")
@@ -102,6 +127,7 @@ struct TolerancePlannerView: View {
             }
         }
         .navigationTitle("Rest Days")
+        .toast($reminderMessage, systemImage: "exclamationmark.triangle.fill")
     }
 
     private func statCard(_ label: String, _ value: String) -> some View {

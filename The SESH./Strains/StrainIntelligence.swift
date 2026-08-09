@@ -226,3 +226,71 @@ final class WishlistStore {
         items = decoded
     }
 }
+
+// MARK: - Comparison history
+
+/// One past comparison the user ran in the Compare Strains tool.
+struct ComparisonRecord: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var strains: [String]
+    var comparedAt = Date()
+}
+
+/// Remembers the strain sets the user has compared, most-recent first, so they
+/// can re-open a past comparison with one tap. Persists to UserDefaults, same
+/// pattern as WishlistStore.
+@Observable
+final class ComparisonHistoryStore {
+    private(set) var records: [ComparisonRecord] = []
+    private let key = "sesh.comparisonHistory.v1"
+    private let maxRecords = 12
+
+    init() { load() }
+
+    /// Record a comparison of 2+ strains. Consecutive edits to the same
+    /// comparison (adding/removing one strain) collapse into a single entry
+    /// instead of piling up, and an exact repeat jumps back to the top.
+    func record(_ names: [String]) {
+        let cleaned = names
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard cleaned.count >= 2 else { return }
+        let newSet = Set(cleaned.map { $0.lowercased() })
+
+        // Collapse "still editing" the most recent comparison (a super/subset
+        // of it) so building [A,B] -> [A,B,C] leaves one entry, not three.
+        if let first = records.first {
+            let firstSet = Set(first.strains.map { $0.lowercased() })
+            if newSet.isSubset(of: firstSet) || newSet.isSuperset(of: firstSet) {
+                records.removeFirst()
+            }
+        }
+        // Drop any exact set-duplicate elsewhere in the list.
+        records.removeAll { Set($0.strains.map { $0.lowercased() }) == newSet }
+
+        records.insert(ComparisonRecord(strains: cleaned), at: 0)
+        if records.count > maxRecords { records = Array(records.prefix(maxRecords)) }
+        save()
+    }
+
+    func remove(_ record: ComparisonRecord) {
+        records.removeAll { $0.id == record.id }
+        save()
+    }
+
+    func clear() {
+        records.removeAll()
+        save()
+    }
+
+    private func save() {
+        if let data = try? JSONEncoder().encode(records) {
+            UserDefaults.standard.set(data, forKey: key)
+        }
+    }
+    private func load() {
+        guard let data = UserDefaults.standard.data(forKey: key),
+              let decoded = try? JSONDecoder().decode([ComparisonRecord].self, from: data) else { return }
+        records = decoded
+    }
+}

@@ -21,15 +21,22 @@ struct ChatRoomsView: View {
                         .foregroundStyle(Palette.text).padding(.top, 8)
                     Text("Jump into the conversation.").font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
 
-                    ForEach(social.rooms) { room in
-                        Button { social.markRoomRead(room.id); openRoom = room } label: {
-                            RoomRow(room: room)
-                        }.buttonStyle(.plain)
+                    if social.rooms.isEmpty {
+                        EmptyStateView(icon: "bubble.left.and.bubble.right",
+                                       title: "No rooms yet",
+                                       message: social.online ? "Rooms will show up here as the community opens up." : "You're offline — pull to refresh once you're back online.")
+                    } else {
+                        ForEach(social.rooms) { room in
+                            Button { social.markRoomRead(room.id); openRoom = room } label: {
+                                RoomRow(room: room)
+                            }.buttonStyle(.plain)
+                        }
                     }
                     Color.clear.frame(height: 40)
                 }
                 .padding(.horizontal, 18)
             }
+            .refreshable { await social.refresh() }
         }
         .sheet(item: $openRoom) { r in ChatRoomView(roomID: r.id) }
     }
@@ -76,6 +83,16 @@ struct ChatRoomView: View {
 
     private var room: ChatRoom? { social.rooms.first { $0.id == roomID } }
 
+    /// "1 member" / "12 members", and no bare "0 members" while the first
+    /// snapshot with a real count is still in flight.
+    static func memberLine(_ count: Int) -> String {
+        switch count {
+        case ..<1:  return "Just you so far"
+        case 1:     return "1 member"
+        default:    return "\(count) members"
+        }
+    }
+
     var body: some View {
         ZStack {
             AppBackground()
@@ -118,7 +135,7 @@ struct ChatRoomView: View {
             }.buttonStyle(.plain)
             VStack(alignment: .leading, spacing: 1) {
                 Text(room?.name ?? "Room").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.text)
-                Text("\(room?.memberCount ?? 0) members").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+                Text(Self.memberLine(room?.memberCount ?? 0)).font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
             }
             Spacer()
         }
@@ -150,12 +167,12 @@ struct ChatBubble: View {
             if message.isMe { Spacer(minLength: 40) }
             VStack(alignment: message.isMe ? .trailing : .leading, spacing: 2) {
                 if !message.isMe {
-                    Text(message.senderName).font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.gold)
+                    Text(message.authorLabel).font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.gold)
                 }
                 Text(message.text)
                     .font(.system(size: 15)).foregroundStyle(message.isMe ? Palette.onGreen : Palette.text)
                     .padding(.horizontal, 14).padding(.vertical, 9)
-                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                         .fill(message.isMe ? Palette.green : Palette.card))
             }
             if !message.isMe { Spacer(minLength: 40) }

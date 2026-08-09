@@ -37,7 +37,7 @@ enum HomeQuickAction: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .compareStrains: return "Compare Strains"
+        case .compareStrains: return "Compare Strain"
         case .addPurchase:    return "Add Purchase"
         case .logSession:     return "Log Session"
         case .logThought:     return "Log Thought"
@@ -127,7 +127,9 @@ enum HomeQuickAction: String, CaseIterable, Identifiable, Codable {
     }
 
     /// The default set shown before the user customizes anything.
-    static let defaults: [HomeQuickAction] = [.addPurchase, .logSession, .friends, .analytics]
+    /// §4.1 — exactly Add Purchase, Log Session, Compare Strain. Friends moved
+    /// out of Quick Actions and stays reachable via Community and profiles.
+    static let defaults: [HomeQuickAction] = [.addPurchase, .logSession, .compareStrains]
 }
 
 // MARK: - Home Quick Actions row
@@ -135,10 +137,8 @@ enum HomeQuickAction: String, CaseIterable, Identifiable, Codable {
 /// Renders the user's chosen Quick Actions as a grid of tiles, plus an Edit
 /// affordance. Tapping a tile emits its action to the parent for routing.
 struct HomeQuickActionsRow: View {
-    @Environment(AppSession.self) private var session
     @Environment(ThemeManager.self) private var theme
     let onAction: (HomeQuickAction) -> Void
-    @State private var showEditor = false
 
     private let columns = [GridItem(.flexible(), spacing: 10),
                            GridItem(.flexible(), spacing: 10),
@@ -148,26 +148,17 @@ struct HomeQuickActionsRow: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Quick Actions")
-                    .font(.system(size: 17, weight: .bold)).foregroundStyle(Palette.text)
+                    .font(.system(size: 19, weight: .bold, design: .serif)).foregroundStyle(Palette.text)
                 Spacer()
-                Button { showEditor = true } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "slider.horizontal.3").font(.system(size: 12, weight: .semibold))
-                        Text("Edit").font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundStyle(Palette.greenBright)
-                }
-                .buttonStyle(.plain)
             }
 
             LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(session.quickActions) { action in
+                ForEach(HomeQuickAction.defaults) { action in
                     tile(action)
                 }
             }
         }
         .padding(.horizontal, 18)
-        .sheet(isPresented: $showEditor) { QuickActionsEditor() }
     }
 
     private func tile(_ action: HomeQuickAction) -> some View {
@@ -183,21 +174,27 @@ struct HomeQuickActionsRow: View {
                 // giving each appearance its own glyph vocabulary.
                 Image(systemName: action.symbol(for: theme.iconStyle))
                     .font(.system(size: 30, weight: .regular))
-                    .foregroundStyle(Palette.text)
-                    .frame(height: 46)
+                    .foregroundStyle(Palette.text.opacity(0.9))
+                    .frame(height: 42)
                 Text(action.title)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Palette.text)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.85)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
-            .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+            .padding(.vertical, 15)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
+                    .fill(LinearGradient(colors: [Palette.cardElevated, Palette.card],
+                                         startPoint: .topLeading, endPoint: .bottomTrailing))
+            )
+            .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.goldRing.opacity(0.28), lineWidth: 1))
+            .shadow(color: .black.opacity(0.28), radius: 8, y: 4)
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -271,6 +268,14 @@ enum SessionTool: String, CaseIterable, Identifiable, Codable {
 
     /// Default in-sesh tools before the user customizes.
     static let defaults: [SessionTool] = [.addSong, .updateMood, .logThought, .endSession]
+
+    /// Tools whose in-sesh flows exist today. `.invite` / `.addProduct` route to
+    /// `.none` (tapping them does nothing yet), so keep them out of the editor's
+    /// available list until they're implemented — the enum cases stay for
+    /// forward compatibility and persistence.
+    static var implemented: [SessionTool] {
+        allCases.filter { $0.route != SessionQuickAction.none }
+    }
 }
 
 // MARK: - Session Tools editor
@@ -280,7 +285,7 @@ struct SessionToolsEditor: View {
     @Environment(\.dismiss) private var dismiss
 
     private var available: [SessionTool] {
-        SessionTool.allCases.filter { !session.sessionTools.contains($0) }
+        SessionTool.implemented.filter { !session.sessionTools.contains($0) }
     }
 
     var body: some View {
@@ -329,6 +334,7 @@ struct SessionToolsEditor: View {
                 Image(systemName: "plus.circle.fill").font(.system(size: 18)).foregroundStyle(Palette.greenBright)
             }
         }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -396,5 +402,6 @@ struct QuickActionsEditor: View {
                 Image(systemName: "plus.circle.fill").font(.system(size: 18)).foregroundStyle(Palette.greenBright)
             }
         }
+        .accessibilityElement(children: .combine)
     }
 }

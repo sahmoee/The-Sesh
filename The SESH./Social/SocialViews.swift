@@ -134,8 +134,11 @@ struct BroadcastStrip: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Current status with a live-updating timer (auto-ticks every second).
-            TimelineView(.periodic(from: .now, by: 1)) { _ in
+            // Current status with a live-updating timer. Ticks every second only
+            // while an activity is actually running; idle/presence states fall
+            // back to a once-a-minute schedule so the view isn't re-rendering
+            // 60x a minute for a static row.
+            TimelineView(.periodic(from: .now, by: social.me.activity.isActive ? 1 : 60)) { _ in
                 let act = social.me.activity
                 HStack(spacing: 10) {
                     ZStack {

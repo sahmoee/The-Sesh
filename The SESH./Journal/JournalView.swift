@@ -250,6 +250,7 @@ struct JournalView: View {
                 if !query.isEmpty {
                     Button { query = "" } label: {
                         Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.textSecondary)
+                            .minimumTapTarget()
                     }.buttonStyle(.plain)
                 }
             }
@@ -279,9 +280,25 @@ struct JournalView: View {
         .padding(.horizontal, 18).padding(.bottom, 12)
     }
 
+    /// Summary that matches what the active tab actually renders: thoughts on
+    /// the Thoughts tab, sessions (plus thoughts, on All) elsewhere.
+    private var resultSummaryText: String {
+        if filter == "Thoughts" {
+            let n = standaloneThoughts.count
+            return "\(n) \(n == 1 ? "thought" : "thoughts")"
+        }
+        let n = filtered.count
+        var text = "\(n) \(n == 1 ? "session" : "sessions")"
+        if filter == "All" && effectFilter == nil && minRating == 0 {
+            let t = standaloneThoughts.count
+            if t > 0 { text += " · \(t) \(t == 1 ? "thought" : "thoughts")" }
+        }
+        return text
+    }
+
     @ViewBuilder private var resultSummaryBar: some View {
         HStack {
-            Text("\(filtered.count) \(filtered.count == 1 ? "session" : "sessions")")
+            Text(resultSummaryText)
                 .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
             Spacer()
             Button { showManageCategories = true; Haptics.tap() } label: {
@@ -296,14 +313,14 @@ struct JournalView: View {
     }
 
     @ViewBuilder private var feedContent: some View {
-        if session.entries.isEmpty {
+        if session.entries.isEmpty && session.thoughts.isEmpty {
             EmptyStateView(icon: "doc.text",
                            title: "Nothing logged yet",
                            message: "Record your first session or capture a thought to start your log.",
                            actionTitle: "Add to Log", actionIcon: "plus",
                            action: { showLogChooser = true })
             Spacer()
-        } else if filtered.isEmpty {
+        } else if feed.isEmpty {
             EmptyStateView(icon: "magnifyingglass",
                            title: "Nothing matches",
                            message: "Try a different search or filter.",
@@ -345,11 +362,12 @@ private struct LogItemRow: View {
     let item: LogItem
     let onEditEntry: (JournalEntry) -> Void
     let onEditThought: (HighThought) -> Void
+    @State private var confirmDeleteEntry = false
 
     var body: some View {
         switch item {
         case .entry(let e):
-            SessionCard(entry: e, seed: abs(e.id.hashValue % 60))
+            SessionCard(entry: e, seed: StrainImageStore.budIndex(for: e.id.uuidString))
                 .listRowInsets(EdgeInsets(top: 6, leading: 18, bottom: 6, trailing: 18))
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -369,7 +387,13 @@ private struct LogItemRow: View {
                     Button { session.toggleFavorite(e) } label: {
                         Label(e.category == .personalFaves ? "Remove favorite" : "Add to favorites", systemImage: "heart")
                     }
-                    Button(role: .destructive) { session.delete(e) } label: { Label("Delete", systemImage: "trash") }
+                    Button(role: .destructive) { confirmDeleteEntry = true } label: { Label("Delete", systemImage: "trash") }
+                }
+                .confirmationDialog("Delete this sesh?", isPresented: $confirmDeleteEntry, titleVisibility: .visible) {
+                    Button("Delete", role: .destructive) { Haptics.warning(); session.delete(e) }
+                    Button("Cancel", role: .cancel) { }
+                } message: {
+                    Text("This removes the \(e.strain) log for good.")
                 }
         case .thought(let t):
             ThoughtCard(thought: t)
@@ -472,6 +496,7 @@ struct SessionCard: View {
                             Image(systemName: entry.isFavorite ? "heart.fill" : "heart")
                                 .font(.system(size: 15))
                                 .foregroundStyle(entry.isFavorite ? Palette.moodAngry : Palette.textSecondary)
+                                .minimumTapTarget()
                         }
                         .buttonStyle(.plain)
                         RatingBadge(value: entry.rating)
@@ -530,6 +555,8 @@ struct ManageCategoriesView: View {
     @State private var newName = ""
     @State private var renaming: String? = nil
     @State private var renameText = ""
+    /// Category pending delete confirmation (deleting unassigns it everywhere).
+    @State private var deleting: String? = nil
 
     var body: some View {
         ZStack {
@@ -597,9 +624,11 @@ struct ManageCategoriesView: View {
                                             Spacer()
                                             Button { renaming = name; renameText = name } label: {
                                                 Image(systemName: "pencil").font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
+                                                    .minimumTapTarget()
                                             }.buttonStyle(.plain)
-                                            Button { session.deleteCategory(name); Haptics.warning() } label: {
+                                            Button { deleting = name } label: {
                                                 Image(systemName: "trash").font(.system(size: 14)).foregroundStyle(Palette.moodAngry)
+                                                    .minimumTapTarget()
                                             }.buttonStyle(.plain)
                                         }
                                         .padding(.horizontal, 14).padding(.vertical, 11)
@@ -615,6 +644,18 @@ struct ManageCategoriesView: View {
                     .padding(.horizontal, 18).padding(.bottom, 28)
                 }
             }
+        }
+        .confirmationDialog("Delete \"\(deleting ?? "")\"?",
+                            isPresented: Binding(get: { deleting != nil },
+                                                 set: { if !$0 { deleting = nil } }),
+                            titleVisibility: .visible) {
+            Button("Delete Category", role: .destructive) {
+                if let name = deleting { session.deleteCategory(name); Haptics.warning() }
+                deleting = nil
+            }
+            Button("Cancel", role: .cancel) { deleting = nil }
+        } message: {
+            Text("This removes the category from every sesh it's assigned to.")
         }
     }
 

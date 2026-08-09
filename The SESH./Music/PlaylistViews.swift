@@ -84,10 +84,11 @@ struct PlaylistsView: View {
             .tint(Palette.greenBright).padding(.horizontal, 18)
             Spacer()
             PrimaryButton(title: "Create", icon: "plus") {
-                _ = store.createPlaylist(name: newName, autoCollect: newAuto)
+                _ = store.createPlaylist(name: newName.trimmingCharacters(in: .whitespaces), autoCollect: newAuto)
                 newName = ""; newAuto = true; showNew = false
                 Haptics.success()
             }
+            .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
             .padding(.horizontal, 18).padding(.bottom, 18)
         }
         .background(AppBackground())
@@ -148,6 +149,14 @@ struct PlaylistDetailView: View {
                     }
                     .padding(.horizontal, 20)
                 }
+            } else {
+                // Deleted or missing playlist — say so instead of a blank screen.
+                EmptyStateView(icon: "music.note.list",
+                               title: "Playlist not found",
+                               message: "This playlist may have been deleted.",
+                               actionTitle: "Go Back", actionIcon: "chevron.left",
+                               action: { dismiss() })
+                Spacer()
             }
         }
         .background(AppBackground())
@@ -161,6 +170,7 @@ struct PlaylistDetailView: View {
         HStack {
             Button { dismiss() } label: {
                 Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
+                    .minimumTapTarget()
             }
             .buttonStyle(.plain)
             Spacer()
@@ -346,6 +356,9 @@ struct TrackSearchView: View {
     @State private var results: [PlaylistTrack] = []
     @State private var searching = false
     @State private var added: Set<String> = []
+    /// True once a search has completed for the current query (drives the
+    /// "No songs found" empty state).
+    @State private var searched = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -357,7 +370,6 @@ struct TrackSearchView: View {
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, 18).padding(.bottom, 8)
-            .onChange(of: source) { _, _ in if !query.isEmpty { runSearch() } }
 
             // Search field
             HStack(spacing: 8) {
@@ -365,7 +377,6 @@ struct TrackSearchView: View {
                 TextField("Search songs", text: $query)
                     .textFieldStyle(.plain)
                     .submitLabel(.search)
-                    .onSubmit { runSearch() }
             }
             .padding(12)
             .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.field))
@@ -379,6 +390,11 @@ struct TrackSearchView: View {
                 }.padding(.top, 30)
             } else if searching {
                 ProgressView().padding(.top, 30)
+            } else if searched && results.isEmpty {
+                EmptyStateView(icon: "magnifyingglass",
+                               title: "No songs found",
+                               message: "Try a different search or the other source.")
+                    .padding(.top, 20)
             } else {
                 ScrollView {
                     VStack(spacing: 8) {
@@ -403,14 +419,22 @@ struct TrackSearchView: View {
             Spacer()
         }
         .background(AppBackground())
-    }
-
-    private func runSearch() {
-        searching = true
-        Task {
-            let r = await store.search(query, on: source)
+        // Debounced search: retyping restarts the task, cancelling stale
+        // searches so results can't race each other.
+        .task(id: "\(source.hashValue)|\(query)") {
+            let trimmed = query.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else {
+                results = []; searching = false; searched = false
+                return
+            }
+            searching = true
+            do { try await Task.sleep(for: .milliseconds(300)) }
+            catch { return }  // cancelled: a newer query took over
+            let r = await store.search(trimmed, on: source)
+            guard !Task.isCancelled else { return }
             results = r
             searching = false
+            searched = true
         }
     }
 }

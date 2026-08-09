@@ -19,6 +19,7 @@
 //
 
 import SwiftUI
+import UIKit
 import WidgetKit
 import ActivityKit
 
@@ -198,6 +199,12 @@ struct SeshStatusProvider: TimelineProvider {
 struct SeshStatusWidgetView: View {
     var entry: SeshStatusEntry
 
+    private var statusAccessibilityLabel: String {
+        var parts = ["\(entry.streak) day streak", "Last sesh: \(entry.lastStrain)"]
+        if entry.stashCount > 0 { parts.append("\(entry.stashCount) in stash") }
+        return parts.joined(separator: ". ")
+    }
+
     var body: some View {
         ZStack {
             W.bg
@@ -211,6 +218,8 @@ struct SeshStatusWidgetView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 .padding(14)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Sesh live: \(entry.liveStrain.isEmpty ? "in progress" : entry.liveStrain). Tap to resume.")
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
@@ -229,6 +238,8 @@ struct SeshStatusWidgetView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 .padding(14)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(statusAccessibilityLabel)
             }
         }
     }
@@ -274,17 +285,25 @@ private struct QuickAction {
     let tint: Color
 }
 
+/// Deep-link URLs built once, without force unwraps — a typo here should
+/// degrade to a harmless no-op link, never crash the widget process.
+private enum DeepLink {
+    static let rollUp = URL(string: "sesh://start/rollingUp") ?? URL(fileURLWithPath: "/")
+    static let smoke  = URL(string: "sesh://start/smoking") ?? URL(fileURLWithPath: "/")
+    static let end    = URL(string: "sesh://end") ?? URL(fileURLWithPath: "/")
+}
+
 struct SeshQuickActionsView: View {
     var entry: SeshQuickActionsEntry
 
     private var actions: [QuickAction] {
         [
             QuickAction(title: "Roll up", icon: "sesh_rolling", symbol: "leaf.fill",
-                        url: URL(string: "sesh://start/rollingUp")!, tint: W.green),
+                        url: DeepLink.rollUp, tint: W.green),
             QuickAction(title: "Smoke", icon: "sesh_smoking", symbol: "smoke.fill",
-                        url: URL(string: "sesh://start/smoking")!, tint: W.green),
+                        url: DeepLink.smoke, tint: W.green),
             QuickAction(title: "End", icon: "sesh_cigar", symbol: "stop.circle.fill",
-                        url: URL(string: "sesh://end")!, tint: W.gold),
+                        url: DeepLink.end, tint: W.gold),
         ]
     }
 
@@ -298,7 +317,17 @@ struct SeshQuickActionsView: View {
                     let a = actions[i]
                     Link(destination: a.url) {
                         VStack(spacing: 6) {
-                            Image(a.icon).resizable().scaledToFit().frame(height: 26)
+                            // The catalog asset when it exists; the declared SF
+                            // Symbol fallback otherwise (a missing asset used
+                            // to render blank).
+                            if let ui = UIImage(named: a.icon) {
+                                Image(uiImage: ui).resizable().scaledToFit().frame(height: 26)
+                            } else {
+                                Image(systemName: a.symbol)
+                                    .font(.system(size: 22))
+                                    .foregroundStyle(a.tint)
+                                    .frame(height: 26)
+                            }
                             Text(a.title)
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(W.text).lineLimit(1)
@@ -307,6 +336,7 @@ struct SeshQuickActionsView: View {
                         .padding(.vertical, 12)
                         .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(W.card))
                     }
+                    .accessibilityLabel(a.title)
                 }
             }
         }
@@ -324,7 +354,7 @@ struct SeshQuickActionsWidget: Widget {
             }
         }
         .configurationDisplayName("Quick Start")
-        .description("Tap to jump straight into rolling up, smoking, or a bong rip.")
+        .description("Tap to jump straight into rolling up, smoking, or ending your sesh.")
         .supportedFamilies([.systemMedium])
     }
 }

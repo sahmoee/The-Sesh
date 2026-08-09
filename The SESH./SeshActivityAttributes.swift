@@ -15,7 +15,7 @@
 import Foundation
 import ActivityKit
 
-struct SeshActivityAttributes: ActivityAttributes {
+nonisolated struct SeshActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         /// SeshStage.rawValue — kept as a String so this file has no dependency
         /// on the app's models (the widget target only needs this file).

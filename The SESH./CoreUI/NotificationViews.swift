@@ -52,7 +52,7 @@ struct NotificationBannerModifier: ViewModifier {
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .task(id: note.id) {
                     try? await Task.sleep(for: .seconds(3))
-                    withAnimation(.easeOut(duration: 0.25)) { notifications.dismissBanner() }
+                    withMotion(.easeOut(duration: 0.25)) { notifications.dismissBanner() }
                 }
             }
         }
@@ -92,6 +92,10 @@ struct NotificationBell: View {
             }
         }
         .buttonStyle(.plain)
+        .minimumTapTarget()
+        .accessibilityLabel(notifications.unreadCount > 0
+            ? "Notifications, \(notifications.unreadCount) unread"
+            : "Notifications")
     }
 }
 
@@ -100,6 +104,7 @@ struct NotificationBell: View {
 struct NotificationInboxView: View {
     @Environment(NotificationManager.self) private var notifications
     @Environment(\.dismiss) private var dismiss
+    @State private var showClearConfirm = false
 
     var body: some View {
         ZStack {
@@ -130,7 +135,7 @@ struct NotificationInboxView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .onAppear { notifications.markAllRead() }
+        .task { notifications.markAllRead() }
     }
 
     private var header: some View {
@@ -142,12 +147,16 @@ struct NotificationInboxView: View {
                 .font(.system(size: 20, weight: .bold, design: .serif)).foregroundStyle(Palette.text)
             Spacer()
             if !notifications.inbox.isEmpty {
-                Button { notifications.clearInbox(); Haptics.tap() } label: {
+                Button { showClearConfirm = true } label: {
                     Text("Clear").font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.textSecondary)
                 }.buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
+        .confirmationDialog("Clear all notifications?", isPresented: $showClearConfirm, titleVisibility: .visible) {
+            Button("Clear All", role: .destructive) { notifications.clearInbox(); Haptics.tap() }
+            Button("Cancel", role: .cancel) { }
+        }
     }
 
     private func inboxRow(_ note: SeshNotification) -> some View {
@@ -162,7 +171,7 @@ struct NotificationInboxView: View {
                 Text(note.body).font(.system(size: 13)).foregroundStyle(Palette.textSecondary).lineLimit(2)
             }
             Spacer(minLength: 8)
-            Text(relativeTime(note.at)).font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
+            Text(Fmt.relative(note.at)).font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
         }
         .padding(.horizontal, 12).padding(.vertical, 12)
     }
@@ -174,13 +183,5 @@ struct NotificationInboxView: View {
         case .chat:      return Palette.green
         case .milestone: return Palette.gold
         }
-    }
-
-    private func relativeTime(_ date: Date) -> String {
-        let secs = Int(Date().timeIntervalSince(date))
-        if secs < 60 { return "now" }
-        if secs < 3600 { return "\(secs / 60)m" }
-        if secs < 86_400 { return "\(secs / 3600)h" }
-        return "\(secs / 86_400)d"
     }
 }

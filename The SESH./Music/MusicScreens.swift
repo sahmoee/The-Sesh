@@ -17,6 +17,7 @@ import MusicKit
 struct ConnectedAppsView: View {
     @Environment(SpotifyAuth.self) private var spotify
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var appleAuthorized = MusicAuthorization.currentStatus == .authorized
 
     var body: some View {
@@ -43,6 +44,14 @@ struct ConnectedAppsView: View {
             }
         }
         .background(AppBackground())
+        // The initial snapshot goes stale if the user changes authorization in
+        // Settings — re-read it on appear and whenever the app comes back.
+        .task { appleAuthorized = MusicAuthorization.currentStatus == .authorized }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                appleAuthorized = MusicAuthorization.currentStatus == .authorized
+            }
+        }
     }
 
     private var spotifyRow: some View {

@@ -12,7 +12,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppSession.self) private var session
     @Environment(SocialStore.self) private var social
-    @Environment(StrainStore.self) private var strains
+    @Environment(LoungeFeedStore.self) private var lounge
 
     // Callbacks wired by RootView.
     var onStartSesh: (StartActivity) -> Void = { _ in }
@@ -33,16 +33,17 @@ struct HomeView: View {
     @State private var showToolsEditor = false
 
     // Button color pairs (soft fill + deep tint), built from the existing palette.
-    private let rollFill = Palette.gold.opacity(0.16)
-    private let rollTint = Palette.goldDeep
-    private let smokeFill = Palette.green.opacity(0.16)
-    private let smokeTint = Palette.greenDeep
-    private let thoughtFill = Palette.purple.opacity(0.16)
-    private let thoughtTint = Palette.purple
-    private let endFill = Palette.moodAngry.opacity(0.14)
-    private let endTint = Palette.moodAngry
-    private let bongFill = Palette.greenBright.opacity(0.14)
-    private let bongTint = Palette.greenBright
+    // Computed so they track the live theme instead of freezing at init.
+    private var rollFill: Color { Palette.gold.opacity(0.16) }
+    private var rollTint: Color { Palette.goldDeep }
+    private var smokeFill: Color { Palette.green.opacity(0.16) }
+    private var smokeTint: Color { Palette.greenDeep }
+    private var thoughtFill: Color { Palette.purple.opacity(0.16) }
+    private var thoughtTint: Color { Palette.purple }
+    private var endFill: Color { Palette.moodAngry.opacity(0.14) }
+    private var endTint: Color { Palette.moodAngry }
+    private var bongFill: Color { Palette.greenBright.opacity(0.14) }
+    private var bongTint: Color { Palette.greenBright }
 
     /// A sesh is in progress when there's a live sesh state.
     private var isLive: Bool { session.hasActiveSesh }
@@ -60,6 +61,8 @@ struct HomeView: View {
     var body: some View {
         ZStack(alignment: .top) {
             AppBackground()
+            LoungeLampGlow()
+                .padding(.top, -18)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     header
@@ -75,8 +78,13 @@ struct HomeView: View {
                     buttonGrid
                     if !isLive {
                         HomeQuickActionsRow(onAction: { onQuickAction($0) })
-                            .padding(.bottom, 18)
+                            .padding(.bottom, 14)
                     }
+                    // §4.1 destination card into The Lounge.
+                    EnterLoungeCard(liveCount: lounge.liveRooms.count,
+                                    onEnter: { Haptics.tap(); onOpenLounge() })
+                        .padding(.horizontal, 18)
+                        .padding(.bottom, 18)
                     feedSection
                 }
                 .padding(.bottom, 96)
@@ -93,41 +101,55 @@ struct HomeView: View {
     // MARK: Header
 
     @ViewBuilder private var header: some View {
-        HStack(alignment: .top) {
-            Button(action: onMenu) {
-                Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(Palette.text)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Menu")
+        ZStack(alignment: .top) {
+            HStack(alignment: .top) {
+                Button(action: onMenu) {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 23, weight: .medium))
+                        .foregroundStyle(Palette.text)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Menu")
 
-            VStack(alignment: .leading, spacing: 2) {
+                Spacer()
+
+                HStack(spacing: 10) {
+                    StatusPill()
+                    NotificationBell(tint: Palette.textSecondary, action: onOpenInbox)
+                }
+                .padding(.top, 2)
+            }
+
+            VStack(spacing: 5) {
+                LoungeLamp()
+                    .scaleEffect(1.05)
                 Text("\(greeting), \(session.userName)")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Palette.textSecondary)
+                    .font(.system(size: 17, weight: .medium, design: .serif))
+                    .foregroundStyle(Palette.goldSoft)
+                    .shadow(color: Palette.gold.opacity(0.28), radius: 8, y: 1)
                 Text(isLive ? "You're seshing" : "What's the move?")
-                    .font(.system(size: 22, weight: .semibold, design: .serif))
+                    .font(.system(size: 36, weight: .bold, design: .serif))
                     .foregroundStyle(Palette.text)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.8)
+                    .lineLimit(1)
+                    .shadow(color: Palette.gold.opacity(0.35), radius: 14, y: 2)
                 if !isLive, let since = session.timeSinceLastSeshPhrase {
                     HStack(spacing: 4) {
                         Image(systemName: "clock").font(.system(size: 10))
                         Text("Last sesh \(since)").font(.system(size: 12))
                     }
                     .foregroundStyle(Palette.textTertiary)
-                    .padding(.top, 1)
                 }
             }
-            .padding(.leading, 10)
-
-            Spacer()
-
-            HStack(spacing: 10) {
-                StatusPill()
-                NotificationBell(tint: Palette.textSecondary, action: onOpenInbox)
-            }
+            .padding(.top, 0)
+            .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .combine)
         }
-        .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 16)
+        .padding(.horizontal, 18)
+        .padding(.top, 2)
+        .padding(.bottom, 20)
     }
 
     // MARK: Four primary buttons
@@ -212,6 +234,8 @@ struct HomeView: View {
             .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(tool.tint.opacity(0.35), lineWidth: 1))
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(tool.title)
     }
 
     /// Fourth tile: a Bong Rip start action when idle. While a sesh is live it
@@ -272,14 +296,18 @@ struct HomeView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 20).padding(.horizontal, 12)
+            .padding(.vertical, 18).padding(.horizontal, 12)
             .background(tileBackground(fill: fill, dashed: dashed))
             .overlay(
                 RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                    .stroke(Palette.greenBright, lineWidth: highlighted ? 2 : 0)
+                    .stroke(highlighted ? Palette.greenBright : Palette.goldRing.opacity(0.26),
+                            lineWidth: highlighted ? 2 : 1)
             )
+            .shadow(color: .black.opacity(0.30), radius: 10, y: 5)
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel([title, badge ?? subtitle].compactMap { $0 }.joined(separator: ", "))
     }
 
     @ViewBuilder private func tileBackground(fill: Color, dashed: Bool) -> some View {
@@ -293,10 +321,14 @@ struct HomeView: View {
                 )
         } else {
             RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                .fill(fill)
+                .fill(
+                    LinearGradient(colors: [fill, Palette.card.opacity(0.78)],
+                                   startPoint: .topLeading,
+                                   endPoint: .bottomTrailing)
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                        .stroke(Palette.stroke.opacity(0.5), lineWidth: 1)
+                        .stroke(Palette.stroke.opacity(0.55), lineWidth: 1)
                 )
         }
     }
@@ -304,7 +336,7 @@ struct HomeView: View {
     // MARK: Social feed
 
     @ViewBuilder private var feedSection: some View {
-        Button { withAnimation(.easeInOut(duration: 0.2)) { feedCollapsed.toggle() } } label: {
+        Button { withMotion(.easeInOut(duration: 0.2)) { feedCollapsed.toggle() } } label: {
             HStack {
                 Text("Around you")
                     .font(.system(size: 13, weight: .semibold))
@@ -322,6 +354,8 @@ struct HomeView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Around you")
+        .accessibilityHint(feedCollapsed ? "Expands the nearby feed" : "Collapses the nearby feed")
         .padding(.horizontal, 18).padding(.bottom, 10)
 
         if !feedCollapsed {
@@ -335,35 +369,6 @@ struct HomeView: View {
         }
     }
 
-    // MARK: Footer tiles
-
-    @ViewBuilder private var footerTiles: some View {
-        HStack(spacing: 10) {
-            footerTile("Stash", "shippingbox.fill",
-                       subtitle: session.stashRemaining.isEmpty ? nil : "\(session.stashRemaining.count)",
-                       action: onOpenStash)
-            footerTile("Lounge", "globe.americas.fill", subtitle: nil, action: onOpenLounge)
-            footerTile("Strains", "leaf.fill", subtitle: nil, action: onOpenStrains)
-        }
-        .padding(.horizontal, 18)
-    }
-
-    private func footerTile(_ title: String, _ icon: String,
-                            subtitle: String?, action: @escaping () -> Void) -> some View {
-        Button(action: { Haptics.tap(); action() }) {
-            VStack(spacing: 3) {
-                Image(systemName: icon).font(.system(size: 18)).foregroundStyle(Palette.textSecondary)
-                Text(subtitle == nil ? title : "\(title) · \(subtitle!)")
-                    .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
-            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-    }
 }
 
 // MARK: - Streak ring (kept; used elsewhere)

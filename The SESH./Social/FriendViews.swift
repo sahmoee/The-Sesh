@@ -203,31 +203,22 @@ struct FriendsView: View {
                            title: friendQuery.isEmpty ? "No friends yet" : "No matches",
                            message: friendQuery.isEmpty ? "Share your code or add someone by theirs to get started." : "Try a different name.")
         } else {
-            List {
+            // A LazyVStack sizes to its content, so rows never clip at large
+            // Dynamic Type the way the old fixed-height List did. The former
+            // swipe actions live on as the context menu.
+            LazyVStack(spacing: 10) {
                 ForEach(friends) { f in
                     FriendRow(friend: f)
-                        .listRowInsets(EdgeInsets(top: 5, leading: 0, bottom: 5, trailing: 0))
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        .contextMenu {
                             Button(role: .destructive) {
                                 Haptics.warning(); social.removeFriend(f)
-                            } label: { Label("Remove", systemImage: "person.badge.minus") }
-                            Button {
+                            } label: { Label("Remove friend", systemImage: "person.badge.minus") }
+                            Button(role: .destructive) {
                                 Haptics.warning(); Task { await social.block(f) }
                             } label: { Label("Block", systemImage: "hand.raised") }
-                            .tint(Palette.moodAngry)
-                        }
-                        .contextMenu {
-                            Button(role: .destructive) { social.removeFriend(f) } label: { Label("Remove friend", systemImage: "person.badge.minus") }
-                            Button(role: .destructive) { Task { await social.block(f) } } label: { Label("Block", systemImage: "hand.raised") }
                         }
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .frame(height: CGFloat(friends.count) * 78 + 8)
-            .scrollDisabled(true)
         }
     }
 
@@ -239,6 +230,7 @@ struct FriendsView: View {
             working = false
             status = result
             if result.contains("added") { codeInput = ""; Haptics.success() } else { Haptics.warning() }
+            AccessibilityNotification.Announcement(result).post()
         }
     }
 }

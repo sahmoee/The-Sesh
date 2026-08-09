@@ -45,22 +45,25 @@ final class ScrobbleStore {
     private var identity: SeshIdentity?
     private var spotifyPoll: Task<Void, Never>?
     private var appleObserver: NSObjectProtocol?
+    private var applePlaybackObserver: NSObjectProtocol?
     private let player = MPMusicPlayerController.systemMusicPlayer
 
     // MARK: Apple Music playback control
     // The system music player controls Apple Music playback directly from the
     // app. These drive the in-app transport buttons.
 
-    /// Whether the system Apple Music player is currently playing.
-    var isPlaying: Bool { player.playbackState == .playing }
+    /// Whether the system Apple Music player is currently playing. Stored (not
+    /// computed from the non-observable `player.playbackState`) and mirrored
+    /// from the playback-state-changed notification so the UI updates.
+    private(set) var isPlaying = false
 
     /// Toggle play/pause on the system Apple Music player.
     func togglePlayPause() {
-        if player.playbackState == .playing { player.pause() } else { player.play() }
+        if player.playbackState == .playing { pauseMusic() } else { playMusic() }
     }
 
-    func playMusic() { player.play() }
-    func pauseMusic() { player.pause() }
+    func playMusic() { player.play(); isPlaying = true }
+    func pauseMusic() { player.pause(); isPlaying = false }
     func skipToNext() { player.skipToNextItem() }
     func skipToPrevious() {
         // Tapping previous restarts the current track first, like most players;
@@ -94,6 +97,10 @@ final class ScrobbleStore {
             player.endGeneratingPlaybackNotifications()
             appleObserver = nil
         }
+        if let obs = applePlaybackObserver {
+            NotificationCenter.default.removeObserver(obs)
+            applePlaybackObserver = nil
+        }
         spotifyPoll?.cancel()
         spotifyPoll = nil
     }
@@ -107,6 +114,18 @@ final class ScrobbleStore {
             object: player, queue: .main) { [weak self] _ in
                 Task { @MainActor in self?.readAppleNowPlaying() }
         }
+        // Mirror play/pause into the stored observable `isPlaying` so the
+        // transport icon updates (playbackState itself is not observable).
+        applePlaybackObserver = NotificationCenter.default.addObserver(
+            forName: .MPMusicPlayerControllerPlaybackStateDidChange,
+            object: player, queue: .main) { [weak self] _ in
+                Task { @MainActor in
+                    guard let self else { return }
+                    self.isPlaying = self.player.playbackState == .playing
+                    self.readAppleNowPlaying()
+                }
+        }
+        isPlaying = player.playbackState == .playing
         // Authorization for the music library is requested lazily; reading the
         // system player's nowPlayingItem itself does not require library auth on
         // recent iOS, but metadata is richer with it.
@@ -148,7 +167,11 @@ final class ScrobbleStore {
                 // Re-acquire self each iteration; if it's gone, stop. Binding to a
                 // fresh local avoids the Swift 6 captured-var-across-await warning.
                 guard let store = self else { return }
-                await store.pollSpotifyOnce()
+                // (#C6) Don't hit the network while offline — same pattern as
+                // SocialStore.startPolling; the next tick picks it back up.
+                if ConnectivityMonitor.shared.pathSatisfied {
+                    await store.pollSpotifyOnce()
+                }
                 try? await Task.sleep(for: .seconds(Double(seconds)))
             }
         }

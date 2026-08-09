@@ -75,10 +75,29 @@ struct SeshAPI {
     }()
     private var session: URLSession { Self.sharedSession }
 
-    /// Shared decoder (ISO-8601 dates) so each call doesn't allocate one.
+    /// Cached ISO-8601 formatters. The Worker emits `Date().toISOString()`,
+    /// which carries fractional seconds — Foundation's plain `.iso8601`
+    /// strategy rejects those, so try fractional first, then second-precision.
+    private static let isoFractional: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static let isoPlain = ISO8601DateFormatter()
+
+    /// Shared decoder (fraction-tolerant ISO-8601 dates) so each call doesn't
+    /// allocate one.
     private static let decoder: JSONDecoder = {
         let d = JSONDecoder()
-        d.dateDecodingStrategy = .iso8601
+        d.dateDecodingStrategy = .custom { dec in
+            let s = try dec.singleValueContainer().decode(String.self)
+            if let date = isoFractional.date(from: s) ?? isoPlain.date(from: s) {
+                return date
+            }
+            throw DecodingError.dataCorrupted(.init(
+                codingPath: dec.codingPath,
+                debugDescription: "Unparseable ISO-8601 date: \(s)"))
+        }
         return d
     }()
 
@@ -259,6 +278,44 @@ struct SeshAPI {
         _ = await post("/api/activity", body: ActivityBody(activity: activity.rawValue, detail: detail ?? ""))
     }
 
+    // MARK: Profile
+
+    private struct ProfileBody: Encodable { var handle: String; var name: String; var code: String }
+    private struct ProfileResponse: Decodable { let token: String; let uid: String }
+
+    /// Push the current display name / handle to the Worker.
+    ///
+    /// The session token itself carries the display name, and the Worker stamps
+    /// that name onto every chat message — so renaming yourself only reaches
+    /// other people once the session is re-minted. The Worker returns a fresh
+    /// token for the SAME verified uid (no re-authentication), which we swap in.
+    func updateProfile(identity: SeshIdentity?) async {
+        guard let identity, SeshAuth.shared.token != nil else { return }
+        let body = ProfileBody(handle: identity.handle, name: identity.name, code: identity.code)
+        guard let data = try? Self.encoder.encode(body),
+              let req = makeRequest("/api/profile", method: "POST", identity: identity, body: data) else { return }
+        do {
+            let (payload, resp) = try await send(req)
+            guard resp.statusCode == 200,
+                  let decoded = try? Self.decoder.decode(ProfileResponse.self, from: payload) else { return }
+            SeshAuth.shared.adoptRefreshedSession(token: decoded.token, uid: decoded.uid,
+                                                  handle: identity.handle, name: identity.name,
+                                                  code: identity.code)
+        } catch {
+            // Fail soft: the name syncs on the next launch's exchange.
+        }
+    }
+
+    // MARK: Rooms
+
+    private struct RoomJoinBody: Encodable { var roomID: String }
+
+    /// Register the caller as a member of a chat room (drives "N members").
+    func joinRoom(_ roomID: String, identity: SeshIdentity?) async {
+        let safeID = roomID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? roomID
+        _ = await post("/api/rooms/\(safeID)/join", body: RoomJoinBody(roomID: roomID))
+    }
+
     // MARK: Scrobbler (now-playing)
 
     /// Broadcast the current user's now-playing track.
@@ -416,11 +473,14 @@ struct SeshAPI {
                    ["userID": userID ?? "", "messageID": messageID ?? "", "reason": reason])
     }
 
+    /// Shared ISO-8601 formatter — allocating one per call is expensive.
+    private static let isoFormatter = ISO8601DateFormatter()
+
     /// Fetch a page of older messages before a given timestamp (pagination).
     func fetchMessages(roomID: String, before: Date?, limit: Int, identity: SeshIdentity?) async -> [ChatMessage]? {
         var path = "/api/rooms/\(roomID)/messages?limit=\(limit)"
         if let before {
-            let iso = ISO8601DateFormatter().string(from: before)
+            let iso = Self.isoFormatter.string(from: before)
             if let encoded = iso.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
                 path += "&before=\(encoded)"
             }
@@ -431,5 +491,223 @@ struct SeshAPI {
             guard resp.statusCode == 200 else { return nil }
             return try Self.decoder.decode([ChatMessage].self, from: data)
         } catch { return nil }
+    }
+}
+
+// MARK: - The Lounge (SESH-RL-001-R2)
+//
+// Lives in this file so it can reuse SeshAPI's private request plumbing —
+// bearer auth, the silent 401 re-exchange, and the retry ladder. Swift's
+// `private` is file-scoped for extensions, so an extension in a separate file
+// could not reach `makeRequest`/`sendWithRetry`.
+
+extension SeshAPI {
+
+    /// One page of the Lounge feed. `cursor` is opaque and comes from the
+    /// previous page; nil starts a fresh feed session. `session` pins template
+    /// stability so post shapes don't jump between pages (§11).
+    func fetchLoungeFeed(tab: LoungeTab,
+                         filter: LoungeFilter,
+                         cursor: String?,
+                         sessionID: String?,
+                         identity: SeshIdentity?) async -> LoungeFeedPage? {
+        var path = "/api/lounge/feed?tab=\(tab.rawValue)&filter=\(filter.rawValue)"
+        if let cursor, let encoded = cursor.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+            path += "&cursor=\(encoded)"
+        }
+        if let sessionID, let encoded = sessionID.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+            path += "&session=\(encoded)"
+        }
+        guard let req = makeRequest(path, identity: identity) else { return nil }
+        do {
+            let (data, resp) = try await sendWithRetry(req)
+            guard resp.statusCode == 200 else {
+                Diag.network.warning("lounge feed failed: \(resp.statusCode)")
+                return nil
+            }
+            return try Self.decoder.decode(LoungeFeedPage.self, from: data)
+        } catch {
+            return nil
+        }
+    }
+
+    /// Full post plus comments for the expanded view (Phase 3).
+    func fetchLoungePost(id: String, identity: SeshIdentity?) async -> LoungePostDetail? {
+        let safeID = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
+        guard let req = makeRequest("/api/lounge/post/\(safeID)", identity: identity) else { return nil }
+        do {
+            let (data, resp) = try await sendWithRetry(req)
+            guard resp.statusCode == 200 else { return nil }
+            return try Self.decoder.decode(LoungePostDetail.self, from: data)
+        } catch {
+            return nil
+        }
+    }
+
+    func reactLounge(postID: String, on: Bool, identity: SeshIdentity?) async -> Bool {
+        await post("/api/lounge/react", identity: identity, ["postID": postID, "on": on])
+    }
+
+    /// Live-room presence: how many sockets/participants are currently in the
+    /// room (Phase 4). Returns nil on any failure so callers can keep the last
+    /// known count instead of flashing to zero.
+    func fetchRoomPresence(roomID: String, identity: SeshIdentity?) async -> Int? {
+        let safeID = roomID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? roomID
+        guard let req = makeRequest("/api/rooms/\(safeID)/presence", identity: identity) else { return nil }
+        struct PresenceResponse: Decodable { let count: Int }
+        do {
+            let (data, resp) = try await sendWithRetry(req)
+            guard resp.statusCode == 200 else { return nil }
+            return try Self.decoder.decode(PresenceResponse.self, from: data).count
+        } catch {
+            return nil
+        }
+    }
+
+    /// Returns the recomputed poll so percentages come from the server, not
+    /// from an optimistic guess.
+    /// Plain `send` (no retry ladder): voting is not idempotent, and a retry
+    /// after a flaky response could double-submit.
+    func voteLoungePoll(postID: String, choiceID: String, identity: SeshIdentity?) async -> LoungePollContent? {
+        let payload: [String: Any] = ["postID": postID, "choiceID": choiceID]
+        guard let body = try? JSONSerialization.data(withJSONObject: payload),
+              let req = makeRequest("/api/lounge/vote", method: "POST", identity: identity, body: body)
+        else { return nil }
+        do {
+            let (data, resp) = try await send(req)
+            guard resp.statusCode == 200 else { return nil }
+            return try Self.decoder.decode(LoungePollContent.self, from: data)
+        } catch {
+            return nil
+        }
+    }
+
+    /// Plain `send` (no retry ladder): commenting is not idempotent, and a
+    /// retry after a flaky response could post the comment twice.
+    func commentLounge(postID: String, text: String, identity: SeshIdentity?) async -> LoungeComment? {
+        let payload: [String: Any] = ["postID": postID, "text": text]
+        guard let body = try? JSONSerialization.data(withJSONObject: payload),
+              let req = makeRequest("/api/lounge/comment", method: "POST", identity: identity, body: body)
+        else { return nil }
+        do {
+            let (data, resp) = try await send(req)
+            guard resp.statusCode == 200 else { return nil }
+            return try Self.decoder.decode(LoungeComment.self, from: data)
+        } catch {
+            return nil
+        }
+    }
+
+    func reportLounge(postID: String, reason: LoungeReportReason, detail: String,
+                      identity: SeshIdentity?) async -> Bool {
+        await post("/api/lounge/report", identity: identity,
+                   ["postID": postID, "reason": reason.rawValue, "detail": detail])
+    }
+
+    func hideLounge(postID: String, identity: SeshIdentity?) async -> Bool {
+        await post("/api/lounge/hide", identity: identity, ["postID": postID])
+    }
+
+    // MARK: Compose (Phase 4)
+
+    /// Typed body for POST /api/lounge/create. Field shapes mirror the Worker's
+    /// sanitizers (lounge.ts): media keeps url/aspectRatio (altText is accepted
+    /// but optional), poll choices are {id,label} — the server forces votes and
+    /// totals to zero at create time, so none are sent.
+    struct LoungeCreateBody: Encodable {
+        struct Media: Encodable {
+            var url: String
+            var aspectRatio: Double
+            var altText: String?
+        }
+        struct Track: Encodable {
+            var title: String
+            var artist: String
+            var artworkURL: String?
+            var previewURL: String?
+            var durationSeconds: Double?
+            var vibeTags: [String] = []
+        }
+        struct PollChoice: Encodable {
+            var id: String
+            var label: String
+        }
+        struct Poll: Encodable {
+            var question: String
+            var choices: [PollChoice]
+        }
+
+        /// Not encoded — sent as X-Idempotency-Key so the Worker dedupes a
+        /// retried submit instead of double-posting.
+        var idempotencyKey: String = UUID().uuidString
+
+        var kind: String
+        var text: String
+        var media: [Media] = []
+        var track: Track?
+        var poll: Poll?
+        var strainName: String?
+        var method: String?
+        var mood: String?
+        var vibeTags: [String] = []
+        var visibility: String
+
+        private enum CodingKeys: String, CodingKey {
+            case kind, text, media, track, poll
+            case strainName, method, mood, vibeTags, visibility
+        }
+    }
+
+    private struct LoungeCreateResponse: Decodable {
+        var post: LoungePost
+    }
+
+    /// Plain `send` (no retry ladder): creation is not idempotent at the
+    /// transport level. The draft's idempotency key rides along as
+    /// X-Idempotency-Key so an app-level resubmit of the same draft is deduped
+    /// by the Worker instead of producing a duplicate post.
+    func createLoungePost(_ draft: LoungeCreateBody, identity: SeshIdentity?) async -> LoungePost? {
+        guard let body = try? Self.encoder.encode(draft),
+              let req = makeRequest("/api/lounge/create", method: "POST", identity: identity,
+                                    body: body, idempotencyKey: draft.idempotencyKey)
+        else { return nil }
+        do {
+            let (data, resp) = try await send(req)
+            guard resp.statusCode == 200 else {
+                Diag.network.warning("lounge create failed: \(resp.statusCode)")
+                return nil
+            }
+            return try Self.decoder.decode(LoungeCreateResponse.self, from: data).post
+        } catch {
+            return nil
+        }
+    }
+
+    /// Uploads a compose photo as a raw JPEG body (server cap: 2 MB) and
+    /// returns the absolute URL to reference in media[].url. Plain `send`: a
+    /// duplicate upload just orphans a blob, but retrying automatically could
+    /// stack uploads on a flaky link.
+    func uploadLoungeMedia(_ jpeg: Data, identity: SeshIdentity?) async -> String? {
+        guard var req = makeRequest("/api/lounge/media", method: "POST",
+                                    identity: identity, body: jpeg) else { return nil }
+        // makeRequest assumes JSON bodies; this endpoint takes the raw image.
+        req.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
+        do {
+            let (data, resp) = try await send(req)
+            guard resp.statusCode == 200 else {
+                Diag.network.warning("lounge media upload failed: \(resp.statusCode)")
+                return nil
+            }
+            struct UploadResponse: Decodable { var url: String }
+            return try Self.decoder.decode(UploadResponse.self, from: data).url
+        } catch {
+            return nil
+        }
+    }
+
+    /// Ends a live room post (POST /api/lounge/live/end). Lives here with the
+    /// rest of the Lounge calls; the live feature drives it.
+    func endLoungeLive(postID: String, identity: SeshIdentity?) async -> Bool {
+        await post("/api/lounge/live/end", identity: identity, ["postID": postID])
     }
 }

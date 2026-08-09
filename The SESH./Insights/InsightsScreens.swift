@@ -222,6 +222,9 @@ struct BadgesView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
     @State private var filter = "All"
+    /// BadgeBuilder.build makes ~25 full passes over entries — hoisted out of
+    /// body and recomputed only when the entry count changes.
+    @State private var all: [BadgeItem] = []
     private var filters: [String] { ["All"] + BadgeGroupStyle.order }
     private let cols = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
@@ -232,7 +235,6 @@ struct BadgesView: View {
                 ScreenHeader(title: "Badges", onBack: { dismiss() })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
 
-                let all = BadgeBuilder.build(session)
                 let earnedCount = all.count(where: { $0.earned })
                 Text("\(earnedCount) of \(all.count) earned")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
@@ -269,6 +271,7 @@ struct BadgesView: View {
                 }
             }
         }
+        .task(id: session.entries.count) { all = BadgeBuilder.build(session) }
     }
 }
 

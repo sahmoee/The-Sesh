@@ -12,14 +12,32 @@ import SwiftUI
 struct StashForecastView: View {
     @Environment(AppSession.self) private var session
 
-    /// Average daily draw-down over the last 30 days, per unit-compatible use.
+    /// Days of history the burn rate is averaged over: capped at 30, but never
+    /// more than we actually have — with 3 days of logs, dividing by 30 makes
+    /// the burn rate look 10x lower than it is. Always at least 1.
+    private var burnWindowDays: Double {
+        guard let first = session.entries.map(\.date).min() else { return 30 }
+        let elapsed = Date().timeIntervalSince(first) / 86_400
+        return max(1, min(30, elapsed.rounded(.up)))
+    }
+
+    /// Average daily draw-down over the burn window, per unit-compatible use.
     private var dailyBurn: Double {
         let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
         let used = session.entries
             .filter { $0.date >= cutoff }
             .compactMap(\.amount)
             .reduce(0, +)
-        return used / 30
+        return used / burnWindowDays
+    }
+
+    /// The unit the stash is actually tracked in ("g", "oz", …) — the most
+    /// common unit across current purchases, instead of hardcoded grams.
+    private var burnUnit: String {
+        let units = session.stashRemaining.map(\.unit).filter { !$0.isEmpty }
+        var counts: [String: Int] = [:]
+        for u in units { counts[u, default: 0] += 1 }
+        return counts.max { $0.value < $1.value }?.key ?? "g"
     }
 
     private struct Forecast: Identifiable {
@@ -47,7 +65,8 @@ struct StashForecastView: View {
                                   text: "Nothing in your stash yet. Add a purchase and log sessions with amounts to see forecasts.")
                     } else {
                         if dailyBurn > 0.01 {
-                            Text(String(format: "You average %.2fg per day over the last 30 days.", dailyBurn))
+                            Text(String(format: "You average %.2f%@ per day over the last %d days.",
+                                        dailyBurn, burnUnit, Int(burnWindowDays)))
                                 .font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
                         } else {
                             Text("Log session amounts to unlock day estimates.")

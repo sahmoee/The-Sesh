@@ -12,7 +12,7 @@
 //
 
 import Foundation
-import ActivityKit
+@preconcurrency import ActivityKit
 import WidgetKit
 
 @MainActor

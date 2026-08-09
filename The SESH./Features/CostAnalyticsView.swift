@@ -14,7 +14,9 @@ struct CostAnalyticsView: View {
     private var priced: [JournalEntry] { session.entries.filter { $0.price != nil } }
     private var totalSpend: Double { priced.compactMap(\.price).reduce(0, +) }
     private var costPerSession: Double {
-        session.entries.isEmpty ? 0 : totalSpend / Double(session.entries.count)
+        // Average over the sessions that actually have a price — dividing by
+        // ALL entries silently deflated the number as unpriced logs piled up.
+        priced.isEmpty ? 0 : totalSpend / Double(priced.count)
     }
     private var avgDuration: Int {
         let ds = session.entries.compactMap(\.durationMinutes)

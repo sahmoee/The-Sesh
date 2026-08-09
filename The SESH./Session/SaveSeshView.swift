@@ -25,14 +25,23 @@ struct SaveSeshView: View {
     @State private var notes = ""
     @State private var vault: SeshCategory?
     @State private var photoName: String?
+    @State private var confirmDiscard = false
 
     private let methods = ["Joint", "Blunt", "Bong", "Pipe", "Vape", "Edible", "Other"]
+
+    /// True when the user has changed anything from the defaults — backing out
+    /// would silently lose their rating/effects/notes/photo.
+    private var hasEdits: Bool {
+        rating != 7 || method != "Joint" || !effects.isEmpty || vault != nil
+            || photoName != nil || !notes.trimmingCharacters(in: .whitespaces).isEmpty
+    }
 
     var body: some View {
         ZStack {
             AppBackground()
             VStack(spacing: 0) {
-                ScreenHeader(title: "Save this sesh", onBack: { dismiss() })
+                ScreenHeader(title: "Save this sesh",
+                             onBack: { if hasEdits { confirmDiscard = true } else { dismiss() } })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
@@ -112,10 +121,7 @@ struct SaveSeshView: View {
                         }
 
                         // Notes
-                        VStack(alignment: .leading, spacing: 8) {
-                            FieldLabel(text: "Notes")
-                            InputField(label: "", placeholder: "How was it?…", value: $notes)
-                        }
+                        NotesField(label: "Notes", placeholder: "How was it?…", text: $notes)
 
                         // Photo (optional)
                         VStack(alignment: .leading, spacing: 8) {
@@ -129,6 +135,12 @@ struct SaveSeshView: View {
                     .padding(.horizontal, 18)
                 }
             }
+        }
+        .confirmationDialog("Discard this sesh?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard", role: .destructive) { dismiss() }
+            Button("Keep Editing", role: .cancel) {}
+        } message: {
+            Text("Your rating, effects, notes and photo won't be saved.")
         }
     }
 

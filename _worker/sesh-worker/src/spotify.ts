@@ -156,10 +156,12 @@ export async function exportPlaylist(env: SpotifyEnv, userID: string, name: stri
   if (!meResp.ok) return { error: "me failed" };
   const meData = (await meResp.json()) as { id: string };
 
-  let playlistID = existingID || null;
+  // Spotify playlist IDs are 22 base62 chars — anything else is either junk or
+  // a path-injection attempt against the API URL below.
+  let playlistID = existingID && /^[A-Za-z0-9]{22}$/.test(existingID) ? existingID : null;
   let playlistURL: string | null = null;
   if (!playlistID) {
-    const createResp = await fetch(`${API}/users/${meData.id}/playlists`, {
+    const createResp = await fetch(`${API}/users/${encodeURIComponent(meData.id)}/playlists`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ name: name || "The Sesh Playlist", description: "Made in The Sesh", public: false }),
@@ -173,7 +175,7 @@ export async function exportPlaylist(env: SpotifyEnv, userID: string, name: stri
   }
 
   for (let i = 0; i < uris.length; i += 100) {
-    await fetch(`${API}/playlists/${playlistID}/tracks`, {
+    await fetch(`${API}/playlists/${encodeURIComponent(playlistID)}/tracks`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ uris: uris.slice(i, i + 100) }),

@@ -213,6 +213,23 @@ struct ChatMessage: Codable, Identifiable, Hashable {
     var text: String
     var sentAt: Date
     var isMe: Bool
+
+    /// What to show above someone else's bubble.
+    ///
+    /// Belt-and-braces against the second-person-name bug: messages sent before
+    /// the fix are stored server-side with the literal "You" as their author,
+    /// and any such message that reaches an older cache or a client the Worker
+    /// hasn't repaired would otherwise render as "You" on the reader's screen.
+    /// A message that isn't mine is never labelled "You".
+    var authorLabel: String {
+        let name = senderName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !name.isEmpty && !Self.selfLabels.contains(name.lowercased()) { return name }
+        let handle = senderHandle.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !handle.isEmpty && !Self.selfLabels.contains(handle.lowercased()) { return handle }
+        return "Sesher"
+    }
+
+    private static let selfLabels: Set<String> = ["you", "@you", "me", "@me", "myself", "self"]
 }
 
 // MARK: - Live

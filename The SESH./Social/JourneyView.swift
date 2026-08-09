@@ -174,7 +174,7 @@ struct JourneyView: View {
                 StatsView(initialTab: "Spending").environment(session).navigationBarBackButtonHidden(true)
             } label: {
                 overviewTile(title: "This Month Spent",
-                             value: String(format: "$%.2f", session.thisMonthSpent),
+                             value: Fmt.currency(session.thisMonthSpent),
                              suffix: nil, emoji: "dollarsign.circle", emojiColor: Palette.green)
             }
             .buttonStyle(.plain)
