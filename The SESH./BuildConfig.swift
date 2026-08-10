@@ -51,6 +51,6 @@ enum BuildConfig {
             return override
         }
         #endif
-        return "https://sesh-worker.stocked.workers.dev"
+        return SeshUnifiedWorker.baseURLString
     }()
 }

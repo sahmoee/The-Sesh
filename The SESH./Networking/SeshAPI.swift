@@ -62,8 +62,6 @@ enum APIError: Error {
 /// SeshAuth's token and is only ever called from MainActor stores.
 @MainActor
 struct SeshAPI {
-    private var base: URL? { URL(string: BuildConfig.workerURL) }
-
     /// One shared session for the whole app. Creating a URLSession per request
     /// (as before) prevents connection reuse/keep-alive and reallocates the
     /// config each call. A single configured session is reused everywhere.
@@ -104,7 +102,7 @@ struct SeshAPI {
     private func makeRequest(_ path: String, method: String = "GET",
                              identity: SeshIdentity?, body: Data? = nil,
                              idempotencyKey: String? = nil) -> URLRequest? {
-        guard let base, let url = URL(string: path, relativeTo: base) else { return nil }
+        guard let url = SeshUnifiedWorker.url(path) else { return nil }
         var req = URLRequest(url: url)
         req.httpMethod = method
         // (#C1) Verified session token — the Worker derives identity from this,

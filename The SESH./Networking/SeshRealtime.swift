@@ -58,13 +58,9 @@ final class SeshRealtime {
     private func runLoop() async {
         while !Task.isCancelled {
             guard let token = SeshAuth.shared.token,
-                  var comps = URLComponents(string: BuildConfig.workerURL) else {
+                  let url = SeshUnifiedWorker.webSocketURL(token: token) else {
                 try? await Task.sleep(for: .seconds(5)); continue
             }
-            comps.scheme = comps.scheme == "http" ? "ws" : "wss"
-            comps.path = "/api/ws"
-            comps.queryItems = [URLQueryItem(name: "token", value: token)]
-            guard let url = comps.url else { return }
 
             setState(.connecting)
             let ws = URLSession.shared.webSocketTask(with: url)

@@ -26,7 +26,7 @@ August 2, 2026. This batch finishes the revised Lounge specification. Phases 1â€
 ## Deploy
 
 - **Xcode:** three new files should be picked up by the synchronized group: `The SESH./Lounge/LoungeComposeView.swift`, `The SESH./Lounge/LoungeLiveRoomView.swift`, `The SESH./Lounge/LoungePreviewPlayer.swift`. Build.
-- **Worker:** `cd _worker/sesh-worker && wrangler deploy`. No new secrets; media uses the existing KV binding.
+- **Worker:** deploy the separate UnifiedWorker repository. No new secrets; media uses the existing KV binding.
 - Verified: per-file Swift syntax checks clean, `tsc --noEmit` clean, full-diff adversarial review (7 findings, all fixed before packaging).
 
 ## Deliberately not in this batch

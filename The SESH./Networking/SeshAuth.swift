@@ -130,8 +130,7 @@ final class SeshAuth {
     }
 
     private func exchange(path: String, body: [String: String]) async -> Bool {
-        guard let base = URL(string: BuildConfig.workerURL),
-              let url = URL(string: path, relativeTo: base) else { return false }
+        guard let url = SeshUnifiedWorker.url(path) else { return false }
         var payload = body
         // (#C2) Attach a DeviceCheck token when available. The Worker validates
         // it with Apple, gating account creation and messaging behind proof of

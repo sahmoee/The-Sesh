@@ -103,5 +103,5 @@ Every Swift file passed syntax verification; the worker passes `tsc --noEmit` wi
 ## Deploy notes
 
 - **Xcode:** add `The SESH./Persistence/StorageHealthBanner.swift` to the app target if the synchronized group doesn't pick it up; build.
-- **Worker:** `cd _worker/sesh-worker && wrangler deploy` (no new secrets, no migrations — all changes are code-level).
+- **Worker:** deploy the separate UnifiedWorker repository (no new secrets, no migrations — all changes are code-level).
 - Verification performed: per-file Swift syntax checks (all clean), `tsc --noEmit` (clean), full-diff adversarial review with 5 findings found and fixed (admin-export regression, camera-return data wipe in LogSeshView, over-tight track cap, stuck Start Cypher guard, stale recap cache).

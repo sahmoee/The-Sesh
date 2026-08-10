@@ -29,7 +29,7 @@ enum SeshUnifiedWorker {
     ///
     /// `false` → https://sesh-worker.stocked.workers.dev (via the shim)
     /// `true`  → https://api.sowensstudios.com/sesh
-    static let useUnifiedEndpoint = false
+    static let useUnifiedEndpoint = true
 
     static let legacyBase = "https://sesh-worker.stocked.workers.dev"
     static let unifiedBase = "https://api.sowensstudios.com/sesh"
