@@ -49,3 +49,9 @@ node_modules/
 
 # Worker has no package.json; a stray lockfile is always an artifact
 _worker/**/package-lock.json
+
+# Local operating guide — not part of the shipped repo
+README-FIRST.md
+IMPROVEMENTS.md
+LOUNGE_R2_PHASE4_NOTES.md
+NOTES.md
