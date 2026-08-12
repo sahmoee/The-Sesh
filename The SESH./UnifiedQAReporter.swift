@@ -199,6 +199,16 @@ private struct UnifiedQATicketList: View {
                         }
                     }
                 }
+                Section("Deep QA") {
+                    NavigationLink("Open Sesh QA Lab") {
+                        UnifiedQADeepView(app: app, tickets: store.tickets,
+                                          unsyncedCount: store.tickets.filter { $0.status != "verified" }.count,
+                                          memoryMB: autonomy.memoryMB,
+                                          hitchMS: autonomy.longestHitchMS)
+                    }
+                    Text("Session, strain, stash, journal, insights, community, music, sync, privacy, and reliability checks.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 if !store.syncMessage.isEmpty { Text(store.syncMessage).font(.caption).foregroundStyle(.secondary) }
                 ForEach(store.tickets) { ticket in Button { editing = ticket } label: { VStack(alignment: .leading, spacing: 4) { Text(ticket.number).font(.caption.monospaced()); Text(ticket.title).font(.headline); Text(ticket.status.capitalized + " · " + ticket.severity.capitalized).font(.caption).foregroundStyle(.secondary); if let resolution = ticket.resolution { Text("Fixed: " + resolution).font(.caption).lineLimit(2).foregroundStyle(.green) } } } }
             }
