@@ -31,7 +31,18 @@ struct SeshApp: App {
                 if !onboarded {
                     OnboardingView(onDone: { onboarded = true })
                 } else if auth.isSignedIn || skippedSignIn {
-                    RootView()
+                    ZStack {
+                        RootView()
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Spacer()
+                                UnifiedQAReporter(app: "Sesh", source: "sesh-app", prefix: "SESH")
+                                    .padding(.trailing, 16)
+                                    .padding(.bottom, 82)
+                            }
+                        }
+                    }
                 } else {
                     SignInView(onContinueWithout: { skippedSignIn = true })
                 }
