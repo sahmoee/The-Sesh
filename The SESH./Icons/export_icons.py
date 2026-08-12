@@ -7,10 +7,12 @@ requires for the marketing icon and as looks correct for an opaque design.
 
 import json
 import os
+from pathlib import Path
 from PIL import Image
 
-MASTER = "/home/claude/icon_master_1024.png"
-OUT = "/home/claude/MoodWeedJournal/MoodWeedJournal/Assets.xcassets/AppIcon.appiconset"
+PROJECT_DIR = Path(__file__).resolve().parents[2]
+MASTER = Path(__file__).resolve().parent / "icon_master_1024.png"
+OUT = PROJECT_DIR / "The SESH." / "Assets.xcassets" / "AppIcon.appiconset"
 BG = (0x16, 0x1B, 0x12)  # opaque fallback matte (never seen, but guarantees no alpha)
 
 # (idiom, size_pt, scale) -> filename pixel size = size_pt * scale
@@ -50,7 +52,7 @@ def main():
         if px not in made:
             img = master.resize((px, px), Image.LANCZOS)
             img = flatten(img)  # ensure RGB, no alpha
-            img.save(os.path.join(OUT, fname))
+            img.save(OUT / fname)
             made[px] = fname
         size_str = (f"{int(pt)}x{int(pt)}" if float(pt).is_integer()
                     else f"{pt:g}x{pt:g}")
@@ -62,13 +64,13 @@ def main():
         })
 
     contents = {"images": images, "info": {"version": 1, "author": "xcode"}}
-    with open(os.path.join(OUT, "Contents.json"), "w") as f:
+    with open(OUT / "Contents.json", "w") as f:
         json.dump(contents, f, indent=2)
 
     # Verify no alpha anywhere
     bad = []
     for fn in sorted(set(made.values())):
-        im = Image.open(os.path.join(OUT, fn))
+        im = Image.open(OUT / fn)
         if im.mode != "RGB":
             bad.append((fn, im.mode))
     print(f"Wrote {len(set(made.values()))} unique PNGs + Contents.json to:")

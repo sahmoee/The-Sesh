@@ -111,7 +111,7 @@ Core tests are in [`SeshTests/`](SeshTests/). Changes should cover domain transf
 
 Internal QA reports save locally first, then synchronize with screenshot and build/device context. Fixed reports require a “What was fixed” explanation. Testers choose **Verify Fix** or **Refile — still broken**, preserving ticket history and adding current evidence.
 
-Shared intake is under `~/Documents/Reports/Sesh`. Coding agents must follow [`AGENTS.md`](AGENTS.md) before planning, changing, or building.
+Report synchronization is an internal development operation and is intentionally not documented in the public repository.
 
 ## Release checklist
 
@@ -137,7 +137,6 @@ Never commit tokens, Apple keys, journals, social exports, user media, or QA scr
 ## Contributing and license
 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — development expectations
-- [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) — agent and report workflow
 - [`CHANGELOG.md`](CHANGELOG.md) — release history
 - [`LICENSE.md`](LICENSE.md) — license terms
 

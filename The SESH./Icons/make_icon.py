@@ -180,5 +180,6 @@ def build_master():
 
 if __name__ == "__main__":
     master = build_master()
-    master.save("/home/claude/icon_master_1024.png")
+    from pathlib import Path
+    master.save(Path(__file__).resolve().parent / "icon_master_1024.png")
     print("master saved", master.size, master.mode)
