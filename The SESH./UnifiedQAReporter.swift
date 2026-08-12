@@ -39,6 +39,7 @@ struct UnifiedQATicket: Codable, Identifiable {
     var resolution: String?
     var verifiedAt: Date?
     var refileCount: Int?
+    var requiresManualReview: Bool?
 }
 
 @MainActor final class UnifiedQAStore: ObservableObject {
@@ -50,7 +51,8 @@ struct UnifiedQATicket: Codable, Identifiable {
     private init() { load() }
 
     func save(app: String, source: String, prefix: String, ticket: UnifiedQATicket?, title: String,
-              details: String, severity: String, screen: String, status: String, resolution: String) {
+              details: String, severity: String, screen: String, status: String, resolution: String,
+              requiresManualReview: Bool) {
         let shot = Self.capture()
         var value = ticket ?? UnifiedQATicket(number: nextNumber(prefix: prefix), title: title,
             body: details, severity: severity, screen: screen, hasScreenshot: shot != nil,
@@ -61,6 +63,7 @@ struct UnifiedQATicket: Codable, Identifiable {
         value.screen = screen
         value.status = status
         value.resolution = resolution.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : resolution
+        value.requiresManualReview = requiresManualReview
         value.updatedAt = Date()
         value.hasScreenshot = value.hasScreenshot || shot != nil
         if let index = tickets.firstIndex(where: { $0.id == value.id }) { tickets[index] = value }
@@ -107,6 +110,7 @@ struct UnifiedQATicket: Codable, Identifiable {
         let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]; encoder.dateEncodingStrategy = .iso8601
         if let data = try? encoder.encode(ticket) { try? data.write(to: folder.appendingPathComponent("ticket.json"), options: .atomic) }
         let fixed = ticket.resolution.map { "\n## What was fixed\n\n\($0)\n" } ?? ""
+        let review = ticket.requiresManualReview == true ? "\n> **REQUIRES MANUAL REVIEW:** Ask the tester for specifics before changing code.\n" : ""
         let report = "# \(ticket.number) — \(ticket.title)\n\n**\(ticket.severity)** · \(ticket.status)\n\n## Report\n\n\(ticket.body)\n\(fixed)\n## Context\n\n- Screen: \(ticket.screen)\n- App: \(ticket.environment["appVersion"] ?? "?") build \(ticket.environment["build"] ?? "?")\n- Device: \(ticket.environment["device"] ?? "?") · \(ticket.environment["os"] ?? "?")\n"
         try? Data(report.utf8).write(to: folder.appendingPathComponent("report.md"), options: .atomic)
         if let data = screenshot?.jpegData(compressionQuality: 0.72) { try? data.write(to: folder.appendingPathComponent("screenshot.jpg"), options: .atomic) }
@@ -210,7 +214,7 @@ private struct UnifiedQATicketList: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 if !store.syncMessage.isEmpty { Text(store.syncMessage).font(.caption).foregroundStyle(.secondary) }
-                ForEach(store.tickets) { ticket in Button { editing = ticket } label: { VStack(alignment: .leading, spacing: 4) { Text(ticket.number).font(.caption.monospaced()); Text(ticket.title).font(.headline); Text(ticket.status.capitalized + " · " + ticket.severity.capitalized).font(.caption).foregroundStyle(.secondary); if let resolution = ticket.resolution { Text("Fixed: " + resolution).font(.caption).lineLimit(2).foregroundStyle(.green) } } } }
+                ForEach(store.tickets) { ticket in Button { editing = ticket } label: { VStack(alignment: .leading, spacing: 4) { Text(ticket.number).font(.caption.monospaced()); Text(ticket.title).font(.headline); Text(ticket.status.capitalized + " · " + ticket.severity.capitalized).font(.caption).foregroundStyle(.secondary); if ticket.requiresManualReview == true { Label("Requires manual review", systemImage: "person.crop.circle.badge.questionmark").font(.caption).foregroundStyle(.orange) }; if let resolution = ticket.resolution { Text("Fixed: " + resolution).font(.caption).lineLimit(2).foregroundStyle(.green) } } } }
             }
             .navigationTitle("QA Tickets")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } }; ToolbarItem(placement: .primaryAction) { Button { creating = true } label: { Image(systemName: "plus") } } }
@@ -224,11 +228,11 @@ private struct UnifiedQATicketEditor: View {
     let app: String; let source: String; let prefix: String; let ticket: UnifiedQATicket?
     @EnvironmentObject var store: UnifiedQAStore
     @Environment(\.dismiss) var dismiss
-    @State private var title: String; @State private var details: String; @State private var severity: String; @State private var screen: String; @State private var status: String; @State private var resolution: String
+    @State private var title: String; @State private var details: String; @State private var severity: String; @State private var screen: String; @State private var status: String; @State private var resolution: String; @State private var requiresManualReview: Bool
     init(app: String, source: String, prefix: String, ticket: UnifiedQATicket?) {
         self.app=app; self.source=source; self.prefix=prefix; self.ticket=ticket
         _title=State(initialValue: ticket?.title ?? ""); _details=State(initialValue: ticket?.body ?? "")
-        _severity=State(initialValue: ticket?.severity ?? "major"); _screen=State(initialValue: ticket?.screen ?? "Current screen"); _status=State(initialValue: ticket?.status ?? "open"); _resolution=State(initialValue: ticket?.resolution ?? "")
+        _severity=State(initialValue: ticket?.severity ?? "major"); _screen=State(initialValue: ticket?.screen ?? "Current screen"); _status=State(initialValue: ticket?.status ?? "open"); _resolution=State(initialValue: ticket?.resolution ?? ""); _requiresManualReview=State(initialValue: ticket?.requiresManualReview ?? false)
     }
-    var body: some View { NavigationStack { Form { Section("Issue") { TextField("Short title", text: $title); TextField("What happened and what should happen?", text: $details, axis: .vertical).lineLimit(4...10) }; Section("Context") { Picker("Severity", selection: $severity) { Text("Blocker").tag("blocker"); Text("Major").tag("major"); Text("Minor").tag("minor") }; TextField("Screen", text: $screen) }; Section("Fix lifecycle") { Picker("Status", selection: $status) { Text("Open").tag("open"); Text("Investigating").tag("investigating"); Text("Fixed — needs verification").tag("fixed"); Text("Verified").tag("verified") }; TextField("What was fixed", text: $resolution, axis: .vertical).lineLimit(3...8); if let ticket, ticket.status == "fixed" { Button("Verify Fix") { store.verify(ticket, source: source); dismiss() }; Button("Refile — still broken", role: .destructive) { store.refile(ticket, source: source); dismiss() } } }; Section { Text("A screenshot and device/build context are attached automatically. Saving also syncs immediately; offline reports retry next time QA opens.").font(.caption).foregroundStyle(.secondary) } }.navigationTitle(ticket == nil ? "New Ticket" : "Edit Ticket").toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }; ToolbarItem(placement: .confirmationAction) { Button("Save") { store.save(app: app, source: source, prefix: prefix, ticket: ticket, title: title, details: details, severity: severity, screen: screen, status: status, resolution: resolution); dismiss() }.disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || status == "fixed" && resolution.trimmingCharacters(in: .whitespaces).isEmpty) } } } }
+    var body: some View { NavigationStack { Form { Section("Issue") { TextField("Short title", text: $title); TextField("What happened and what should happen?", text: $details, axis: .vertical).lineLimit(4...10); Toggle("Requires manual review", isOn: $requiresManualReview); Text("Use when wording or design intent needs human interpretation. AI will ask for specifics.").font(.caption).foregroundStyle(.secondary) }; Section("Context") { Picker("Severity", selection: $severity) { Text("Blocker").tag("blocker"); Text("Major").tag("major"); Text("Minor").tag("minor") }; TextField("Screen", text: $screen) }; Section("Fix lifecycle") { Picker("Status", selection: $status) { Text("Open").tag("open"); Text("Investigating").tag("investigating"); Text("Fixed — needs verification").tag("fixed"); Text("Verified").tag("verified") }; TextField("What was fixed", text: $resolution, axis: .vertical).lineLimit(3...8); if let ticket, ticket.status == "fixed" { Button("Verify Fix") { store.verify(ticket, source: source); dismiss() }; Button("Refile — still broken", role: .destructive) { store.refile(ticket, source: source); dismiss() } } }; Section { Text("A screenshot and device/build context are attached automatically. Saving also syncs immediately; offline reports retry next time QA opens.").font(.caption).foregroundStyle(.secondary) } }.navigationTitle(ticket == nil ? "New Ticket" : "Edit Ticket").toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }; ToolbarItem(placement: .confirmationAction) { Button("Save") { store.save(app: app, source: source, prefix: prefix, ticket: ticket, title: title, details: details, severity: severity, screen: screen, status: status, resolution: resolution, requiresManualReview: requiresManualReview); dismiss() }.disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || status == "fixed" && resolution.trimmingCharacters(in: .whitespaces).isEmpty) } } } }
 }
