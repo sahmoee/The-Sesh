@@ -2,17 +2,24 @@ import SwiftUI
 import UIKit
 import Combine
 
-enum UnifiedQASettings { static let enabledKey = "sesh.qa.enabled" }
+enum UnifiedQASettings {
+    static let enabledKey = "sesh.qa.enabled"
+    static let touchesKey = "sesh.qa.touches"
+}
 
 struct UnifiedQASettingsView: View {
     @AppStorage(UnifiedQASettings.enabledKey) private var enabled = false
+    @AppStorage(UnifiedQASettings.touchesKey) private var touches = true
     var body: some View {
-        Toggle(isOn: $enabled) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Enable Sesh QA")
-                Text("Session, journal, social, music, screenshot, ticket, and fix-verification reporting.")
-                    .font(.caption).foregroundStyle(.secondary)
+        VStack(alignment: .leading) {
+            Toggle(isOn: $enabled) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Enable Sesh QA")
+                    Text("Session, journal, social, music, screenshot, ticket, and fix-verification reporting.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
+            if enabled { Toggle("Record anonymous touch positions", isOn: $touches).font(.caption) }
         }
     }
 }
@@ -138,9 +145,11 @@ struct UnifiedQATicket: Codable, Identifiable {
     }
 
     private static func environment(app: String) -> [String: String] {
-        ["app": app, "appVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?",
+        var value = ["app": app, "appVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?",
          "build": Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?",
          "device": UIDevice.current.model, "os": "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)"]
+        value.merge(UnifiedQAAutonomy.shared.evidence) { _, new in new }
+        return value
     }
 
     private static func capture() -> UIImage? {
@@ -155,10 +164,14 @@ struct UnifiedQAReporter: View {
     @StateObject private var store = UnifiedQAStore.shared
     @State private var presented = false
     var body: some View {
-        Button { presented = true } label: { Image(systemName: "ladybug.fill").padding(12).background(.ultraThinMaterial).clipShape(Circle()) }
+        ZStack {
+            UnifiedQAGestureObserver().frame(width: 0, height: 0)
+            Button { presented = true } label: { Image(systemName: "ladybug.fill").padding(12).background(.ultraThinMaterial).clipShape(Circle()) }
+        }
             .accessibilityLabel("Open QA tickets")
             .sheet(isPresented: $presented) { UnifiedQATicketList(app: app, source: source, prefix: prefix).environmentObject(store) }
-            .task { store.retryAll(source: source) }
+            .task { UnifiedQAAutonomy.shared.start(); store.retryAll(source: source) }
+            .onReceive(NotificationCenter.default.publisher(for: .unifiedQAQuickReport)) { _ in presented = true }
     }
 }
 
@@ -168,9 +181,24 @@ private struct UnifiedQATicketList: View {
     @Environment(\.dismiss) var dismiss
     @State private var editing: UnifiedQATicket?
     @State private var creating = false
+    @ObservedObject private var autonomy = UnifiedQAAutonomy.shared
     var body: some View {
         NavigationStack {
             List {
+                Section("Automatic coverage") {
+                    LabeledContent("Memory", value: "\(autonomy.memoryMB) MB")
+                    LabeledContent("Longest hang", value: "\(autonomy.longestHitchMS) ms")
+                    Button("Run accessibility sweep") { autonomy.runAccessibilityAudit() }
+                    if !autonomy.accessibilityFindings.isEmpty {
+                        Text("\(autonomy.accessibilityFindings.count) accessibility finding(s)").foregroundStyle(.orange)
+                    }
+                    ForEach(autonomy.events.prefix(8)) { event in
+                        VStack(alignment: .leading) {
+                            Text(event.kind.capitalized).font(.caption.bold())
+                            Text(event.detail).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
                 if !store.syncMessage.isEmpty { Text(store.syncMessage).font(.caption).foregroundStyle(.secondary) }
                 ForEach(store.tickets) { ticket in Button { editing = ticket } label: { VStack(alignment: .leading, spacing: 4) { Text(ticket.number).font(.caption.monospaced()); Text(ticket.title).font(.headline); Text(ticket.status.capitalized + " · " + ticket.severity.capitalized).font(.caption).foregroundStyle(.secondary); if let resolution = ticket.resolution { Text("Fixed: " + resolution).font(.caption).lineLimit(2).foregroundStyle(.green) } } } }
             }
