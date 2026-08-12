@@ -24,6 +24,7 @@ struct SeshApp: App {
     @State private var playlists = PlaylistStore()
     @AppStorage("sesh.skippedSignIn") private var skippedSignIn = false
     @AppStorage("sesh.onboarded.v2") private var onboarded = false
+    @AppStorage(UnifiedQASettings.enabledKey) private var qaEnabled = false
 
     var body: some Scene {
         WindowGroup {
@@ -37,9 +38,11 @@ struct SeshApp: App {
                             Spacer()
                             HStack {
                                 Spacer()
-                                UnifiedQAReporter(app: "Sesh", source: "sesh-app", prefix: "SESH")
-                                    .padding(.trailing, 16)
-                                    .padding(.bottom, 82)
+                                if qaEnabled {
+                                    UnifiedQAReporter(app: "Sesh", source: "sesh-app", prefix: "SESH")
+                                        .padding(.trailing, 16)
+                                        .padding(.bottom, 82)
+                                }
                             }
                         }
                     }

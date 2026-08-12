@@ -2,6 +2,21 @@ import SwiftUI
 import UIKit
 import Combine
 
+enum UnifiedQASettings { static let enabledKey = "sesh.qa.enabled" }
+
+struct UnifiedQASettingsView: View {
+    @AppStorage(UnifiedQASettings.enabledKey) private var enabled = false
+    var body: some View {
+        Toggle(isOn: $enabled) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Enable Sesh QA")
+                Text("Session, journal, social, music, screenshot, ticket, and fix-verification reporting.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
 struct UnifiedQATicket: Codable, Identifiable {
     var id = UUID()
     var number: String

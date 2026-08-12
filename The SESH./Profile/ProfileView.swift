@@ -350,6 +350,15 @@ struct ProfileSettingsView: View {
 
                         Divider().overlay(Palette.stroke).padding(.vertical, 4)
 
+                        VStack(alignment: .leading, spacing: 10) {
+                            FieldLabel(text: "Quality Assurance")
+                            UnifiedQASettingsView()
+                            Text("Disabled by default. Enable only while testing Sesh.")
+                                .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
+                        }
+
+                        Divider().overlay(Palette.stroke).padding(.vertical, 4)
+
                         // Danger zone: reset everything (also "logs out")
                         VStack(alignment: .leading, spacing: 8) {
                             FieldLabel(text: "Reset")
