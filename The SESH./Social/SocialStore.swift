@@ -75,6 +75,7 @@ final class SocialStore {
         self.api = api
         self.outbox = outbox
         self.clock = clock
+        self.pushToken = UserDefaults.standard.string(forKey: DefaultsKey.pushToken)
     }
 
     /// The identity sent to the Worker on every call.
@@ -240,8 +241,24 @@ final class SocialStore {
     /// Called when iOS hands us a fresh APNs token. Stores it and registers it
     /// with the backend so friends' "went live" events can reach this device.
     func registerPushToken(_ token: String) {
+        guard UserDefaults.standard.object(forKey: DefaultsKey.notifEnabled) as? Bool ?? true else { return }
+        guard token != pushToken else { return }
+        let previous = pushToken
         pushToken = token
-        Task { await api.registerPush(token: token, identity: identity) }
+        UserDefaults.standard.set(token, forKey: DefaultsKey.pushToken)
+        Task {
+            if let previous, previous != token {
+                _ = await api.post("/api/push/unregister", body: SeshAPI.TokenBody(token: previous))
+            }
+            await api.registerPush(token: token, identity: identity)
+        }
+    }
+
+    func disablePushNotifications() {
+        guard let token = pushToken else { return }
+        pushToken = nil
+        UserDefaults.standard.removeObject(forKey: DefaultsKey.pushToken)
+        Task { _ = await api.post("/api/push/unregister", body: SeshAPI.TokenBody(token: token)) }
     }
 
     private static func handle(from name: String) -> String {
@@ -319,6 +336,8 @@ final class SocialStore {
         if let tok = pushToken {
             _ = await api.post("/api/push/unregister", body: SeshAPI.TokenBody(token: tok))
         }
+        pushToken = nil
+        UserDefaults.standard.removeObject(forKey: DefaultsKey.pushToken)
         teardown()
         SeshAuth.shared.signOut()
     }

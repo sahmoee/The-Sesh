@@ -101,6 +101,7 @@ struct SeshApp: App {
                 notifications.scenePhaseActive = (phase == .active)
                 if phase == .active {
                     notifications.dismissBanner()
+                    PushManager.shared.requestAndRegister()
                     // Opening the app makes you "ready" — but only if you were away
                     // and not mid-sesh, so this never overrides a live status.
                     social.enterReadyIfAway()

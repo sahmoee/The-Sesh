@@ -226,6 +226,10 @@ final class NotificationManager {
     func clearInbox() {
         inbox.removeAll()
         persistInbox()
+        let center = UNUserNotificationCenter.current()
+        center.removeAllPendingNotificationRequests()
+        center.removeAllDeliveredNotifications()
+        center.setBadgeCount(0)
     }
 
     func dismissBanner() { activeBanner = nil }

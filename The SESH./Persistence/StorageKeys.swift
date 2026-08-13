@@ -71,6 +71,7 @@ enum DefaultsKey {
     static let notifInbox     = "sesh.notif.inbox.v1"
     static let notifSeenIDs   = "sesh.notif.seenIDs.v1"
     static let notifEnabled   = "sesh.notif.enabled.v1"
+    static let pushToken      = "sesh.push.token.v1"
 
     // Strain images: user-attached photos keyed by strain id
     static let strainUserPhotos = "sesh.strain.userPhotos.v1"

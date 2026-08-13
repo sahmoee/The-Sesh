@@ -19,6 +19,7 @@ import os
 @MainActor
 final class SeshRealtime {
     enum State { case disconnected, connecting, connected }
+    private struct ServerMessage: Decodable { let type: String }
 
     private(set) var state: State = .disconnected
 
@@ -75,12 +76,14 @@ final class SeshRealtime {
                     let message = try await ws.receive()
                     setState(.connected)
                     backoff = 1
-                    if case .string(let text) = message {
-                        if text.contains("\"welcome\"") || text.contains("\"pong\"") {
+                    if case .string(let text) = message,
+                       let data = text.data(using: .utf8),
+                       let event = try? JSONDecoder().decode(ServerMessage.self, from: data) {
+                        if event.type == "welcome" || event.type == "pong" {
                             setState(.connected)
                             backoff = 1
                         }
-                        if text.contains("\"changed\"") { onChange?() }
+                        if event.type == "changed" { onChange?() }
                     }
                 } catch {
                     alive = false
@@ -106,8 +109,12 @@ final class SeshRealtime {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(30))
                 guard !Task.isCancelled else { return }
-                let uid = SeshAuth.shared.uid ?? ""
-                try? await ws.send(.string(#"{"type":"heartbeat","uid":"\#(uid)"}"#))
+                do {
+                    try await ws.send(.string(#"{"type":"heartbeat"}"#))
+                } catch {
+                    ws.cancel(with: .goingAway, reason: nil)
+                    return
+                }
             }
         }
     }

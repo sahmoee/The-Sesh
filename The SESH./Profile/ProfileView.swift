@@ -193,6 +193,7 @@ struct ProfileSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthManager.self) private var auth
     @Environment(SocialStore.self) private var social
+    @Environment(NotificationManager.self) private var notifications
     @State private var name = ""
     @State private var showResetConfirm = false
     @State private var showClearMusicConfirm = false
@@ -488,7 +489,12 @@ struct ProfileSettingsView: View {
                 }
             }
             .tint(Palette.green)
-            .onChange(of: notificationsOn) { _, _ in Haptics.selection() }
+            .onChange(of: notificationsOn) { _, enabled in
+                notifications.enabled = enabled
+                if !enabled { notifications.dismissBanner() }
+                PushManager.shared.updateEnabled(enabled)
+                Haptics.selection()
+            }
             .padding(14)
             .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
             .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))

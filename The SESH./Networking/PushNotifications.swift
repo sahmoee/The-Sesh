@@ -33,26 +33,41 @@ final class PushManager {
 
     /// Ask for permission (once) and register with APNs if granted.
     func requestAndRegister() {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            Task { @MainActor in
-                if settings.authorizationStatus == .notDetermined {
-                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-                        Task { @MainActor in
-                            self.authorized = granted
-                            if granted { UIApplication.shared.registerForRemoteNotifications() }
-                        }
-                    }
-                } else {
-                    self.authorized = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
-                    if self.authorized { UIApplication.shared.registerForRemoteNotifications() }
-                }
+        guard UserDefaults.standard.object(forKey: DefaultsKey.notifEnabled) as? Bool ?? true else {
+            updateEnabled(false)
+            return
+        }
+        Task {
+            let center = UNUserNotificationCenter.current()
+            var settings = await center.notificationSettings()
+            if settings.authorizationStatus == .notDetermined {
+                _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
+                settings = await center.notificationSettings()
             }
+            authorized = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
+            if authorized { UIApplication.shared.registerForRemoteNotifications() }
+        }
+    }
+
+    /// Keep the system registration and Worker token in lockstep with the
+    /// user-facing Settings toggle.
+    func updateEnabled(_ enabled: Bool) {
+        if enabled {
+            requestAndRegister()
+        } else {
+            authorized = false
+            UIApplication.shared.unregisterForRemoteNotifications()
+            social?.disablePushNotifications()
+            UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+            UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+            UNUserNotificationCenter.current().setBadgeCount(0)
         }
     }
 
     /// Called by the AppDelegate with the raw APNs token data.
     func didRegister(deviceToken: Data) {
         let hex = deviceToken.map { String(format: "%02x", $0) }.joined()
+        guard !hex.isEmpty else { return }
         social?.registerPushToken(hex)
     }
 }
@@ -76,7 +91,7 @@ final class SeshAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         // fail quietly; the rest of the app is unaffected.
     }
 
-    /// Show banners even when the app is in the foreground.
+    /// Show non-duplicated banners even when the app is in the foreground.
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
         // Realtime feed ingestion already presents friend activity in-app. Do
@@ -84,6 +99,6 @@ final class SeshAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         if notification.request.content.userInfo["kind"] as? String == "friend_activity" {
             return []
         }
-        [.banner, .sound]
+        return [.banner, .sound]
     }
 }
