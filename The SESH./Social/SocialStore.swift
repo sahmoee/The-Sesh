@@ -224,7 +224,13 @@ final class SocialStore {
         profileSyncTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1.5))
             guard !Task.isCancelled, let self else { return }
-            await self.api.updateProfile(identity: self.identity)
+            if await self.api.updateProfile(identity: self.identity) {
+                // The open socket was authenticated with the old token claims.
+                // Reconnect so every subsequent mutation carries the new name.
+                self.realtime.disconnect()
+                if self.appIsActive { self.realtime.connect() }
+                await self.refresh()
+            }
         }
     }
 
@@ -295,6 +301,12 @@ final class SocialStore {
             Task { await self.refresh() }
         }
         await ensureSession()
+        profileSyncTask?.cancel()
+        profileSyncTask = nil
+        // Existing 24-hour sessions may still contain the fallback name that
+        // was minted before the user edited Me. Refresh the claims before any
+        // socket, presence, or Ready activity can publish that stale identity.
+        _ = await api.updateProfile(identity: identity)
         await api.setPresence(online: true, identity: identity)
         await refresh()
         realtime.onChange = { [weak self] in

@@ -291,20 +291,23 @@ struct SeshAPI {
     /// that name onto every chat message — so renaming yourself only reaches
     /// other people once the session is re-minted. The Worker returns a fresh
     /// token for the SAME verified uid (no re-authentication), which we swap in.
-    func updateProfile(identity: SeshIdentity?) async {
-        guard let identity, SeshAuth.shared.token != nil else { return }
+    @discardableResult
+    func updateProfile(identity: SeshIdentity?) async -> Bool {
+        guard let identity, SeshAuth.shared.token != nil else { return false }
         let body = ProfileBody(handle: identity.handle, name: identity.name, code: identity.code)
         guard let data = try? Self.encoder.encode(body),
-              let req = makeRequest("/api/profile", method: "POST", identity: identity, body: data) else { return }
+              let req = makeRequest("/api/profile", method: "POST", identity: identity, body: data) else { return false }
         do {
             let (payload, resp) = try await send(req)
             guard resp.statusCode == 200,
-                  let decoded = try? Self.decoder.decode(ProfileResponse.self, from: payload) else { return }
+                  let decoded = try? Self.decoder.decode(ProfileResponse.self, from: payload) else { return false }
             SeshAuth.shared.adoptRefreshedSession(token: decoded.token, uid: decoded.uid,
                                                   handle: identity.handle, name: identity.name,
                                                   code: identity.code)
+            return true
         } catch {
             // Fail soft: the name syncs on the next launch's exchange.
+            return false
         }
     }
 

@@ -115,6 +115,11 @@ struct SeshApp: App {
             }
             .onChange(of: session.userName) { _, _ in
                 social.configure(userID: auth.userID, displayName: session.userName)
+                let identity = social.identitySnapshot
+                scrobbler.configure(identity: identity)
+                spotify.configure(identity: identity)
+                lounge.configure(identity: identity)
+                playlists.configure(identity: identity)
             }
         }
     }
