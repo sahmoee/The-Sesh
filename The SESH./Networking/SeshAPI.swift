@@ -266,7 +266,11 @@ struct SeshAPI {
         }
     }
 
-    struct ActivityBody: Encodable { var activity: String; var detail: String }
+    struct ActivityBody: Encodable {
+        var activity: String
+        var detail: String
+        var occurredAt: Date = Date()
+    }
     struct MessageBody: Encodable { var id: String; var text: String }
     struct TokenBody: Encodable { var token: String }
     struct FriendCodeBody: Encodable { var code: String }
@@ -419,6 +423,10 @@ struct SeshAPI {
 
     func heartbeat(identity: SeshIdentity?) async {
         await post("/api/heartbeat", identity: identity, [:])
+    }
+
+    func setPresence(online: Bool, identity: SeshIdentity?) async {
+        await post("/api/presence", identity: identity, ["online": online])
     }
 
     func createCypher(_ c: Cypher, identity: SeshIdentity?) async {

@@ -58,6 +58,8 @@ final class SocialStore {
     private let api: SeshAPI
     private let clock: Clock
     private var pollTask: Task<Void, Never>?
+    private var refreshInFlight = false
+    private var appIsActive = true
     private var openRoomID: String?     // room whose chat we're actively polling
 
     /// (#C3) Push-driven realtime channel. While connected, the server tells us
@@ -276,6 +278,7 @@ final class SocialStore {
             Task { await self.refresh() }
         }
         await ensureSession()
+        await api.setPresence(online: true, identity: identity)
         await refresh()
         realtime.onChange = { [weak self] in
             Task { await self?.refresh() }
@@ -332,9 +335,15 @@ final class SocialStore {
     }
 
     func refresh() async {
+        guard !refreshInFlight else { return }
+        refreshInFlight = true
         loading = true
         ConnectivityMonitor.shared.isSyncing = true
-        defer { loading = false; ConnectivityMonitor.shared.isSyncing = false }
+        defer {
+            loading = false
+            refreshInFlight = false
+            ConnectivityMonitor.shared.isSyncing = false
+        }
 
         switch await api.fetchSnapshot(identity: identity, etag: snapshotETag) {
         case .fresh(let snapshot, let etag):
@@ -369,7 +378,9 @@ final class SocialStore {
                 // (#C6) Don't hammer the radio while offline — the reconnect
                 // hook refreshes immediately when the path returns.
                 guard ConnectivityMonitor.shared.pathSatisfied else { continue }
-                await self.api.heartbeat(identity: self.identity)
+                if self.realtime.state != .connected {
+                    await self.api.heartbeat(identity: self.identity)
+                }
                 await self.refresh()
             }
         }
@@ -381,15 +392,22 @@ final class SocialStore {
         // Capture prior unread-per-room to detect new incoming chat messages.
         let priorUnread = Dictionary(uniqueKeysWithValues: rooms.map { ($0.id, $0.unread) })
 
-        friends = s.friends
-        cyphers = s.cyphers
+        let now = clock.now
+        friends = s.friends.map { friend in
+            var friend = friend
+            if friend.lastSeen > now.addingTimeInterval(60) { friend.lastSeen = now }
+            return friend
+        }
+        cyphers = s.cyphers.filter { now.timeIntervalSince($0.startedAt) < 4 * 60 * 60 }
         rooms = s.rooms
-        liveStreams = s.live
-        feed = s.feed
+        liveStreams = s.live.filter { now.timeIntervalSince($0.startedAt) < 4 * 60 * 60 }
+        feed = s.feed.filter { event in
+            event.at <= now.addingTimeInterval(60) && now.timeIntervalSince(event.at) < 24 * 60 * 60
+        }
 
         // Turn newly-arrived friend events into notifications. The manager applies
         // its own anti-spam throttle so rapid status flips don't flood the user.
-        let events = s.feed
+        let events = feed
         let myHandle = me.handle
         let openRoom = openRoomID
         var chatNotes: [(title: String, body: String, id: String)] = []
@@ -442,7 +460,8 @@ final class SocialStore {
         let sharedDetail = privacy.shareStrainDetails ? (detail ?? "") : ""
         // (#C5) Presence/status writes queue offline and replay idempotently.
         if let body = try? SeshAPI.encoder.encode(
-            SeshAPI.ActivityBody(activity: activity.rawValue, detail: sharedDetail)) {
+            SeshAPI.ActivityBody(activity: activity.rawValue, detail: sharedDetail,
+                                 occurredAt: event.at)) {
             outbox.enqueue(path: "/api/activity", body: body)
             outbox.scheduleReplay(api: api)
         }
@@ -547,8 +566,34 @@ final class SocialStore {
 
     /// Friends currently doing something (for the presence row).
     var activeFriends: [SeshUser] {
-        friends.filter { $0.activity.isActive }
+        friends.filter { friend in
+            friend.isOnline == true || (friend.activity.isActive && clock.now.timeIntervalSince(friend.lastSeen) < 4 * 60 * 60)
+        }
             .sorted { $0.lastSeen > $1.lastSeen }
+    }
+
+    /// Foreground presence owns all network loops. Backgrounding immediately
+    /// releases the online lease; an active Sesh status remains visible until
+    /// it ends or reaches the server activity timeout.
+    func appDidBecomeActive() async {
+        guard !appIsActive else {
+            await api.setPresence(online: true, identity: identity)
+            return
+        }
+        appIsActive = true
+        await api.setPresence(online: true, identity: identity)
+        realtime.connect()
+        startPolling(every: 60)
+        await refresh()
+    }
+
+    func appDidEnterBackground() async {
+        guard appIsActive else { return }
+        appIsActive = false
+        stopPolling()
+        realtime.disconnect()
+        if myStatus == .ready { applyStatus(.away) }
+        await api.setPresence(online: false, identity: identity)
     }
 
     func friend(byHandle handle: String) -> SeshUser? {

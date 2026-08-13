@@ -11,7 +11,7 @@ import SwiftUI
 
 /// Compact "2m", "1h", "just now" relative time for the social feed.
 func seshAgo(_ date: Date) -> String {
-    let s = Int(Date().timeIntervalSince(date))
+    let s = max(0, Int(Date().timeIntervalSince(date)))
     if s < 10 { return "just now" }
     if s < 60 { return "\(s)s" }
     let m = s / 60
@@ -36,9 +36,9 @@ struct PresenceAvatar: View {
                                      startPoint: .topLeading, endPoint: .bottomTrailing))
                 .overlay(Text(user.initials).font(.system(size: size * 0.34, weight: .bold)).foregroundStyle(Palette.onGreen))
                 .frame(width: size, height: size)
-            if user.activity.isActive {
+            if user.activity.isActive || user.isOnline == true {
                 Circle()
-                    .stroke(user.activity.tint, lineWidth: 2.5)
+                    .stroke(user.activity.isActive ? user.activity.tint : Palette.greenBright, lineWidth: 2.5)
                     .frame(width: size + 6, height: size + 6)
             }
         }
@@ -181,4 +181,3 @@ struct BroadcastStrip: View {
 }
 
 // MARK: - Cyphers list
-

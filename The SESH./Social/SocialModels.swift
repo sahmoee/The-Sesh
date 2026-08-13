@@ -162,6 +162,9 @@ struct SeshUser: Codable, Identifiable, Hashable {
     var lastSeen: Date
     var streak: Int             // current daily streak
     var isFriend: Bool
+    /// Server-authoritative foreground presence. Nil keeps old cached snapshots
+    /// compatible and is treated as offline.
+    var isOnline: Bool? = nil
     var nowPlaying: NowPlaying? = nil // currently-playing track, if the user shares it
 
     var initials: String {

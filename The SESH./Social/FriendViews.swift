@@ -275,6 +275,11 @@ private struct FriendRow: View {
                     Text("\(seshAgo(friend.lastSeen)) elapsed").font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
                 }
             }
+        } else if friend.isOnline == true {
+            HStack(spacing: 5) {
+                Circle().fill(Palette.greenBright).frame(width: 6, height: 6)
+                Text("Online now").font(.system(size: 12, weight: .medium)).foregroundStyle(Palette.greenBright)
+            }
         } else {
             HStack(spacing: 5) {
                 Circle().fill(Palette.textTertiary.opacity(0.5)).frame(width: 6, height: 6)

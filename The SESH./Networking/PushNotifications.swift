@@ -33,11 +33,19 @@ final class PushManager {
 
     /// Ask for permission (once) and register with APNs if granted.
     func requestAndRegister() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
             Task { @MainActor in
-                self.authorized = granted
-                guard granted else { return }
-                UIApplication.shared.registerForRemoteNotifications()
+                if settings.authorizationStatus == .notDetermined {
+                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                        Task { @MainActor in
+                            self.authorized = granted
+                            if granted { UIApplication.shared.registerForRemoteNotifications() }
+                        }
+                    }
+                } else {
+                    self.authorized = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
+                    if self.authorized { UIApplication.shared.registerForRemoteNotifications() }
+                }
             }
         }
     }
@@ -71,6 +79,11 @@ final class SeshAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
     /// Show banners even when the app is in the foreground.
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        // Realtime feed ingestion already presents friend activity in-app. Do
+        // not show the matching APNs banner as well when foregrounded.
+        if notification.request.content.userInfo["kind"] as? String == "friend_activity" {
+            return []
+        }
         [.banner, .sound]
     }
 }

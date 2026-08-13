@@ -75,9 +75,12 @@ final class SeshRealtime {
                     let message = try await ws.receive()
                     setState(.connected)
                     backoff = 1
-                    if case .string(let text) = message,
-                       text.contains("\"changed\"") {
-                        onChange?()
+                    if case .string(let text) = message {
+                        if text.contains("\"welcome\"") || text.contains("\"pong\"") {
+                            setState(.connected)
+                            backoff = 1
+                        }
+                        if text.contains("\"changed\"") { onChange?() }
                     }
                 } catch {
                     alive = false
@@ -101,7 +104,7 @@ final class SeshRealtime {
         heartbeatTask?.cancel()
         heartbeatTask = Task { @MainActor in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(60))
+                try? await Task.sleep(for: .seconds(30))
                 guard !Task.isCancelled else { return }
                 let uid = SeshAuth.shared.uid ?? ""
                 try? await ws.send(.string(#"{"type":"heartbeat","uid":"\#(uid)"}"#))

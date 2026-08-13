@@ -104,6 +104,9 @@ struct SeshApp: App {
                     // Opening the app makes you "ready" — but only if you were away
                     // and not mid-sesh, so this never overrides a live status.
                     social.enterReadyIfAway()
+                    Task { await social.appDidBecomeActive() }
+                } else if phase == .background {
+                    Task { await social.appDidEnterBackground() }
                 }
             }
             .onChange(of: auth.userID) { _, _ in

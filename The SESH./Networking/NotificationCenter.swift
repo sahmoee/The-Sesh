@@ -82,6 +82,7 @@ final class NotificationManager {
     /// Event ids we've already notified on, so re-polling the same feed doesn't
     /// re-fire. Bounded to a recent window to avoid unbounded growth.
     private var seenIDs: Set<String> = []
+    private let launchedAt = Date()
 
     // MARK: Anti-spam tuning
 
@@ -128,6 +129,12 @@ final class NotificationManager {
         for event in fresh {
             seenIDs.insert(event.id)
             guard event.userHandle != myHandle else { continue }   // not my own
+            // Snapshot/feed history is for the inbox, not a delayed alert. APNs
+            // handles events while the app is closed; only near-live events
+            // discovered in this process may surface locally.
+            guard event.at >= launchedAt.addingTimeInterval(-15),
+                  event.at <= Date().addingTimeInterval(60),
+                  event.activity != .idle else { continue }
             let note = SeshNotification(
                 id: event.id, kind: .status,
                 title: event.userName,
