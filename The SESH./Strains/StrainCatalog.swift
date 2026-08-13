@@ -104,7 +104,24 @@ struct StrainProfile: Codable, Identifiable, Hashable {
 
     /// All names this strain can be matched against (lowercased).
     var matchKeys: [String] {
-        ([name] + aka).map { $0.lowercased().trimmingCharacters(in: .whitespaces) }
+        ([name] + aka).map(Self.normalizedSearchText)
+    }
+
+    static func normalizedSearchText(_ value: String) -> String {
+        value.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }.joined(separator: " ")
+    }
+
+    /// Factual field coverage, used to favor informative profiles without
+    /// inventing ratings or popularity.
+    var completenessScore: Int {
+        var score = type == .unknown ? 0 : 1
+        score += thc == nil ? 0 : 1; score += cbd == nil ? 0 : 1
+        score += effects.isEmpty ? 0 : 2; score += flavors.isEmpty ? 0 : 1
+        score += terpenes.isEmpty ? 0 : 2; score += breeder == nil ? 0 : 1
+        score += lineage == nil ? 0 : 1
+        return score
     }
 
     static func slug(from name: String) -> String {
@@ -168,7 +185,7 @@ final class StrainStore {
 
     /// Ranked type-ahead suggestions: prefix matches first, then contains.
     func suggestions(for query: String, limit: Int = 6) -> [StrainProfile] {
-        let key = query.lowercased().trimmingCharacters(in: .whitespaces)
+        let key = StrainProfile.normalizedSearchText(query)
         guard !key.isEmpty else { return [] }
         let all = strains
         // Single pass: bucket into prefix vs. contains matches. Using a Set of ids
@@ -188,6 +205,36 @@ final class StrainStore {
         }
         let merged = prefix + contains.filter { !prefixIDs.contains($0.id) }
         return Array(merged.prefix(limit))
+    }
+
+    /// Relevance-ranked catalog search. Exact and prefix name matches lead,
+    /// followed by aliases, breeder, effects, flavors, and terpenes.
+    func search(_ query: String, type: StrainType? = nil, detailedOnly: Bool = false) -> [StrainProfile] {
+        let term = StrainProfile.normalizedSearchText(query)
+        return strains.compactMap { strain -> (StrainProfile, Int)? in
+            guard type == nil || strain.type == type,
+                  !detailedOnly || strain.completenessScore >= 4 else { return nil }
+            guard !term.isEmpty else { return (strain, strain.completenessScore) }
+            let name = StrainProfile.normalizedSearchText(strain.name)
+            let aliases = strain.aka.map(StrainProfile.normalizedSearchText)
+            let traits = (strain.effects + strain.flavors + strain.terpenes).map { StrainProfile.normalizedSearchText($0.name) }
+            let breeder = StrainProfile.normalizedSearchText(strain.breeder ?? "")
+            let rank: Int
+            if name == term { rank = 100 }
+            else if name.hasPrefix(term) { rank = 80 }
+            else if aliases.contains(where: { $0 == term || $0.hasPrefix(term) }) { rank = 70 }
+            else if name.contains(term) { rank = 60 }
+            else if breeder.contains(term) { rank = 40 }
+            else if traits.contains(where: { $0.contains(term) }) { rank = 30 }
+            else { return nil }
+            return (strain, rank + strain.completenessScore)
+        }
+        .sorted {
+            $0.1 == $1.1
+                ? $0.0.name.localizedCaseInsensitiveCompare($1.0.name) == .orderedAscending
+                : $0.1 > $1.1
+        }
+        .map(\.0)
     }
 
     /// True if no strain (bundled or custom) matches the name exactly.

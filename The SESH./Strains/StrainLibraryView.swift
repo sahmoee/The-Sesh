@@ -16,14 +16,12 @@ struct StrainLibraryView: View {
 
     @State private var query = ""
     @State private var typeFilter: StrainType?
+    @State private var detailedOnly = false
     @State private var showAdd = false
     @State private var editingStrain: StrainProfile?
 
     private var results: [StrainProfile] {
-        let base = strains.filtered(by: typeFilter)
-        guard !query.isEmpty else { return base }
-        let key = query.lowercased()
-        return base.filter { $0.matchKeys.contains { $0.contains(key) } }
+        strains.search(query, type: typeFilter, detailedOnly: detailedOnly)
     }
 
     private var filterLabels: [String] { ["All"] + StrainType.allCases.filter { $0 != .unknown }.map(\.rawValue) }
@@ -45,6 +43,7 @@ struct StrainLibraryView: View {
                         .padding(.bottom, 10)
                     FilterPills(items: filterLabels, selection: filterBinding)
                         .padding(.horizontal, 18).padding(.bottom, 8)
+                    resultsSummary
                     libraryListContent
                 }
                 floatingAddButton
@@ -57,6 +56,22 @@ struct StrainLibraryView: View {
         .sheet(item: $editingStrain) { s in
             StrainEditorView(editing: s).environment(strains)
         }
+    }
+
+    private var resultsSummary: some View {
+        HStack {
+            Text("\(results.count.formatted()) strain\(results.count == 1 ? "" : "s")")
+                .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+            Spacer()
+            Button { detailedOnly.toggle() } label: {
+                Label("Detailed profiles", systemImage: detailedOnly ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(detailedOnly ? Palette.greenBright : Palette.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityValue(detailedOnly ? "On" : "Off")
+        }
+        .padding(.horizontal, 18).padding(.bottom, 8)
     }
 
     @ViewBuilder private var libraryHeader: some View {
@@ -198,10 +213,8 @@ struct StrainLibraryView: View {
                                     Image(systemName: "star.fill").font(.system(size: 12)).foregroundStyle(Palette.gold)
                                 }
                                 Text(f.type.rawValue).font(.system(size: 12, weight: .medium)).foregroundStyle(f.type.tint)
-                                HStack(spacing: 4) {
-                                    Image(systemName: "star.fill").font(.system(size: 11)).foregroundStyle(Palette.gold)
-                                    Text(communityRating(f)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.text)
-                                }
+                                Label("Detailed profile", systemImage: "checkmark.seal.fill")
+                                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.greenBright)
                                 if let summary = f.summary {
                                     Text(summary).font(.system(size: 12)).foregroundStyle(Palette.textSecondary).lineLimit(2)
                                 }
@@ -217,7 +230,7 @@ struct StrainLibraryView: View {
     @ViewBuilder private var popularBlock: some View {
         let popular = popularStrains(from: strains.strains)
         VStack(alignment: .leading, spacing: 8) {
-            Text("POPULAR THIS WEEK").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+            Text("WELL-DOCUMENTED PICKS").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
             VStack(spacing: 0) {
                 ForEach(Array(popular.enumerated()), id: \.element.id) { idx, s in
                     NavigationLink {
@@ -244,37 +257,24 @@ struct StrainLibraryView: View {
                 Text(s.type.rawValue).font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
             }
             Spacer()
-            HStack(spacing: 3) {
-                Image(systemName: "star.fill").font(.system(size: 10)).foregroundStyle(Palette.gold)
-                Text(shortRating(s)).font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.text)
-            }
+            Image(systemName: "doc.text.magnifyingglass").font(.system(size: 13)).foregroundStyle(Palette.greenBright)
         }
         .padding(.vertical, 9)
     }
 
     private func featuredStrain(from all: [StrainProfile]) -> StrainProfile? {
-        guard !all.isEmpty else { return nil }
+        let documented = all.filter { $0.completenessScore >= 4 }
+        guard !documented.isEmpty else { return nil }
         // Stable daily-ish pick: index by day-of-year.
         let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
-        return all[day % all.count]
+        return documented[day % documented.count]
     }
     private func popularStrains(from all: [StrainProfile]) -> [StrainProfile] {
-        // A stable pseudo-popular set (well-known names if present, else first few).
+        // Familiar, well-documented entries—never synthetic popularity.
         let faves = ["Blue Dream", "Wedding Cake", "Runtz", "Permanent Marker", "Gelato"]
-        let picked = faves.compactMap { name in all.first { $0.name.caseInsensitiveCompare(name) == .orderedSame } }
+        let picked = faves.compactMap { name in all.first { $0.name.caseInsensitiveCompare(name) == .orderedSame && $0.completenessScore >= 4 } }
         if picked.count >= 4 { return Array(picked.prefix(4)) }
-        return Array(all.prefix(4))
-    }
-    /// Deterministic synthetic community rating like "4.6 (2,463)".
-    private func communityRating(_ s: StrainProfile) -> String {
-        let seed = abs(s.id.hashValue)
-        let rating = 4.0 + Double(seed % 10) / 10.0          // 4.0–4.9
-        let count = 800 + (seed % 4200)                       // 800–4999
-        return String(format: "%.1f (%d)", rating, count)
-    }
-    private func shortRating(_ s: StrainProfile) -> String {
-        let seed = abs(s.id.hashValue)
-        return String(format: "%.1f", 4.0 + Double(seed % 10) / 10.0)
+        return Array(all.sorted { $0.completenessScore > $1.completenessScore }.prefix(4))
     }
 }
 
@@ -390,4 +390,3 @@ struct StrainRow: View {
 }
 
 // MARK: - Catalog detail
-

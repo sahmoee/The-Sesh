@@ -54,6 +54,8 @@ struct StrainCatalogDetailView: View {
                                 if let summary = shown.summary {
                                     Text(summary).font(.system(size: 14)).foregroundStyle(Palette.text.opacity(0.9))
                                 }
+                                Text("Batch potency and effects can vary. Missing fields mean not reported—not zero.")
+                                    .font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
                             }
                         }
 
@@ -125,16 +127,25 @@ struct StrainCatalogDetailView: View {
 
                         if !shown.effects.isEmpty {
                             Text("Effects").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
-                            VStack(spacing: 12) {
-                                ForEach(shown.effects) { e in
-                                    HStack(spacing: 12) {
-                                        Text(e.name).font(.system(size: 14)).foregroundStyle(Palette.text).frame(width: 90, alignment: .leading)
-                                        EffectBar(value: (e.intensity ?? 0.6) * 10)
-                                        Text(String(format: "%.1f", (e.intensity ?? 0.6) * 10))
-                                            .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
-                                            .frame(width: 32, alignment: .trailing)
+                            let ranked = shown.effects.allSatisfy { $0.intensity != nil }
+                            if ranked {
+                                VStack(spacing: 12) {
+                                    ForEach(shown.effects) { e in
+                                        HStack(spacing: 12) {
+                                            Text(e.name).font(.system(size: 14)).foregroundStyle(Palette.text).frame(width: 90, alignment: .leading)
+                                            EffectBar(value: (e.intensity ?? 0) * 10)
+                                            Text(String(format: "%.1f", (e.intensity ?? 0) * 10))
+                                                .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
+                                                .frame(width: 32, alignment: .trailing)
+                                        }
                                     }
                                 }
+                            } else {
+                                FlowLayout(spacing: 8) {
+                                    ForEach(shown.effects) { effect in CategoryTag(text: effect.name) }
+                                }
+                                Text("Reported effects are not ranked because the source does not provide intensity.")
+                                    .font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
                             }
                         }
 
@@ -177,9 +188,13 @@ struct StrainCatalogDetailView: View {
                         }
 
                         // Similar strains (same type)
-                        let similar = strains.strains.filter {
-                            $0.type == shown.type && $0.id != shown.id
-                        }.prefix(6)
+                        let shownTraits = Set((shown.effects + shown.flavors + shown.terpenes).map { $0.name.lowercased() })
+                        let similar = strains.strains.filter { $0.type == shown.type && $0.id != shown.id }
+                            .map { candidate in
+                                let traits = Set((candidate.effects + candidate.flavors + candidate.terpenes).map { $0.name.lowercased() })
+                                return (candidate, shownTraits.intersection(traits).count * 10 + candidate.completenessScore)
+                            }
+                            .sorted { $0.1 > $1.1 }.prefix(6).map(\.0)
                         if !similar.isEmpty {
                             Text("Similar Strains").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).padding(.top, 4)
                             ScrollView(.horizontal, showsIndicators: false) {

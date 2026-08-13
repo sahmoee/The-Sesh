@@ -102,6 +102,14 @@ struct HomeView: View {
 
     @ViewBuilder private var header: some View {
         ZStack(alignment: .top) {
+            // Decorative light gets its own reserved lane. It no longer sits in
+            // the same layout band as Menu, status, or notification controls.
+            LoungeLamp()
+                .scaleEffect(0.78, anchor: .top)
+                .offset(y: -6)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+
             HStack(alignment: .top) {
                 Button(action: onMenu) {
                     Image(systemName: "line.3.horizontal")
@@ -122,8 +130,6 @@ struct HomeView: View {
             }
 
             VStack(spacing: 5) {
-                LoungeLamp()
-                    .scaleEffect(1.05)
                 Text("\(greeting), \(session.userName)")
                     .font(.system(size: 17, weight: .medium, design: .serif))
                     .foregroundStyle(Palette.goldSoft)
@@ -143,7 +149,7 @@ struct HomeView: View {
                     .foregroundStyle(Palette.textTertiary)
                 }
             }
-            .padding(.top, 0)
+            .padding(.top, 54)
             .frame(maxWidth: .infinity)
             .accessibilityElement(children: .combine)
         }
