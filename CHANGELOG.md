@@ -4,6 +4,7 @@ Every push should add an entry here so GitHub carries the build/change history.
 Newest at the top. Keep it plain ASCII (see .gitmessage.txt for the commit rules).
 
 ## [Unreleased]
+- Build 65 follow-up gives the Lounge entry button a bright gold treatment, bold high-contrast label, and clearer edge/shadow separation across app themes.
 - Build 65 follow-up synchronizes the saved Me-page display name before presence starts, refreshes identity-dependent services after edits, and reconnects realtime with renewed session claims so banners, activity, chat, and notifications no longer fall back to “Sesher ####.”
 - Build 65 follow-up separates Home controls, lamp, and greeting into explicit layout rows so the Ready pill cannot overlap the hanging light at any supported width or Dynamic Type size.
 - Build 65 expands the normalized strain reference from 1,453 to 9,598 entries, adds a repeatable licensed-data updater, relevance search, informative-profile filtering, transparent missing-data/source labels, trait-based similar strains, and a home lamp layout that no longer covers controls or content.

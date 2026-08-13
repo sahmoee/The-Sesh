@@ -172,13 +172,17 @@ struct EnterLoungeCard: View {
             Spacer(minLength: 0)
 
             HStack(spacing: 5) {
-                Text("Enter").font(.system(size: 13, weight: .semibold))
+                Text("Enter").font(.system(size: 14, weight: .bold))
                 Image(systemName: "arrow.right").font(.system(size: 11, weight: .bold))
             }
-            .foregroundStyle(Palette.onGreen)
-            .padding(.horizontal, 18).padding(.vertical, 12)
-            .background(Capsule().fill(Palette.creamElevated))
-            .foregroundStyle(Palette.onCream)
+            .foregroundStyle(Color.black.opacity(0.88))
+            .padding(.horizontal, 20).padding(.vertical, 13)
+            .background {
+                Capsule()
+                    .fill(Palette.goldSoft)
+                    .overlay(Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1))
+                    .shadow(color: Palette.gold.opacity(0.28), radius: 8, y: 3)
+            }
         }
         .padding(.horizontal, 16)
     }
