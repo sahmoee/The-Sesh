@@ -101,16 +101,8 @@ struct HomeView: View {
     // MARK: Header
 
     @ViewBuilder private var header: some View {
-        ZStack(alignment: .top) {
-            // Decorative light gets its own reserved lane. It no longer sits in
-            // the same layout band as Menu, status, or notification controls.
-            LoungeLamp()
-                .scaleEffect(0.78, anchor: .top)
-                .offset(y: -6)
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
-
-            HStack(alignment: .top) {
+        VStack(spacing: 0) {
+            HStack(alignment: .center) {
                 Button(action: onMenu) {
                     Image(systemName: "line.3.horizontal")
                         .font(.system(size: 23, weight: .medium))
@@ -120,14 +112,23 @@ struct HomeView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Menu")
 
-                Spacer()
+                Spacer(minLength: 12)
 
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     StatusPill()
+                        .layoutPriority(1)
                     NotificationBell(tint: Palette.textSecondary, action: onOpenInbox)
                 }
-                .padding(.top, 2)
             }
+
+            // A true layout row—not a ZStack overlay—keeps the lamp below the
+            // status controls at every device width and Dynamic Type size.
+            LoungeLamp()
+                .scaleEffect(0.72)
+                .frame(height: 30)
+                .clipped()
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
 
             VStack(spacing: 5) {
                 Text("\(greeting), \(session.userName)")
@@ -149,7 +150,7 @@ struct HomeView: View {
                     .foregroundStyle(Palette.textTertiary)
                 }
             }
-            .padding(.top, 54)
+            .padding(.top, 4)
             .frame(maxWidth: .infinity)
             .accessibilityElement(children: .combine)
         }
