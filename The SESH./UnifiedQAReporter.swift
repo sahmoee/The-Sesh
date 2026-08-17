@@ -10,17 +10,26 @@ enum UnifiedQASettings {
 struct UnifiedQASettingsView: View {
     @AppStorage(UnifiedQASettings.enabledKey) private var enabled = false
     @AppStorage(UnifiedQASettings.touchesKey) private var touches = true
+    @AppStorage(UnifiedQAPasscode.unlockedUntilKey) private var unlockedUntil = 0.0
+    @State private var code = ""
+    @State private var wrongCode = false
+    private var unlocked: Bool { unlockedUntil > Date().timeIntervalSinceReferenceDate }
     var body: some View {
         VStack(alignment: .leading) {
-            Toggle(isOn: $enabled) {
+            if unlocked { Toggle(isOn: $enabled) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Enable Sesh QA")
                     Text("Session, journal, social, music, screenshot, ticket, and fix-verification reporting.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+            } } else {
+                SecureField("QA passcode", text: $code).textFieldStyle(.roundedBorder)
+                if wrongCode { Text("Incorrect passcode").font(.caption).foregroundStyle(.red) }
+                Button("Unlock QA") { wrongCode = !UnifiedQAPasscode.unlock(code); code = ""; unlockedUntil = UserDefaults.standard.double(forKey: UnifiedQAPasscode.unlockedUntilKey) }
             }
-            if enabled { Toggle("Record anonymous touch positions", isOn: $touches).font(.caption) }
+            if unlocked && enabled { Toggle("Record anonymous touch positions", isOn: $touches).font(.caption) }
         }
+        .onAppear { if !unlocked { enabled = false } }
     }
 }
 
@@ -72,7 +81,32 @@ struct UnifiedQATicket: Codable, Identifiable {
         Task { await sync(value, source: source) }
     }
 
-    func retryAll(source: String) { Task { for ticket in tickets { await sync(ticket, source: source) } } }
+    func retryAll(source: String) { Task { await syncAll(source: source) } }
+
+    private func syncAll(source: String) async {
+        await pull(source: source)
+        for ticket in tickets { await sync(ticket, source: source) }
+    }
+
+    private func pull(source: String) async {
+        guard UnifiedQAPasscode.isUnlocked else { return }
+        do {
+            var components = URLComponents(url: base.appendingPathComponent("tickets/sync"), resolvingAgainstBaseURL: false)!
+            components.queryItems = [URLQueryItem(name: "source", value: source), URLQueryItem(name: "limit", value: "1000")]
+            var request = URLRequest(url: components.url!); request.httpMethod = "POST"; request.setValue("Joo", forHTTPHeaderField: "X-QA-Passcode")
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.userAuthenticationRequired) }
+            let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let values = try JSONSerialization.data(withJSONObject: object?["tickets"] as? [[String: Any]] ?? [])
+            let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
+            let remote = try decoder.decode([UnifiedQATicket].self, from: values)
+            var byNumber = Dictionary(uniqueKeysWithValues: tickets.map { ($0.number, $0) })
+            for ticket in remote where ticket.updatedAt >= (byNumber[ticket.number]?.updatedAt ?? .distantPast) { byNumber[ticket.number] = ticket }
+            tickets = byNumber.values.sorted { $0.updatedAt > $1.updatedAt }
+            for ticket in remote { persist(ticket: ticket, screenshot: nil) }
+            saveIndex(); syncMessage = "Loaded \(remote.count) cross-device ticket(s)"
+        } catch { syncMessage = "Saved locally · device sync will retry" }
+    }
 
     func verify(_ ticket: UnifiedQATicket, source: String) {
         var value = ticket; value.status = "verified"; value.verifiedAt = Date(); value.updatedAt = Date()
@@ -173,7 +207,7 @@ struct UnifiedQAReporter: View {
             Button { presented = true } label: { Image(systemName: "ladybug.fill").padding(12).background(.ultraThinMaterial).clipShape(Circle()) }
         }
             .accessibilityLabel("Open QA tickets")
-            .sheet(isPresented: $presented) { UnifiedQATicketList(app: app, source: source, prefix: prefix).environmentObject(store) }
+            .sheet(isPresented: $presented) { UnifiedQAPasscodeGate { UnifiedQATicketList(app: app, source: source, prefix: prefix).environmentObject(store) } }
             .task { UnifiedQAAutonomy.shared.start(); store.retryAll(source: source) }
             .onReceive(NotificationCenter.default.publisher(for: .unifiedQAQuickReport)) { _ in presented = true }
     }
