@@ -1,5 +1,7 @@
 # Cross-project sync
 
+Also apply the ten additive cross-project safeguards in `PROJECT_GUIDE_ADDITIONS.md`; existing ownership and compatibility rules remain authoritative.
+
 - `UnifiedWorker`: auth, social graph, rooms/WebSockets, lounge, APNs, Spotify, QA, and legacy shim.
 - `site-repo`: public SESH pages, policies, age/safety language, support, and links.
 
