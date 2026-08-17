@@ -201,6 +201,7 @@ struct UnifiedQAReporter: View {
     let app: String; let source: String; let prefix: String
     @StateObject private var store = UnifiedQAStore.shared
     @State private var presented = false
+    @AppStorage(UnifiedQASettings.enabledKey) private var enabled = false
     var body: some View {
         ZStack {
             UnifiedQAGestureObserver().frame(width: 0, height: 0)
@@ -208,7 +209,10 @@ struct UnifiedQAReporter: View {
         }
             .accessibilityLabel("Open QA tickets")
             .sheet(isPresented: $presented) { UnifiedQAPasscodeGate { UnifiedQATicketList(app: app, source: source, prefix: prefix).environmentObject(store) } }
-            .task { UnifiedQAAutonomy.shared.start(); store.retryAll(source: source) }
+            .task {
+                guard UnifiedQAPasscode.isUnlocked else { enabled = false; return }
+                UnifiedQAAutonomy.shared.start(); store.retryAll(source: source)
+            }
             .onReceive(NotificationCenter.default.publisher(for: .unifiedQAQuickReport)) { _ in presented = true }
     }
 }
