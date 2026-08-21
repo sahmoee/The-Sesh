@@ -27,7 +27,10 @@ struct UnifiedQASettingsView: View {
                 if wrongCode { Text("Incorrect passcode").font(.caption).foregroundStyle(.red) }
                 Button("Unlock QA") { wrongCode = !UnifiedQAPasscode.unlock(code); code = ""; unlockedUntil = UserDefaults.standard.double(forKey: UnifiedQAPasscode.unlockedUntilKey) }
             }
-            if unlocked && enabled { Toggle("Record anonymous touch positions", isOn: $touches).font(.caption) }
+            if unlocked && enabled {
+                Toggle("Record anonymous touch positions", isOn: $touches).font(.caption)
+                QAAIOverrideView(app: "sesh", hasActiveAI: false)
+            }
         }
         .onAppear { if !unlocked { enabled = false } }
     }
