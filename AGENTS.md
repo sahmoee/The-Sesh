@@ -19,6 +19,8 @@ This is the single authoritative instruction contract for Codex, Claude, and any
 
 Every page, sheet, popover, and cover must fill its presentation with The SESH. theme, never a stock white host background. Layouts and controls must adapt to available width, device class, orientation, multitasking, safe areas, and Dynamic Type. Prefer flexible frames and adaptive composition; fixed dimensions are only for intentional artwork, QR, session-ring, or media geometry. Never constrain scrolling in a way that clips smaller screens or accessibility text, and avoid forced scrolling when content fits.
 
+App-level headers and root tab bars have one shared implementation and one geometry source. Feature pages must not locally override brand placement, chrome height, safe-area spacing, icon slots, labels, or selected-tab geometry.
+
 ## Cross-project ownership and synchronization
 
 
