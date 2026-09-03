@@ -160,6 +160,7 @@
 				7B15D10E2FE86D4F00F13C0B /* Sources */,
 				7B15D10F2FE86D4F00F13C0B /* Frameworks */,
 				7B15D1102FE86D4F00F13C0B /* Resources */,
+				51414255494C440000000001 /* Stamp QA build number */,
 			);
 			buildRules = (
 			);
@@ -183,6 +184,7 @@
 				7B2DD4F62FDF181D00E3B22C /* Frameworks */,
 				7B2DD4F72FDF181D00E3B22C /* Resources */,
 				7B90A4742FDFE9AC0078E9C8 /* Embed Foundation Extensions */,
+				51414255494C440000000002 /* Stamp QA build number */,
 			);
 			buildRules = (
 			);
@@ -261,6 +263,35 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		51414255494C440000000001 /* Stamp QA build number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = ();
+			inputPaths = ("$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)", "$(PROJECT_TEMP_DIR)/qa-build-number", "$(SRCROOT)/scripts/qa_build_number.py");
+			name = "Stamp QA build number";
+			outputPaths = ("$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)", "$(DERIVED_FILE_DIR)/qa-build-stamped");
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			showEnvVarsInLog = 0;
+			shellScript = "set -eu\n/usr/bin/python3 \"$SRCROOT/scripts/qa_build_number.py\" --stamp-product \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\" --reservation-dir \"$PROJECT_TEMP_DIR\"\n/usr/bin/touch \"$DERIVED_FILE_DIR/qa-build-stamped\"\n";
+		};
+		51414255494C440000000002 /* Stamp QA build number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = ();
+			inputPaths = ("$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)", "$(PROJECT_TEMP_DIR)/qa-build-number", "$(SRCROOT)/scripts/qa_build_number.py");
+			name = "Stamp QA build number";
+			outputPaths = ("$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)", "$(DERIVED_FILE_DIR)/qa-build-stamped");
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			showEnvVarsInLog = 0;
+			shellScript = "set -eu\n/usr/bin/python3 \"$SRCROOT/scripts/qa_build_number.py\" --stamp-product \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\" --reservation-dir \"$PROJECT_TEMP_DIR\"\n/usr/bin/touch \"$DERIVED_FILE_DIR/qa-build-stamped\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		7B15D10E2FE86D4F00F13C0B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -295,7 +326,7 @@
 				CODE_SIGN_ENTITLEMENTS = SeshWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 65;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 5DV5N49VG8;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SeshWidget/Info.plist;
@@ -328,7 +359,7 @@
 				CODE_SIGN_ENTITLEMENTS = SeshWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 65;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 5DV5N49VG8;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SeshWidget/Info.plist;
@@ -485,7 +516,7 @@
 				CODE_SIGN_ENTITLEMENTS = "The SESH./TheSESH.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 65;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 5DV5N49VG8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -529,7 +560,7 @@
 				CODE_SIGN_ENTITLEMENTS = "The SESH./The SESH.Release.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 65;
+				CURRENT_PROJECT_VERSION = 68;
 				DEVELOPMENT_TEAM = 5DV5N49VG8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

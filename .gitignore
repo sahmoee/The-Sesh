@@ -49,3 +49,7 @@ node_modules/
 
 # Worker has no package.json; a stray lockfile is always an artifact
 _worker/**/package-lock.json
+
+# Local QA build reservations
+.qa-build/
+scripts/__pycache__/

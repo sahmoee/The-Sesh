@@ -6,6 +6,19 @@
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
       buildArchitectures = "Automatic">
+      <PreActions>
+         <ExecutionAction ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent title = "Automatic QA build number (version stays manual)" scriptText = "set -eu&#10;/bin/mkdir -p &quot;$PROJECT_TEMP_DIR&quot;&#10;: &gt; &quot;$PROJECT_TEMP_DIR/qa-build-number&quot;&#10;/usr/bin/python3 &quot;$SRCROOT/scripts/qa_build_number.py&quot; --project &quot;$PROJECT_FILE_PATH&quot; --reservation-dir &quot;$PROJECT_TEMP_DIR&quot;&#10;">
+               <EnvironmentBuildable><BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "7B2DD4F82FDF181D00E3B22C"
+               BuildableName = "The SESH..app"
+               BlueprintName = "The SESH."
+               ReferencedContainer = "container:The SESH..xcodeproj">
+            </BuildableReference></EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
