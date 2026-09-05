@@ -1,128 +1,178 @@
-//
-//  OfflineOutbox.swift
-//  The SESH
-//
-//  (#C5) Durable offline outbox. Social writes (chat messages, activity,
-//  friend operations, status changes) are queued locally when they can't be
-//  delivered, then replayed in order when connectivity returns. Every
-//  operation carries a stable idempotency key, sent as X-Idempotency-Key;
-//  the Worker acknowledges duplicates without re-applying them, so a replay
-//  that raced a successful-but-unacknowledged send is harmless.
-//
-//  The queue is persisted to disk (Application Support) so operations survive
-//  relaunches, and is bounded to keep pathological backlogs in check.
-//
-
 import Foundation
+import Observation
 import os
 
-/// One queued write operation.
+/// Additive fields preserve old files; unowned legacy writes are retained, never reassigned.
 struct OutboxOperation: Codable, Identifiable {
-    let id: String              // idempotency key
-    let path: String            // e.g. "/api/rooms/rm_general/messages"
-    let body: Data              // JSON payload
+    let id: String
+    let path: String
+    let body: Data
     let queuedAt: Date
     var attempts: Int = 0
+    var ownerID: String? = nil
+    var heldReason: String? = nil
+    var retryAt: Date? = nil
 }
 
-@MainActor
-@Observable
-final class OfflineOutbox {
+@MainActor @Observable final class OfflineOutbox {
     static let shared = OfflineOutbox()
-
-    /// Pending operation count (for a "syncing…" indicator).
-    private(set) var pendingCount = 0
-
-    private var queue: [OutboxOperation] = [] {
-        didSet { pendingCount = queue.count }
-    }
+    private(set) var queue: [OutboxOperation] = []
+    private(set) var storageError: String?
+    private var enqueueError: String?
     private var replayTask: Task<Void, Never>?
+    private var replayID: UUID?
+    private let storageURL: URL
+    private let owner: @MainActor () -> String?
+    private let online: @MainActor () -> Bool
+    private let automaticallyReplay: Bool
     private let log = Logger(subsystem: "com.sowens.The-SESH-", category: "outbox")
-    private static let maxQueued = 500
-    private static let maxAttempts = 8
+    static let maxQueued = 500
+    static let maxAttempts = 8
 
-    private init() { load() }
+    var pendingCount: Int { queue.count }
+    var heldCount: Int { queue.filter { $0.heldReason != nil || !SeshReliabilityPolicy.ownerMatches($0.ownerID, current: owner()) }.count }
+    var canRetry: Bool { storageError != nil || queue.contains { SeshReliabilityPolicy.ownerMatches($0.ownerID, current: owner()) && $0.heldReason != "invalidRequest" } }
+    var statusMessage: String? {
+        if let storageError { return storageError }
+        if let enqueueError { return enqueueError }
+        if heldCount > 0 { return "Some unsent actions are saved on this device and need review. Nothing was discarded." }
+        if !queue.isEmpty { return "\(queue.count) action\(queue.count == 1 ? "" : "s") waiting to sync." }
+        return nil
+    }
 
-    // MARK: Enqueue
+    /// Injection keeps tests away from real accounts, files and network requests.
+    init(storageURL: URL? = nil, owner: @escaping @MainActor () -> String? = { SeshAuth.shared.uid },
+         online: @escaping @MainActor () -> Bool = { ConnectivityMonitor.shared.pathSatisfied }, automaticallyReplay: Bool = true) {
+        self.storageURL = storageURL ?? Self.defaultURL
+        self.owner = owner
+        self.online = online
+        self.automaticallyReplay = automaticallyReplay
+        load()
+    }
 
-    /// Queue an operation for delivery. Returns the idempotency key.
     @discardableResult
-    func enqueue(path: String, body: Data, key: String = UUID().uuidString) -> String {
-        queue.append(OutboxOperation(id: key, path: path, body: body, queuedAt: Date()))
-        if queue.count > Self.maxQueued { queue.removeFirst(queue.count - Self.maxQueued) }
-        persist()
-        scheduleReplay()
+    func enqueue(path: String, body: Data, key: String = UUID().uuidString) -> String? {
+        guard storageError == nil else { return nil }
+        guard let currentOwner = owner(), !currentOwner.isEmpty else {
+            enqueueError = "Connect once to verify your social account before sending. Your draft is still available."; return nil
+        }
+        if let existing = queue.first(where: { $0.id == key }) {
+            guard existing.path == path, existing.body == body, existing.ownerID == currentOwner else {
+                enqueueError = "That action could not be safely queued. Please try again."; return nil
+            }
+            return existing.id
+        }
+        guard !key.isEmpty, key.utf8.count <= 128, SeshReliabilityPolicy.validOutboxPath(path),
+              body.count <= SeshReliabilityPolicy.maxJSONBytes,
+              (try? JSONSerialization.jsonObject(with: body)) != nil else {
+            enqueueError = "That action is not valid. Your existing saved actions are unchanged."; return nil
+        }
+        guard queue.count < Self.maxQueued else {
+            enqueueError = "The offline queue is full. Sync saved actions before sending more."; return nil
+        }
+        let candidate = queue + [OutboxOperation(id: key, path: path, body: body, queuedAt: Date(), ownerID: currentOwner)]
+        guard commit(candidate) else { return nil }
+        enqueueError = nil
+        if automaticallyReplay { scheduleReplay() }
         return key
     }
 
-    // MARK: Replay
-
-    /// Attempt to deliver everything, oldest first, with exponential backoff
-    /// between rounds. Called on reconnect, on app foreground, and after each
-    /// enqueue.
-    func scheduleReplay(api: SeshAPI = SeshAPI()) {
-        guard replayTask == nil, !queue.isEmpty else { return }
+    func scheduleReplay(api suppliedAPI: SeshAPI? = nil) {
+        let api = suppliedAPI ?? SeshAPI()
+        guard replayTask == nil, storageError == nil, online(), let currentOwner = owner(),
+              queue.contains(where: { $0.ownerID == currentOwner && $0.heldReason == nil }) else { return }
+        let generation = UUID()
+        replayID = generation
         replayTask = Task { [weak self] in
-            defer { self?.replayTask = nil }
-            var backoff: Double = 1
-            while let self, !self.queue.isEmpty, !Task.isCancelled {
-                let op = self.queue[0]
+            guard let self else { return }
+            defer { if self.replayID == generation { self.replayTask = nil; self.replayID = nil } }
+            while !Task.isCancelled, self.replayID == generation, self.online(), self.owner() == currentOwner {
+                guard let op = self.queue.first(where: { $0.ownerID == currentOwner && $0.heldReason == nil }) else { return }
+                if op.path == "/api/activity", !SeshReliabilityPolicy.mayReplayActivity(op.body,
+                    sharesActivity: PrivacySettings.shared.shareActivity,
+                    sharesDetails: PrivacySettings.shared.shareStrainDetails) {
+                    var held = self.queue
+                    if let index = held.firstIndex(where: { $0.id == op.id }) { held[index].heldReason = "privacyChanged" }
+                    guard self.commit(held) else { return }
+                    continue
+                }
+                if let retryAt = op.retryAt, retryAt > Date() {
+                    do { try await Task.sleep(for: .seconds(min(retryAt.timeIntervalSinceNow, 60))) }
+                    catch { return }
+                    continue
+                }
                 let result = await api.postRaw(op.path, body: op.body, idempotencyKey: op.id)
+                guard !Task.isCancelled, self.replayID == generation, self.owner() == currentOwner,
+                      let index = self.queue.firstIndex(where: { $0.id == op.id && $0.ownerID == currentOwner }) else { return }
+                var candidate = self.queue
                 switch result {
                 case .success:
-                    self.queue.removeFirst()
-                    self.persist()
-                    backoff = 1
+                    candidate.remove(at: index)
                 case .failure(let error):
+                    if case .cancelled = error { return }
+                    if !self.online() { return }
                     switch error {
-                    case .notFound, .invalidRequest:
-                        // Permanent: drop rather than retry forever.
-                        self.log.warning("outbox drop (permanent) path=\(op.path, privacy: .public)")
-                        self.queue.removeFirst()
-                        self.persist()
+                    case .notFound, .invalidRequest: candidate[index].heldReason = "invalidRequest"
+                    case .server(let code) where (400...499).contains(code): candidate[index].heldReason = "authorizationOrRequest"
                     default:
-                        var op0 = self.queue[0]
-                        op0.attempts += 1
-                        if op0.attempts >= Self.maxAttempts {
-                            self.log.warning("outbox drop (max attempts) path=\(op.path, privacy: .public)")
-                            self.queue.removeFirst()
-                        } else {
-                            self.queue[0] = op0
-                        }
-                        self.persist()
-                        // Backoff with jitter before the next round.
-                        let delay = backoff + Double.random(in: 0...0.5)
-                        try? await Task.sleep(for: .seconds(delay))
-                        backoff = min(backoff * 2, 60)
+                        candidate[index].attempts = min(max(0, candidate[index].attempts), Self.maxAttempts - 1) + 1
+                        if candidate[index].attempts >= Self.maxAttempts { candidate[index].heldReason = "retryLimit" }
+                        let delay = max(error.retryDelay ?? 0, min(pow(2, Double(candidate[index].attempts)), 60) + Double.random(in: 0...0.5))
+                        candidate[index].retryAt = Date().addingTimeInterval(delay)
                     }
                 }
+                guard self.commit(candidate) else { return }
             }
         }
     }
 
-    func cancelReplay() { replayTask?.cancel(); replayTask = nil }
-
-    // MARK: Persistence
-
-    private static var fileURL: URL {
-        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appendingPathComponent("sesh-outbox.json")
+    func retryHeldOperations() {
+        if storageError != nil { load(); guard storageError == nil else { return } }
+        guard let current = owner() else { return }
+        var candidate = queue
+        for index in candidate.indices where candidate[index].ownerID == current && candidate[index].heldReason != "invalidRequest" {
+            candidate[index].attempts = 0
+            candidate[index].heldReason = nil
+            // Explicit Retry cannot shorten a server cooldown.
+        }
+        guard commit(candidate) else { return }
+        enqueueError = nil
+        scheduleReplay()
     }
 
-    private func persist() {
+    func cancelReplay() {
+        replayID = nil
+        replayTask?.cancel()
+        replayTask = nil
+    }
+
+    private static var defaultURL: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("sesh-outbox.json")
+    }
+
+    @discardableResult private func commit(_ candidate: [OutboxOperation]) -> Bool {
         do {
-            let data = try JSONEncoder().encode(queue)
-            try data.write(to: Self.fileURL, options: .atomic)
+            try FileManager.default.createDirectory(at: storageURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            let data = try JSONEncoder().encode(candidate)
+            try data.write(to: storageURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+            queue = candidate
+            storageError = nil
+            return true
         } catch {
-            log.error("outbox persist failed: \(String(describing: error), privacy: .public)")
+            storageError = "Unsent actions could not be saved. Free device storage and try again; existing actions are retained."
+            log.error("outbox persistence failed; retaining prior queue")
+            return false
         }
     }
 
     private func load() {
-        guard let data = try? Data(contentsOf: Self.fileURL),
-              let saved = try? JSONDecoder().decode([OutboxOperation].self, from: data) else { return }
-        queue = saved
-        pendingCount = saved.count
+        guard FileManager.default.fileExists(atPath: storageURL.path) else { storageError = nil; return }
+        do {
+            queue = try JSONDecoder().decode([OutboxOperation].self, from: Data(contentsOf: storageURL))
+            storageError = nil
+        } catch {
+            storageError = "Saved unsent actions could not be read. The original file is preserved; try again after unlocking the device."
+        }
     }
 }

@@ -26,6 +26,7 @@ struct SaveSeshView: View {
     @State private var vault: SeshCategory?
     @State private var photoName: String?
     @State private var confirmDiscard = false
+    @State private var saving = false
 
     private let methods = ["Joint", "Blunt", "Bong", "Pipe", "Vape", "Edible", "Other"]
 
@@ -33,7 +34,8 @@ struct SaveSeshView: View {
     /// would silently lose their rating/effects/notes/photo.
     private var hasEdits: Bool {
         rating != 7 || method != "Joint" || !effects.isEmpty || vault != nil
-            || photoName != nil || !notes.trimmingCharacters(in: .whitespaces).isEmpty
+            || photoName != nil || !JournalInputPolicy.trimmed(notes).isEmpty
+            || !JournalInputPolicy.trimmed(attachedThought).isEmpty || !capturedThoughts.isEmpty
     }
 
     var body: some View {
@@ -129,22 +131,28 @@ struct SaveSeshView: View {
                             PhotoField(photoName: $photoName, size: 64)
                         }
 
-                        PrimaryButton(title: "Save to Journal", icon: "checkmark") { save() }
+                        PrimaryButton(title: "Save to Journal", icon: "checkmark") { save() }.disabled(saving)
                         Color.clear.frame(height: 30)
                     }
                     .padding(.horizontal, 18)
+                    .seshReadableForm()
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
         }
+        .seshEditorPresentation()
+        .interactiveDismissDisabled(hasEdits)
         .confirmationDialog("Discard this sesh?", isPresented: $confirmDiscard, titleVisibility: .visible) {
             Button("Discard", role: .destructive) { dismiss() }
             Button("Keep Editing", role: .cancel) {}
         } message: {
-            Text("Your rating, effects, notes and photo won't be saved.")
+            Text("Your rating, effects, captured thoughts, notes and photo won't be saved.")
         }
     }
 
     private func save() {
+        guard !saving else { return }
+        saving = true
         // Collect every thought captured during the sesh, plus any final draft.
         var allThoughts = capturedThoughts
         let trimmedDraft = attachedThought.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -163,13 +171,13 @@ struct SaveSeshView: View {
             rating: rating,
             notes: notes
         )
-        entry.mood = Mood.from(effect: effects.first ?? "")
+        entry.mood = Mood.from(effect: effects.sorted().first ?? "")
         entry.smokeAgain = rating >= 7 ? .definitely : (rating >= 5 ? .maybe : .no)
         entry.category = vault
         entry.sessionType = sessionType.rawValue
         entry.durationMinutes = durationMinutes
         entry.companions = companions.isEmpty ? nil : companions
-        entry.effects = effects.isEmpty ? nil : Array(effects)
+        entry.effects = effects.isEmpty ? nil : effects.sorted()
         entry.photoName = photoName
         entry.attachedThoughtID = firstThoughtID
 

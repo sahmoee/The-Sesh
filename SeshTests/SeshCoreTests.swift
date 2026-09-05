@@ -120,31 +120,21 @@ import Foundation
 // MARK: - Outbox bounding (#C5)
 
 @Suite @MainActor struct OutboxTrimTests {
-    /// Over-filling the outbox must drop the OLDEST operations, keeping the
-    /// newest `maxQueued` (500). Verified through the persisted queue file,
-    /// which enqueue() rewrites synchronously.
-    @Test func maxQueuedTrimDropsOldest() throws {
-        let outbox = OfflineOutbox.shared
-        outbox.cancelReplay()
-
-        let total = 505
-        for i in 0..<total {
-            outbox.enqueue(path: "/api/test/trim", body: Data("{}".utf8), key: "trim-\(i)")
+    @Test func maxQueuedRejectsOverflowWithoutErasingOldest() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("sesh-outbox-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appendingPathComponent("queue.json")
+        let outbox = OfflineOutbox(storageURL: file, owner: { "test-owner" }, online: { false }, automaticallyReplay: false)
+        for i in 0..<500 {
+            #expect(outbox.enqueue(path: "/api/activity", body: Data("{}".utf8), key: "trim-\(i)") != nil)
         }
-        outbox.cancelReplay()
-
+        #expect(outbox.enqueue(path: "/api/activity", body: Data("{}".utf8), key: "overflow") == nil)
         #expect(outbox.pendingCount == 500)
-
-        // The persisted file mirrors the in-memory queue after every enqueue.
-        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let data = try Data(contentsOf: dir.appendingPathComponent("sesh-outbox.json"))
-        let saved = try JSONDecoder().decode([OutboxOperation].self, from: data)
-        let ids = Set(saved.map(\.id))
-        #expect(saved.count == 500)
-        #expect(!ids.contains("trim-0"))            // oldest dropped
-        #expect(!ids.contains("trim-4"))            // ...all 5 overflowed
-        #expect(ids.contains("trim-5"))             // first survivor
-        #expect(ids.contains("trim-\(total - 1)"))  // newest kept
+        let saved = try JSONDecoder().decode([OutboxOperation].self, from: Data(contentsOf: file))
+        #expect(saved.first?.id == "trim-0")
+        #expect(saved.last?.id == "trim-499")
+        #expect(outbox.statusMessage != nil)
     }
 }
 

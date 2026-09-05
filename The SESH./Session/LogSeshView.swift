@@ -50,6 +50,8 @@ struct LogSeshView: View {
     /// One-shot guard: `.task` re-runs when the view re-appears (e.g. after the
     /// in-form camera cover dismisses), and re-loading would wipe typed input.
     @State private var didLoad = false
+    @State private var saving = false
+    @State private var saveError: String?
 
     private let moodCols = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 
@@ -90,14 +92,25 @@ struct LogSeshView: View {
                         effectsSection
                         amountSection
                         NotesField(label: "Personal Notes", placeholder: "How was your experience?", text: $notes)
+                        if let saveError {
+                            Text(saveError).font(.callout).foregroundStyle(Palette.moodAngry)
+                        }
+                        if hasPendingFields {
+                            Text("Finish adding the extra strain, category or custom effect above, or clear its draft, before saving.")
+                                .font(.footnote).foregroundStyle(Palette.textSecondary)
+                        }
                         PrimaryButton(title: isEditing ? "Save Changes" : "Save Entry") { save() }
+                            .disabled(!amountIsValid || hasPendingFields || saving || !didLoad)
                             .padding(.top, 4)
                     }
                     .padding(.horizontal, 18).padding(.bottom, 28)
+                    .seshReadableForm()
                 }
                 .scrollDismissesKeyboard(.interactively)
             }
         }
+        .seshEditorPresentation()
+        .interactiveDismissDisabled(hasEdits)
         .task {
             guard !didLoad else { return }
             didLoad = true
@@ -115,16 +128,18 @@ struct LogSeshView: View {
     /// A cheap snapshot of everything the user can edit; compared against the
     /// post-load snapshot to decide whether backing out needs a confirmation.
     private var fieldsFingerprint: String {
-        [strain, extraStrains.joined(separator: ","), method, String(rating),
+        JournalInputPolicy.fingerprint([strain, JournalInputPolicy.fingerprint(extraStrains), method, String(rating),
          mood?.rawValue ?? "", smokeAgain?.rawValue ?? "",
          category?.rawValue ?? "", customCategory ?? "", champion ?? "",
-         sessionTags.sorted().joined(separator: ","),
-         effects.sorted().joined(separator: ","),
+         JournalInputPolicy.fingerprint(sessionTags.sorted()),
+         JournalInputPolicy.fingerprint(effects.sorted()),
          trackMoodShift ? "\(moodBefore)-\(moodAfter)" : "",
-         amount, amountUnit, notes, photoName ?? ""].joined(separator: "|")
+         amount, amountUnit, notes, photoName ?? "", newStrainEntry, newCategoryName, customEffect])
     }
 
-    private var hasEdits: Bool { fieldsFingerprint != loadedFingerprint }
+    private var hasEdits: Bool { didLoad && fieldsFingerprint != loadedFingerprint }
+    private var amountIsValid: Bool { JournalInputPolicy.trimmed(amount).isEmpty || JournalInputPolicy.decimal(amount) != nil }
+    private var hasPendingFields: Bool { [newStrainEntry, newCategoryName, customEffect].contains { !JournalInputPolicy.trimmed($0).isEmpty } }
 
     // MARK: Sections (split out so the type-checker resolves each in isolation)
 
@@ -470,6 +485,7 @@ struct LogSeshView: View {
             HStack(spacing: 8) {
                 TextField("", text: $amount, prompt: Text("0").foregroundStyle(Palette.textTertiary))
                     .keyboardType(.decimalPad).foregroundStyle(Palette.text)
+                    .accessibilityLabel("Recorded amount, optional")
                     .padding(.horizontal, 14).padding(.vertical, 13)
                     .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
                     .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
@@ -486,6 +502,12 @@ struct LogSeshView: View {
                     .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
                     .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
                 }
+                .accessibilityLabel("Recorded amount unit")
+                .accessibilityValue(amountUnit)
+            }
+            if !amountIsValid {
+                Text("Enter a nonnegative number using your region’s decimal separator, without units or group separators.")
+                    .font(.footnote).foregroundStyle(Palette.moodAngry)
             }
         }
     }
@@ -505,7 +527,7 @@ struct LogSeshView: View {
             if let mb = e.moodBefore, let ma = e.moodAfter {
                 moodBefore = mb; moodAfter = ma; trackMoodShift = true
             }
-            if let amt = e.amount { amount = amt.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(amt)) : String(format: "%.1f", amt) }
+            if let amt = e.amount { amount = JournalInputPolicy.editableDecimal(amt) }
             if let u = e.amountUnit { amountUnit = u }
             matched = strains.strain(named: e.strain)
         } else if let p = prefill {
@@ -514,12 +536,23 @@ struct LogSeshView: View {
     }
 
     private func save() {
+        guard didLoad, !saving, amountIsValid, !hasPendingFields else { return }
         // Validation: trimmed strain, clamped rating.
         let trimmed = strain.trimmingCharacters(in: .whitespaces)
         let name = trimmed.isEmpty ? "Untitled" : session.canonicalStrainName(trimmed)
         let clampedRating = min(10, max(1, rating))
 
-        var entry = editing ?? JournalEntry(strain: name, method: "", rating: clampedRating, notes: "")
+        var entry: JournalEntry
+        if let original = editing {
+            guard let current = session.entries.first(where: { $0.id == original.id }) else {
+                saveError = "This entry was removed while you were editing. Your draft is still here; copy your notes before closing."
+                return
+            }
+            entry = current
+        } else {
+            entry = JournalEntry(strain: name, method: "", rating: clampedRating, notes: "")
+        }
+        saving = true
         entry.strain = name
         entry.extraStrains = extraStrains.isEmpty ? nil : extraStrains
         entry.method = method.trimmingCharacters(in: .whitespaces)
@@ -528,8 +561,8 @@ struct LogSeshView: View {
         entry.smokeAgain = smokeAgain
         entry.category = category
         entry.customCategory = customCategory
-        entry.sessionTags = sessionTags.isEmpty ? nil : Array(sessionTags)
-        entry.effects = effects.isEmpty ? nil : Array(effects)
+        entry.sessionTags = sessionTags.isEmpty ? nil : sessionTags.sorted()
+        entry.effects = effects.isEmpty ? nil : effects.sorted()
         // Champion only applies when saved to Favorites.
         entry.champion = (category == .personalFaves) ? champion : nil
         entry.notes = notes
@@ -538,7 +571,7 @@ struct LogSeshView: View {
         entry.photoName = photoName
         entry.moodBefore = trackMoodShift ? moodBefore : nil
         entry.moodAfter = trackMoodShift ? moodAfter : nil
-        let amountValue = Double(amount.filter { "0123456789.".contains($0) })
+        let amountValue = JournalInputPolicy.decimal(amount)
         entry.amount = amountValue
         entry.amountUnit = amountValue != nil ? amountUnit : nil
 

@@ -16,6 +16,15 @@
 import SwiftUI
 
 extension View {
+    /// A single reading width for journal forms in iPad and narrow windows.
+    func seshReadableForm() -> some View {
+        frame(maxWidth: 720).frame(maxWidth: .infinity)
+    }
+
+    func seshEditorPresentation() -> some View {
+        presentationBackground(Palette.bgTop).tint(Palette.green)
+    }
+
     /// 44×44pt minimum touch target (App 10).
     func minimumTapTarget() -> some View {
         frame(minWidth: 44, minHeight: 44)

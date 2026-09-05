@@ -754,12 +754,16 @@ final class SocialStore {
         SocialCache.saveMessages(merged, roomID: roomID)
     }
 
-    func send(_ text: String, to roomID: String) {
+    @discardableResult
+    func send(_ text: String, to roomID: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+        guard !trimmed.isEmpty else { return false }
         let msg = ChatMessage(id: UUID().uuidString, roomID: roomID,
                               senderHandle: me.handle, senderName: me.displayName,
                               text: trimmed, sentAt: Date(), isMe: true)
+        guard let body = try? SeshAPI.encoder.encode(SeshAPI.MessageBody(id: msg.id, text: trimmed)),
+              outbox.enqueue(path: "/api/rooms/\(SeshReliabilityPolicy.pathSegment(roomID))/messages", body: body, key: msg.id) != nil else { return false }
+        // Only present a message as sent/queued after the durable write succeeded.
         messagesByRoom[roomID, default: []].append(msg)
         if let i = rooms.firstIndex(where: { $0.id == roomID }) {
             rooms[i].lastMessage = trimmed
@@ -768,10 +772,8 @@ final class SocialStore {
         // (#C5) Through the outbox: delivered now if online, queued + replayed
         // with the message id as idempotency key if not. No more silently
         // vanished messages.
-        if let body = try? SeshAPI.encoder.encode(SeshAPI.MessageBody(id: msg.id, text: trimmed)) {
-            outbox.enqueue(path: "/api/rooms/\(roomID)/messages", body: body, key: msg.id)
-            outbox.scheduleReplay(api: api)
-        }
+        outbox.scheduleReplay(api: api)
+
         Task {
             // Converge with the server (and pick up others' messages) by
             // MERGING, not replacing: if the outbox hasn't flushed yet, the
@@ -785,6 +787,7 @@ final class SocialStore {
                 messagesByRoom[roomID] = merged
             }
         }
+        return true
     }
 
     func markRoomRead(_ roomID: String) {

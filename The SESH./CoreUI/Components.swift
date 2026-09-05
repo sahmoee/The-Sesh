@@ -92,34 +92,67 @@ struct ScreenHeader<Trailing: View>: View {
     }
 
     var body: some View {
-        ZStack {
-            if showLeaf {
-                VStack(spacing: 2) {
-                    Image(systemName: "leaf.fill")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Palette.green)
-                    Text(title)
-                        .font(.system(size: 22, weight: .semibold, design: .serif))
-                        .foregroundStyle(Palette.text)
-                }
-            } else {
-                Text(title)
-                    .font(.system(size: 22, weight: .semibold, design: .serif))
-                    .foregroundStyle(Palette.text)
-            }
-            HStack {
+        SeshHeaderLayout {
+            Group {
                 if let onBack {
                     Button(action: onBack) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundStyle(Palette.text)
+                            .minimumTapTarget()
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Back")
+                } else {
+                    Color.clear.frame(width: 0, height: 0)
                 }
-                Spacer()
+            }
+            VStack(spacing: 2) {
+                if showLeaf {
+                    Image(systemName: "leaf.fill").font(.caption)
+                        .foregroundStyle(Palette.green).accessibilityHidden(true)
+                }
+                Text(title)
+                    .font(.seshScaled(22, weight: .semibold, design: .serif))
+                    .foregroundStyle(Palette.text)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
+            }
+            ZStack(alignment: .trailing) {
+                Color.clear.frame(width: 0, height: 0)
                 trailing
             }
         }
+    }
+}
+
+/// Keeps the brand centered between equal side slots. When those controls
+/// would crowd a title, the title moves below them instead of overlapping.
+private struct SeshHeaderLayout: Layout {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard subviews.count == 3 else { return .zero }
+        let sides = [subviews[0].sizeThatFits(.unspecified), subviews[2].sizeThatFits(.unspecified)]
+        let width = proposal.width ?? 360
+        let slot = max(sides[0].width, sides[1].width)
+        let stacked = width - 2 * slot - 16 < 140
+        let title = subviews[1].sizeThatFits(.init(width: stacked ? width : max(0, width - 2 * slot - 16), height: nil))
+        return CGSize(width: width, height: stacked ? max(sides[0].height, sides[1].height) + title.height + 8 : max(title.height, max(sides[0].height, sides[1].height)))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard subviews.count == 3 else { return }
+        let left = subviews[0].sizeThatFits(.unspecified)
+        let right = subviews[2].sizeThatFits(.unspecified)
+        let slot = max(left.width, right.width)
+        let stacked = bounds.width - 2 * slot - 16 < 140
+        let controlsHeight = max(left.height, right.height)
+        let centerY = stacked ? bounds.minY + controlsHeight / 2 : bounds.midY
+        subviews[0].place(at: .init(x: bounds.minX, y: centerY), anchor: .leading, proposal: .unspecified)
+        subviews[2].place(at: .init(x: bounds.maxX, y: centerY), anchor: .trailing, proposal: .unspecified)
+        let titleWidth = stacked ? bounds.width : max(0, bounds.width - 2 * slot - 16)
+        subviews[1].place(at: .init(x: bounds.midX, y: stacked ? bounds.minY + controlsHeight + 8 : bounds.midY),
+                          anchor: stacked ? .top : .center, proposal: .init(width: titleWidth, height: nil))
     }
 }
 
@@ -136,7 +169,7 @@ struct FieldLabel: View {
     var onCream: Bool = false
     var body: some View {
         Text(text)
-            .font(.system(size: 14, weight: .medium))
+            .font(.seshScaled(14, weight: .medium))
             .foregroundStyle(onCream ? Palette.onCreamSoft : Palette.textSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -154,9 +187,10 @@ struct InputField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            FieldLabel(text: label)
+            if !label.isEmpty { FieldLabel(text: label).accessibilityHidden(true) }
             HStack(spacing: 10) {
                 TextField("", text: $value, prompt: Text(placeholder).foregroundStyle(Palette.textTertiary))
+                    .accessibilityLabel(label.isEmpty ? placeholder : label)
                     .foregroundStyle(Palette.text)
                     .focused($focused)
                     .padding(.horizontal, 14).padding(.vertical, 13)
@@ -174,6 +208,7 @@ struct InputField: View {
                             .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Add photo")
                 }
             }
         }
@@ -189,15 +224,18 @@ struct NotesField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            FieldLabel(text: label)
+            FieldLabel(text: label).accessibilityHidden(true)
             ZStack(alignment: .topLeading) {
                 if text.isEmpty {
                     Text(placeholder)
                         .foregroundStyle(Palette.textTertiary)
                         .padding(.horizontal, 14).padding(.vertical, 12)
                         .allowsHitTesting(false)
+                        .accessibilityHidden(true)
                 }
                 TextEditor(text: $text)
+                    .accessibilityLabel(label)
+                    .accessibilityHint(placeholder)
                     .foregroundStyle(Palette.text)
                     .focused($focused)
                     .scrollContentBackground(.hidden)
@@ -302,12 +340,13 @@ struct EmojiChip: View {
                 } else {
                     Text(emoji).font(.system(size: 15))
                 }
-                Text(title).font(.system(size: 12, weight: .medium)).lineLimit(1)
+                Text(title).font(.seshScaled(12, weight: .medium)).fixedSize(horizontal: false, vertical: true)
                 if fillWidth { Spacer(minLength: 0) }
             }
             .foregroundStyle(isSelected ? Palette.onGreen : Palette.text)
             .frame(maxWidth: fillWidth ? .infinity : nil)
             .padding(.horizontal, fillWidth ? 12 : 14).padding(.vertical, 10)
+            .frame(minHeight: 44)
             .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
                 .fill(isSelected ? Palette.green : Palette.field))
             .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
@@ -315,6 +354,8 @@ struct EmojiChip: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -329,7 +370,7 @@ struct OptionChip: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: symbol).font(.system(size: 14))
-                Text(title).font(.system(size: 14, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+                Text(title).font(.seshScaled(14, weight: .medium)).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
             .foregroundStyle(isSelected ? Palette.onGreen : tint)
@@ -341,6 +382,8 @@ struct OptionChip: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -384,12 +427,13 @@ struct UnderlineTabs: View {
                     Button { selection = item } label: {
                         VStack(spacing: 6) {
                             Text(item)
-                                .font(.system(size: 14, weight: active ? .semibold : .regular))
+                                .font(.seshScaled(14, weight: active ? .semibold : .regular))
                                 .foregroundStyle(active ? Palette.text : Palette.textSecondary)
                             Rectangle()
                                 .fill(active ? Palette.gold : Color.clear)
                                 .frame(height: 2)
                         }
+                        .frame(minHeight: 44)
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(active ? .isSelected : [])
@@ -410,10 +454,12 @@ struct PrimaryButton: View {
         Button(action: { Haptics.tap(); action() }) {
             HStack(spacing: 8) {
                 if let icon { Image(systemName: icon).font(.system(size: 16, weight: .semibold)) }
-                Text(title).font(.system(size: 16, weight: .semibold))
+                Text(title).font(.seshScaled(16, weight: .semibold))
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
             }
             .foregroundStyle(isEnabled ? Palette.onGreen : Palette.textTertiary)
             .frame(maxWidth: .infinity)
+            .padding(.horizontal, 14)
             .padding(.vertical, 16)
             .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                 .fill(Palette.green.opacity(isEnabled ? 1 : 0.4)))
@@ -521,19 +567,26 @@ struct FlowLayout: Layout {
     func updateCache(_ cache: inout [CGSize], subviews: Subviews) {
         cache = subviews.map { $0.sizeThatFits(.unspecified) }
     }
+    private func sizes(for width: CGFloat, subviews: Subviews, cache: [CGSize]) -> [CGSize] {
+        zip(subviews, cache).map { view, ideal in
+            // Wrapping rows alone cannot contain a single long custom tag.
+            // Measure oversized labels again at the actual available width.
+            ideal.width > width ? view.sizeThatFits(.init(width: max(0, width), height: nil)) : ideal
+        }
+    }
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout [CGSize]) -> CGSize {
         let maxWidth = proposal.width ?? .infinity
         var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0
-        for s in cache {
+        for s in sizes(for: maxWidth, subviews: subviews, cache: cache) {
             if x + s.width > maxWidth, x > 0 { x = 0; y += rowHeight + spacing; rowHeight = 0 }
             x += s.width + spacing
             rowHeight = max(rowHeight, s.height)
         }
-        return CGSize(width: maxWidth == .infinity ? x : maxWidth, height: y + rowHeight)
+        return CGSize(width: maxWidth == .infinity ? max(0, x - spacing) : maxWidth, height: y + rowHeight)
     }
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout [CGSize]) {
         var x = bounds.minX, y = bounds.minY, rowHeight: CGFloat = 0
-        for (v, s) in zip(subviews, cache) {
+        for (v, s) in zip(subviews, sizes(for: bounds.width, subviews: subviews, cache: cache)) {
             if x + s.width > bounds.maxX, x > bounds.minX { x = bounds.minX; y += rowHeight + spacing; rowHeight = 0 }
             v.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(s))
             x += s.width + spacing

@@ -80,6 +80,8 @@ struct ChatRoomView: View {
     @Environment(\.dismiss) private var dismiss
     let roomID: String
     @State private var draft = ""
+    @State private var sendError: String?
+    @State private var confirmDiscard = false
 
     private var room: ChatRoom? { social.rooms.first { $0.id == roomID } }
 
@@ -98,6 +100,7 @@ struct ChatRoomView: View {
             AppBackground()
             VStack(spacing: 0) {
                 header
+                ConnectivityBanner { await social.refreshRoom(roomID) }
                 Divider().overlay(Palette.stroke)
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -121,18 +124,31 @@ struct ChatRoomView: View {
                         }
                     }
                 }
+                if let sendError {
+                    Text(sendError).font(.footnote).foregroundStyle(Palette.moodAngry)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 18).padding(.vertical, 8)
+                        .accessibilityIdentifier("chat.unsentDraftError")
+                }
                 composer
             }
         }
         .onAppear { social.openRoom(roomID) }
         .onDisappear { social.closeRoom(roomID) }
+        .seshEditorPresentation()
+        .interactiveDismissDisabled(!JournalInputPolicy.trimmed(draft).isEmpty)
+        .confirmationDialog("Discard this message draft?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard Draft", role: .destructive) { dismiss() }
+            Button("Keep Writing", role: .cancel) { }
+        } message: { Text("This message has not been sent or queued.") }
     }
 
     private var header: some View {
         HStack(spacing: 12) {
-            Button { dismiss() } label: {
+            Button { if JournalInputPolicy.trimmed(draft).isEmpty { dismiss() } else { confirmDiscard = true } } label: {
                 Image(systemName: "chevron.down").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.text)
-            }.buttonStyle(.plain)
+                    .minimumTapTarget()
+            }.buttonStyle(.plain).accessibilityLabel("Close conversation")
             VStack(alignment: .leading, spacing: 1) {
                 Text(room?.name ?? "Room").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.text)
                 Text(Self.memberLine(room?.memberCount ?? 0)).font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
@@ -144,16 +160,25 @@ struct ChatRoomView: View {
 
     private var composer: some View {
         HStack(spacing: 10) {
-            TextField("", text: $draft, prompt: Text("Message \(room?.name ?? "")…").foregroundStyle(Palette.textTertiary))
+            TextField("", text: $draft, prompt: Text("Message \(room?.name ?? "")…").foregroundStyle(Palette.textTertiary), axis: .vertical)
+                .lineLimit(1...5)
+                .accessibilityLabel("Message draft")
                 .foregroundStyle(Palette.text)
                 .padding(.horizontal, 14).padding(.vertical, 11)
                 .background(Capsule().fill(Palette.field))
                 .overlay(Capsule().stroke(Palette.stroke, lineWidth: 1))
             Button {
-                social.send(draft, to: roomID); draft = ""; Haptics.tap()
+                if social.send(draft, to: roomID) {
+                    draft = ""; sendError = nil; Haptics.tap()
+                } else {
+                    sendError = OfflineOutbox.shared.statusMessage ?? "Your message could not be saved for sending. Your draft is still here; try again."
+                    Haptics.warning()
+                }
             } label: {
                 Image(systemName: "arrow.up.circle.fill").font(.system(size: 30)).foregroundStyle(Palette.green)
-            }.buttonStyle(.plain).disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .minimumTapTarget()
+            }.buttonStyle(.plain).disabled(JournalInputPolicy.trimmed(draft).isEmpty)
+                .accessibilityLabel("Send message")
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
         .background(Palette.tabBar.overlay(Rectangle().fill(Palette.stroke).frame(height: 0.5), alignment: .top))
@@ -181,4 +206,3 @@ struct ChatBubble: View {
 }
 
 // MARK: - Friend profile peek
-

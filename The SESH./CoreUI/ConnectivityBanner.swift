@@ -18,34 +18,44 @@ struct ConnectivityBanner: View {
 
     @State private var retrying = false
     private var monitor: ConnectivityMonitor { .shared }
+    private var outbox: OfflineOutbox { .shared }
 
     var body: some View {
         let state = monitor.state
-        if state.showsBanner {
-            HStack(spacing: 10) {
-                Image(systemName: state == .offline ? "wifi.slash" : "exclamationmark.icloud")
-                    .font(.system(size: 14, weight: .semibold))
-                Text(state.label)
-                    .font(.system(size: 13, weight: .medium))
-                    .lineLimit(1)
-                Spacer(minLength: 8)
-                if let retry {
+        if state.showsBanner || outbox.statusMessage != nil {
+            VStack(alignment: .leading, spacing: 8) {
+                if state.showsBanner {
+                    Label(state.label, systemImage: state == .offline ? "wifi.slash" : "exclamationmark.icloud")
+                        .font(.seshScaled(13, weight: .medium)).fixedSize(horizontal: false, vertical: true)
+                }
+                if let status = outbox.statusMessage {
+                    Label(status, systemImage: "tray.and.arrow.up")
+                        .font(.seshScaled(13)).fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("outbox.recoveryStatus")
+                }
+                Text("Private journal saves remain available without a connection.")
+                    .font(.footnote).foregroundStyle(Palette.textSecondary)
+                if retry != nil || outbox.canRetry {
                     Button {
                         guard !retrying else { return }
                         retrying = true
                         Task {
                             defer { retrying = false }
-                            await retry()
+                            if outbox.canRetry { outbox.retryHeldOperations() }
+                            if let retry { await retry() }
                         }
                     } label: {
-                        if retrying {
-                            ProgressView().controlSize(.small)
-                        } else {
-                            Text("Retry").font(.system(size: 13, weight: .semibold))
-                        }
+                        HStack {
+                            if retrying { ProgressView().controlSize(.small) }
+                            Text(retrying ? "Retrying…" : "Retry connection and saved actions")
+                                .font(.seshScaled(13, weight: .semibold))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }.minimumTapTarget()
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Retry")
+                    .foregroundStyle(Palette.green)
+                    .disabled(retrying || state == .offline)
+                    .accessibilityHint(state == .offline ? "Reconnect to retry. Unsent actions are retained." : "Retries eligible saved actions for the signed-in account")
                 }
             }
             .foregroundStyle(Palette.textSecondary)
@@ -58,8 +68,7 @@ struct ConnectivityBanner: View {
             )
             .padding(.horizontal, 16)
             .transition(.move(edge: .top).combined(with: .opacity))
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(state.label)
+            .accessibilityElement(children: .contain)
         }
     }
 }

@@ -1,0 +1,26 @@
+// Concatenate the exact production Foundation policy declarations before this file.
+func expectMedia(_ condition: @autoclosure () -> Bool, _ name: String) {
+    precondition(condition(), "FAILED: \(name)")
+    print("PASS: \(name)")
+}
+let mediaURL = URL(string: "https://example.invalid/portrait.jpg")!
+expectMedia(SeshReliabilityPolicy.imagePixels(.nan) == 600, "NaN image size")
+expectMedia(SeshReliabilityPolicy.imagePixels(.infinity) == 600, "infinite image size")
+expectMedia(SeshReliabilityPolicy.imagePixels(-1) == 600, "negative image size")
+expectMedia(SeshReliabilityPolicy.imagePixels(30) == 64, "minimum image size")
+expectMedia(SeshReliabilityPolicy.imagePixels(9000) == 2048, "maximum image size")
+expectMedia(SeshReliabilityPolicy.imagePixels(200.1) == 201, "rounded image size")
+expectMedia(SeshReliabilityPolicy.imageKey(mediaURL, pixels: 64) != SeshReliabilityPolicy.imageKey(mediaURL, pixels: 600), "thumbnail and hero identity")
+expectMedia(SeshReliabilityPolicy.acceptsHTTPImage(status: 200, mime: "image/jpeg", bytes: 100), "valid image")
+expectMedia(!SeshReliabilityPolicy.acceptsHTTPImage(status: 404, mime: "image/jpeg", bytes: 100), "404 image")
+expectMedia(!SeshReliabilityPolicy.acceptsHTTPImage(status: 200, mime: "text/html", bytes: 100), "non-image response")
+expectMedia(!SeshReliabilityPolicy.acceptsHTTPImage(status: 200, mime: "image/png", bytes: 0), "empty image")
+expectMedia(!SeshReliabilityPolicy.acceptsHTTPImage(status: 200, mime: "image/png", bytes: SeshReliabilityPolicy.maxImageBytes + 1), "oversized image")
+expectMedia(SeshRealtimeFramePolicy.eventType(in: Data(#"{"type":"welcome"}"#.utf8)) == "welcome", "welcome frame")
+expectMedia(SeshRealtimeFramePolicy.eventType(in: Data(#"{"type":"pong"}"#.utf8)) == "pong", "pong frame")
+expectMedia(SeshRealtimeFramePolicy.eventType(in: Data(#"{"type":"changed"}"#.utf8)) == "changed", "changed frame")
+expectMedia(SeshRealtimeFramePolicy.eventType(in: Data(#"{"type":"unknown"}"#.utf8)) == nil, "unknown frame")
+expectMedia(SeshRealtimeFramePolicy.eventType(in: Data(#"{"type":12}"#.utf8)) == nil, "malformed frame")
+expectMedia(SeshRealtimeFramePolicy.eventType(in: Data(repeating: 32, count: SeshRealtimeFramePolicy.maximumBytes + 1)) == nil, "oversized frame")
+expectMedia(SeshRealtimeFramePolicy.eventType(in: Data()) == nil, "empty frame")
+print("19 Sesh media policy checks passed")

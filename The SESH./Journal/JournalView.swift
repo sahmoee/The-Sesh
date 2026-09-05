@@ -37,6 +37,11 @@ enum LogItem: Identifiable {
         case .thought(let t): return t.date
         }
     }
+
+    func metric(for sort: JournalSort) -> Double? {
+        guard case .entry(let entry) = self else { return nil }
+        return sort == .rating ? entry.rating : entry.price
+    }
 }
 
 struct JournalView: View {
@@ -82,10 +87,8 @@ struct JournalView: View {
     }
 
     private func matchesQuery(_ e: JournalEntry) -> Bool {
-        guard !query.isEmpty else { return true }
-        return e.strain.localizedCaseInsensitiveContains(query)
-            || e.notes.localizedCaseInsensitiveContains(query)
-            || e.method.localizedCaseInsensitiveContains(query)
+        JournalInputPolicy.matches(query, fields: [e.strain, e.notes, e.method, e.customCategory ?? ""]
+            + (e.extraStrains ?? []) + (e.effects ?? []) + (e.sessionTags ?? []))
     }
 
     private func matchesFilter(_ e: JournalEntry) -> Bool {
@@ -132,7 +135,7 @@ struct JournalView: View {
     private var standaloneThoughts: [HighThought] {
         session.thoughts.filter { t in
             !attachedThoughtIDs.contains(t.id) &&
-            (query.isEmpty || t.text.localizedCaseInsensitiveContains(query))
+            JournalInputPolicy.matches(query, fields: [t.text, t.tag?.rawValue ?? ""])
         }
     }
 
@@ -142,13 +145,17 @@ struct JournalView: View {
     /// The dedicated "Thoughts" chip shows thoughts only.
     private var feed: [LogItem] {
         let refining = effectFilter != nil || minRating > 0
-        let showThoughts = (filter == "All" || filter == "Thoughts") && !refining
+        let showThoughts = filter == "Thoughts" || (filter == "All" && !refining)
         let showEntries = filter != "Thoughts"
 
         var items: [LogItem] = []
         if showEntries { items += filtered.map { LogItem.entry($0) } }
         if showThoughts { items += standaloneThoughts.map { LogItem.thought($0) } }
-        return items.sorted { $0.date > $1.date }
+        return items.sorted {
+            JournalInputPolicy.precedes(metric: $0.metric(for: sort), date: $0.date, id: $0.id,
+                                        otherMetric: $1.metric(for: sort), otherDate: $1.date, otherID: $1.id,
+                                        usesMetric: sort != .newest)
+        }
     }
 
     /// The feed grouped by relative day (date sort only).
@@ -185,7 +192,7 @@ struct JournalView: View {
         .sheet(isPresented: $showFilters) {
             JournalFilterSheet(effectFilter: $effectFilter, minRating: $minRating,
                                availableEffects: availableEffects)
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showNewLog) {
             LogSeshView().environment(session)
@@ -202,16 +209,17 @@ struct JournalView: View {
             ManageCategoriesView().environment(session)
                 .presentationDetents([.medium, .large])
         }
+        .onChange(of: filter) { _, newValue in
+            if newValue == "Thoughts" { effectFilter = nil; minRating = 0 }
+        }
+        .onChange(of: session.customCategories) { _, _ in
+            if !filters.contains(filter) { filter = "All" }
+        }
     }
 
     @ViewBuilder private var headerBar: some View {
-        ZStack {
-            Text("Journal")
-                .font(.system(size: 22, weight: .semibold, design: .serif))
-                .foregroundStyle(Palette.text)
-            HStack {
-                Image(systemName: "line.3.horizontal").font(.system(size: 20)).foregroundStyle(Palette.text)
-                Spacer()
+        ScreenHeader(title: "Journal") {
+            HStack(spacing: 4) {
                 Menu {
                     Picker("Sort", selection: $sort) {
                         ForEach(JournalSort.allCases) { s in
@@ -219,22 +227,23 @@ struct JournalView: View {
                         }
                     }
                 } label: {
-                    Image(systemName: "arrow.up.arrow.down").font(.system(size: 16)).foregroundStyle(Palette.text)
+                    Image(systemName: "arrow.up.arrow.down").font(.system(size: 16)).foregroundStyle(Palette.text).minimumTapTarget()
                 }
+                .accessibilityLabel("Sort journal")
+                .accessibilityValue(sort.rawValue)
                 NavigationLink {
                     MusicMemoryView().navigationBarBackButtonHidden(true)
                 } label: {
-                    Image(systemName: "music.note.list").font(.system(size: 16)).foregroundStyle(Palette.text)
+                    Image(systemName: "music.note.list").font(.system(size: 16)).foregroundStyle(Palette.text).minimumTapTarget()
                 }
                 .accessibilityLabel("Music memory")
                 Button {
                     Haptics.tap(); showLogChooser = true
                 } label: {
-                    Image(systemName: "plus.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
+                    Image(systemName: "plus.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green).minimumTapTarget()
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("New log")
-                .padding(.leading, 14)
             }
         }
         .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 14)
@@ -245,13 +254,15 @@ struct JournalView: View {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass").foregroundStyle(Palette.textSecondary)
                 TextField("", text: $query,
-                          prompt: Text("Search your sessions...").foregroundStyle(Palette.textTertiary))
+                          prompt: Text("Search your journal…").foregroundStyle(Palette.textTertiary))
                     .foregroundStyle(Palette.text)
+                    .accessibilityLabel("Search journal")
+                    .autocorrectionDisabled()
                 if !query.isEmpty {
                     Button { query = "" } label: {
                         Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.textSecondary)
                             .minimumTapTarget()
-                    }.buttonStyle(.plain)
+                    }.buttonStyle(.plain).accessibilityLabel("Clear search")
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
@@ -274,7 +285,9 @@ struct JournalView: View {
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Filters")
+            .disabled(filter == "Thoughts")
+            .accessibilityLabel("Session filters")
+            .accessibilityHint(filter == "Thoughts" ? "Rating and effect filters apply to sessions, not thoughts" : "Filter sessions by rating and effect")
             .accessibilityValue(activeRefinements > 0 ? "\(activeRefinements) active" : "none active")
         }
         .padding(.horizontal, 18).padding(.bottom, 12)
@@ -297,16 +310,14 @@ struct JournalView: View {
     }
 
     @ViewBuilder private var resultSummaryBar: some View {
-        HStack {
+        FlowLayout(spacing: 12) {
             Text(resultSummaryText)
                 .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
-            Spacer()
             Button { showManageCategories = true; Haptics.tap() } label: {
                 Label("Categories", systemImage: "tag")
-                    .font(.system(size: 12)).foregroundStyle(Palette.green)
+                    .font(.seshScaled(12)).foregroundStyle(Palette.green).minimumTapTarget()
             }.buttonStyle(.plain)
-            Text("·").font(.system(size: 12)).foregroundStyle(Palette.textTertiary).padding(.horizontal, 2)
-            Label(sort.rawValue, systemImage: sort.symbol)
+            Label(filter == "Thoughts" ? "Newest" : sort.rawValue, systemImage: filter == "Thoughts" ? "clock" : sort.symbol)
                 .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
         }
         .padding(.horizontal, 18).padding(.bottom, 8)
@@ -314,20 +325,22 @@ struct JournalView: View {
 
     @ViewBuilder private var feedContent: some View {
         if session.entries.isEmpty && session.thoughts.isEmpty {
-            EmptyStateView(icon: "doc.text",
+            ScrollView {
+                EmptyStateView(icon: "doc.text",
                            title: "Nothing logged yet",
                            message: "Record your first session or capture a thought to start your log.",
                            actionTitle: "Add to Log", actionIcon: "plus",
-                           action: { showLogChooser = true })
-            Spacer()
+                               action: { showLogChooser = true }).padding(.bottom, 32)
+            }
         } else if feed.isEmpty {
-            EmptyStateView(icon: "magnifyingglass",
+            ScrollView {
+                EmptyStateView(icon: "magnifyingglass",
                            title: "Nothing matches",
                            message: "Try a different search or filter.",
-                           actionTitle: activeRefinements > 0 || !query.isEmpty ? "Clear filters" : nil,
+                           actionTitle: activeRefinements > 0 || !query.isEmpty || filter != "All" ? "Clear filters" : nil,
                            actionIcon: "xmark",
-                           action: { query = ""; filter = "All"; effectFilter = nil; minRating = 0 })
-            Spacer()
+                               action: { query = ""; filter = "All"; effectFilter = nil; minRating = 0 }).padding(.bottom, 32)
+            }
         } else {
             feedList
         }
@@ -352,6 +365,7 @@ struct JournalView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .scrollDismissesKeyboard(.interactively)
     }
 }
 
@@ -363,6 +377,7 @@ private struct LogItemRow: View {
     let onEditEntry: (JournalEntry) -> Void
     let onEditThought: (HighThought) -> Void
     @State private var confirmDeleteEntry = false
+    @State private var confirmDeleteThought = false
 
     var body: some View {
         switch item {
@@ -373,9 +388,10 @@ private struct LogItemRow: View {
                 .listRowBackground(Color.clear)
                 .contentShape(Rectangle())
                 .onTapGesture { onEditEntry(e) }
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                .accessibilityAction(named: "Edit session") { onEditEntry(e) }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
-                        Haptics.warning(); session.delete(e)
+                        confirmDeleteEntry = true
                     } label: { Label("Delete", systemImage: "trash") }
                     Button {
                         Haptics.selection(); session.toggleFavorite(e)
@@ -402,15 +418,24 @@ private struct LogItemRow: View {
                 .listRowBackground(Color.clear)
                 .contentShape(Rectangle())
                 .onTapGesture { onEditThought(t) }
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                .accessibilityAction(named: "Edit thought") { onEditThought(t) }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
-                        Haptics.warning(); session.deleteThought(t)
+                        confirmDeleteThought = true
                     } label: { Label("Delete", systemImage: "trash") }
                     Button {
                         Haptics.selection(); session.toggleThoughtFavorite(t)
                     } label: { Label("Favorite", systemImage: "star") }
                     .tint(Palette.gold)
                 }
+                .contextMenu {
+                    Button("Edit thought", systemImage: "pencil") { onEditThought(t) }
+                    Button("Delete thought", systemImage: "trash", role: .destructive) { confirmDeleteThought = true }
+                }
+                .confirmationDialog("Delete this thought?", isPresented: $confirmDeleteThought, titleVisibility: .visible) {
+                    Button("Delete", role: .destructive) { session.deleteThought(t); Haptics.warning() }
+                    Button("Cancel", role: .cancel) { }
+                } message: { Text("This permanently removes this thought from your journal.") }
         }
     }
 }
@@ -444,6 +469,7 @@ struct JournalFilterSheet: View {
                             }
                             Slider(value: Binding(get: { Double(minRating) }, set: { minRating = Int($0) }), in: 0...10, step: 1)
                                 .tint(Palette.green)
+                                .accessibilityLabel("Minimum session rating")
                                 .accessibilityValue(minRating == 0 ? "Any" : "\(minRating) or higher")
                         }
 
@@ -454,12 +480,13 @@ struct JournalFilterSheet: View {
                                     ForEach(availableEffects, id: \.self) { eff in
                                         let on = effectFilter == eff
                                         Button { effectFilter = on ? nil : eff; Haptics.selection() } label: {
-                                            Text(eff).font(.system(size: 13, weight: .medium))
+                                            Text(eff).font(.seshScaled(13, weight: .medium))
                                                 .foregroundStyle(on ? Palette.onGreen : Palette.text)
                                                 .padding(.horizontal, 14).padding(.vertical, 8)
+                                                .frame(minHeight: 44)
                                                 .background(Capsule().fill(on ? Palette.green : Palette.field))
                                                 .overlay(Capsule().stroke(on ? Color.clear : Palette.stroke, lineWidth: 1))
-                                        }.buttonStyle(.plain)
+                                        }.buttonStyle(.plain).accessibilityAddTraits(on ? .isSelected : [])
                                     }
                                 }
                             }

@@ -26,7 +26,16 @@ import DeviceCheck
 @Observable
 final class SeshAuth {
     static let shared = SeshAuth()
-    private init() { token = Self.keychainRead() }
+    private init() {
+        let stored = Self.keychainRead()
+        token = stored?.token
+        uid = stored?.uid
+    }
+    private var authenticationID = UUID()
+    private(set) var accountGeneration = UUID()
+    private var refreshTask: Task<Bool, Never>?
+    private var refreshID: UUID?
+    private struct StoredSession: Codable { let token: String; let uid: String? }
 
     /// The current session token, if any.
     private(set) var token: String?
@@ -47,6 +56,8 @@ final class SeshAuth {
     /// Exchange a Sign in with Apple identity token for a session.
     @discardableResult
     func exchangeApple(identityToken: String, handle: String, name: String, code: String) async -> Bool {
+        accountGeneration = UUID()
+        lastGuestDeviceID = nil
         remember(handle: handle, name: name, code: code)
         return await exchange(path: "/api/auth/apple",
                               body: ["identityToken": identityToken,
@@ -56,6 +67,7 @@ final class SeshAuth {
     /// Exchange a device-scoped guest identity for a session.
     @discardableResult
     func exchangeGuest(deviceID: String, handle: String, name: String, code: String) async -> Bool {
+        accountGeneration = UUID()
         remember(handle: handle, name: name, code: code)
         lastGuestDeviceID = deviceID
         return await exchange(path: "/api/auth/guest",
@@ -68,13 +80,27 @@ final class SeshAuth {
     /// identity token and re-exchange — this is what survives a SESSION_SECRET
     /// rotation or a normal token expiry without a hard logout.
     func refreshIfNeeded() async -> Bool {
+        guard !Task.isCancelled else { return false }
+        if let task = refreshTask { return await task.value }
+        let id = UUID()
+        refreshID = id
+        let generation = authenticationID
+        let task = Task { [weak self] in await self?.performRefresh(expectedGeneration: generation) ?? false }
+        refreshTask = task
+        let result = await task.value
+        if refreshID == id { refreshTask = nil; refreshID = nil }
+        return !Task.isCancelled && result
+    }
+
+    private func performRefresh(expectedGeneration: UUID) async -> Bool {
+        guard !Task.isCancelled, authenticationID == expectedGeneration else { return false }
         if let deviceID = lastGuestDeviceID {
-            return await exchangeGuest(deviceID: deviceID, handle: lastHandle,
-                                       name: lastName, code: lastCode)
+            return await exchange(path: "/api/auth/guest", body: ["deviceID": deviceID,
+                "handle": lastHandle, "name": lastName, "code": lastCode], expectedGeneration: expectedGeneration)
         }
         if let appleUserID = UserDefaults.standard.string(forKey: "sesh.apple.userID"),
            !appleUserID.isEmpty {
-            return await reexchangeApple(userID: appleUserID)
+            return await reexchangeApple(userID: appleUserID, expectedGeneration: expectedGeneration)
         }
         return false
     }
@@ -87,7 +113,7 @@ final class SeshAuth {
     /// at most a quick system confirmation). If the credential was revoked or is
     /// gone, we return false and the app falls back to the normal sign-in screen —
     /// which is correct, because at that point the user really did sign out.
-    private func reexchangeApple(userID: String) async -> Bool {
+    private func reexchangeApple(userID: String, expectedGeneration: UUID) async -> Bool {
         let provider = ASAuthorizationAppleIDProvider()
         let state: ASAuthorizationAppleIDProvider.CredentialState =
             await withCheckedContinuation { cont in
@@ -95,15 +121,24 @@ final class SeshAuth {
                     cont.resume(returning: state)
                 }
             }
-        guard state == .authorized else { return false }
+        guard state == .authorized, !Task.isCancelled, authenticationID == expectedGeneration else { return false }
         guard let identityToken = await AppleReauth.freshIdentityToken() else { return false }
+        guard !Task.isCancelled, authenticationID == expectedGeneration else { return false }
         // handle/name/code are profile hints only; the Worker binds the session to
         // the verified Apple `sub` in the identity token, so empty hints are fine.
-        return await exchangeApple(identityToken: identityToken,
-                                   handle: lastHandle, name: lastName, code: lastCode)
+        return await exchange(path: "/api/auth/apple", body: ["identityToken": identityToken,
+            "handle": lastHandle, "name": lastName, "code": lastCode], expectedGeneration: expectedGeneration)
     }
 
     func signOut() {
+        accountGeneration = UUID()
+        authenticationID = UUID()
+        refreshID = nil
+        refreshTask?.cancel()
+        refreshTask = nil
+        lastGuestDeviceID = nil
+        lastHandle = ""; lastName = ""; lastCode = ""
+        OfflineOutbox.shared.cancelReplay()
         token = nil
         uid = nil
         Self.keychainDelete()
@@ -122,15 +157,18 @@ final class SeshAuth {
     /// the Worker only issues this in response to an already-valid session.
     func adoptRefreshedSession(token newToken: String, uid newUID: String,
                                handle: String, name: String, code: String) {
-        guard !newToken.isEmpty else { return }
+        guard !newToken.isEmpty, !newUID.isEmpty, uid == nil || uid == newUID else { return }
         remember(handle: handle, name: name, code: code)
         token = newToken
         uid = newUID
-        Self.keychainWrite(newToken)
+        Self.keychainWrite(newToken, uid: newUID)
     }
 
-    private func exchange(path: String, body: [String: String]) async -> Bool {
-        guard let url = SeshUnifiedWorker.url(path) else { return false }
+    private func exchange(path: String, body: [String: String], expectedGeneration: UUID? = nil) async -> Bool {
+        guard !Task.isCancelled, let url = SeshUnifiedWorker.url(path) else { return false }
+        if let expectedGeneration, authenticationID != expectedGeneration { return false }
+        let generation = UUID()
+        authenticationID = generation
         var payload = body
         // (#C2) Attach a DeviceCheck token when available. The Worker validates
         // it with Apple, gating account creation and messaging behind proof of
@@ -138,17 +176,21 @@ final class SeshAuth {
         if let dcToken = await Self.deviceCheckToken() {
             payload["dcToken"] = dcToken
         }
+        guard !Task.isCancelled, authenticationID == generation else { return false }
         var req = URLRequest(url: url)
+        req.timeoutInterval = 20
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try? JSONEncoder().encode(payload)
         do {
             let (data, resp) = try await URLSession.shared.data(for: req)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return false }
+            guard !Task.isCancelled, authenticationID == generation,
+                  (resp as? HTTPURLResponse)?.statusCode == 200 else { return false }
             let decoded = try JSONDecoder().decode(AuthResponse.self, from: data)
+            guard !decoded.token.isEmpty, !decoded.uid.isEmpty else { return false }
             token = decoded.token
             uid = decoded.uid
-            Self.keychainWrite(decoded.token)
+            Self.keychainWrite(decoded.token, uid: decoded.uid)
             return true
         } catch {
             return false
@@ -169,36 +211,55 @@ final class SeshAuth {
 
     private static let service = "com.sowens.The-SESH-.session"
 
-    private static func query() -> [String: Any] {
+    private static func query(account: String = "session-token") -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrService as String: service,
-         kSecAttrAccount as String: "session-token"]
+         kSecAttrService as String: service, kSecAttrAccount as String: account]
     }
 
-    private static func keychainRead() -> String? {
-        var q = query()
+    private static func keychainData(account: String) -> Data? {
+        var q = query(account: account)
         q[kSecReturnData as String] = true
         q[kSecMatchLimit as String] = kSecMatchLimitOne
-        var out: AnyObject?
-        guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess,
-              let data = out as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
+        var result: AnyObject?
+        guard SecItemCopyMatching(q as CFDictionary, &result) == errSecSuccess else { return nil }
+        return result as? Data
     }
 
-    private static func keychainWrite(_ token: String) {
-        let data = Data(token.utf8)
-        var q = query()
-        if SecItemCopyMatching(q as CFDictionary, nil) == errSecSuccess {
-            SecItemUpdate(q as CFDictionary, [kSecValueData as String: data] as CFDictionary)
-        } else {
-            q[kSecValueData as String] = data
-            SecItemAdd(q as CFDictionary, nil)
+    private static func keychainRead() -> StoredSession? {
+        guard let data = keychainData(account: "session-token"),
+              let token = String(data: data, encoding: .utf8), !token.isEmpty else { return nil }
+        if let metadata = keychainData(account: "session-owner-v1"),
+           let stored = try? JSONDecoder().decode(StoredSession.self, from: metadata),
+           stored.token == token { return stored }
+        // A missing/mismatched companion cannot attribute an old token to another account.
+        return StoredSession(token: token, uid: nil)
+    }
+
+    @discardableResult
+    private static func saveKeychain(_ data: Data, account: String) -> Bool {
+        var q = query(account: account)
+        let status = SecItemCopyMatching(q as CFDictionary, nil)
+        if status == errSecSuccess {
+            return SecItemUpdate(q as CFDictionary, [kSecValueData as String: data] as CFDictionary) == errSecSuccess
         }
+        guard status == errSecItemNotFound else { return false }
+        q[kSecValueData as String] = data
+        return SecItemAdd(q as CFDictionary, nil) == errSecSuccess
+    }
+
+    private static func keychainWrite(_ token: String, uid: String) {
+        // Keep the original raw-token item readable by earlier clients. The additive companion
+        // is accepted only when its token matches, so an interrupted two-item save is safe.
+        guard saveKeychain(Data(token.utf8), account: "session-token"),
+              let metadata = try? JSONEncoder().encode(StoredSession(token: token, uid: uid)) else { return }
+        saveKeychain(metadata, account: "session-owner-v1")
     }
 
     private static func keychainDelete() {
         SecItemDelete(query() as CFDictionary)
+        SecItemDelete(query(account: "session-owner-v1") as CFDictionary)
     }
+
 }
 
 // MARK: - Silent Sign in with Apple re-request

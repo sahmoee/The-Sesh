@@ -21,6 +21,11 @@ Every page, sheet, popover, and cover must fill its presentation with The SESH. 
 
 App-level headers and root tab bars have one shared implementation and one geometry source. Feature pages must not locally override brand placement, chrome height, safe-area spacing, icon slots, labels, or selected-tab geometry.
 
+Use shared adaptive controls and JournalInputPolicy for complete locale-aware numeric parsing,
+stable search/sort and draft baselines. Do not silently strip invalid pasted amount characters,
+discard unfinished form fields or resurrect a record removed while an editor was open.
+Keep chat composer text until SocialStore.send confirms durable queueing.
+
 ## Cross-project ownership and synchronization
 
 
@@ -30,6 +35,17 @@ App-level headers and root tab bars have one shared implementation and one geome
 Change client and Worker contracts together while keeping released payloads additive. WebSocket and auth changes require legacy-shim compatibility. Update site-repo for public policy or feature claims.
 
 Sesh QA is available only during a ten-minute `Joo` passcode window. Unlocked iOS/iPadOS devices merge app-scoped tickets from every Sesh device through `POST /_unified/qa/tickets/sync` before retrying local writes. Mac apps do not expose in-app QA.
+
+OfflineOutbox owns durable optional social writes, not private journal saves. Never drop queued
+actions at capacity/retry limits, replay unknown/foreign owners, or publish previously queued
+activity after sharing is revoked. Preserve corrupt files; surface recovery without payload leaks.
+Persist before optimistic success and remove by acknowledged identity only for the current replay
+generation. Explicit Retry cannot shorten server cooldowns. Auth/GET retries retain the original
+account generation across every await; stale refresh cannot replace newer sign-in or sign-out.
+The original Keychain token remains raw; owner metadata is an additive token-matched companion.
+ImagePipeline owns bounded size-specific decoded caching, streamed image limits and cache-clear
+cancellation. Realtime frame limits and generation-guarded cleanup preserve polling fallback.
+See docs/SESH_50_IMPROVEMENTS_2026_09_05.md for evidence, compatibility and device acceptance.
 
 ## Shared safety, validation, and publishing contract
 

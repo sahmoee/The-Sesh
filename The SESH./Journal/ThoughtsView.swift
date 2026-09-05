@@ -32,6 +32,7 @@ struct ThoughtCard: View {
                     Image(systemName: thought.isFavorite ? "star.fill" : "star")
                         .font(.system(size: 16))
                         .foregroundStyle(thought.isFavorite ? Palette.gold : Palette.textSecondary)
+                        .minimumTapTarget()
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(thought.isFavorite ? "Unfavorite thought" : "Favorite thought")
@@ -56,12 +57,24 @@ struct ComposeThoughtView: View {
     @State private var tag: ThoughtTag?
     @State private var visibility: PostVisibility = .privatePost
     @State private var didLoad = false
+    @State private var loadedFingerprint = ""
+    @State private var confirmDiscard = false
+    @State private var confirmVisibility = false
+    @State private var saveError: String?
+    @State private var saving = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var fingerprint: String {
+        JournalInputPolicy.fingerprint([text, tag?.rawValue ?? "", visibility.rawValue])
+    }
+    private var hasEdits: Bool { didLoad && fingerprint != loadedFingerprint }
+    private var canSave: Bool { !JournalInputPolicy.trimmed(text).isEmpty && !saving }
 
     var body: some View {
         ZStack {
             AppBackground()
             VStack(spacing: 0) {
-                ScreenHeader(title: headerTitle, onBack: { dismiss() })
+                ScreenHeader(title: headerTitle, onBack: { if hasEdits { confirmDiscard = true } else { dismiss() } })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
 
                 ScrollView {
@@ -70,13 +83,33 @@ struct ComposeThoughtView: View {
                                    placeholder: composerPlaceholder, text: $text, minHeight: 120)
                         tagSection
                         visibilitySection
-                        PrimaryButton(title: editing == nil ? "Capture Thought" : "Save Changes") { saveThought() }
+                        if let saveError { Text(saveError).font(.callout).foregroundStyle(Palette.moodAngry).accessibilityIdentifier("thought.saveError") }
+                        Text("Saved to your private journal on this device. Visibility is a preference for optional sharing; saving here does not publish a post.")
+                            .font(.footnote).foregroundStyle(Palette.textSecondary)
+                        PrimaryButton(title: editing == nil ? "Capture Thought" : "Save Changes") {
+                            if visibility != .privatePost && visibility != (editing?.visibility ?? .privatePost) {
+                                confirmVisibility = true
+                            } else { saveThought() }
+                        }
+                        .disabled(!canSave)
+                        .accessibilityHint(canSave ? "Save this thought locally" : "Enter a thought before saving")
                     }
                     .padding(.horizontal, 18).padding(.bottom, 28)
+                    .seshReadableForm()
                 }
                 .scrollDismissesKeyboard(.interactively)
             }
         }
+        .seshEditorPresentation()
+        .interactiveDismissDisabled(hasEdits)
+        .confirmationDialog("Discard this thought draft?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard Changes", role: .destructive) { dismiss() }
+            Button("Keep Editing", role: .cancel) { }
+        }
+        .confirmationDialog("Change sharing preference?", isPresented: $confirmVisibility, titleVisibility: .visible) {
+            Button("Save with \(visibility.rawValue)") { saveThought() }
+            Button("Keep Editing", role: .cancel) { }
+        } message: { Text("The selected preference is \(visibility.rawValue). This journal save does not publish your thought.") }
         .onAppear {
             guard !didLoad else { return }
             didLoad = true
@@ -85,6 +118,7 @@ struct ComposeThoughtView: View {
             } else if let initialTag {
                 tag = initialTag
             }
+            loadedFingerprint = fingerprint
         }
     }
 
@@ -100,19 +134,21 @@ struct ComposeThoughtView: View {
     @ViewBuilder private var tagSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             FieldLabel(text: "Tag (optional)")
-            HStack(spacing: 10) {
+            FlowLayout(spacing: 10) {
                 ForEach(ThoughtTag.allCases) { t in
                     Button {
                         Haptics.selection(); tag = (tag == t) ? nil : t
                     } label: {
                         Text(t.rawValue)
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.seshScaled(14, weight: .medium))
                             .foregroundStyle(tag == t ? Palette.onGreen : Palette.textSecondary)
                             .padding(.horizontal, 16).padding(.vertical, 9)
+                            .frame(minHeight: 44)
                             .background(Capsule().fill(tag == t ? Palette.green : Palette.field))
                             .overlay(Capsule().stroke(tag == t ? Color.clear : Palette.stroke, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(tag == t ? .isSelected : [])
                 }
             }
         }
@@ -121,22 +157,23 @@ struct ComposeThoughtView: View {
     @ViewBuilder private var visibilitySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             FieldLabel(text: "Who can see this?")
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 1 : 2), spacing: 10) {
                 ForEach(PostVisibility.allCases) { v in
                     Button {
                         Haptics.selection(); visibility = v
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: v.symbol).font(.system(size: 13))
-                            Text(v.rawValue).font(.system(size: 13, weight: .medium)).lineLimit(1)
+                            Text(v.rawValue).font(.seshScaled(13, weight: .medium)).fixedSize(horizontal: false, vertical: true)
                         }
                         .foregroundStyle(visibility == v ? Palette.onGreen : Palette.text)
                         .frame(maxWidth: .infinity).padding(.vertical, 10)
+                        .frame(minHeight: 44)
                         .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
                             .fill(visibility == v ? Palette.green : Palette.field))
                         .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
                             .stroke(visibility == v ? Color.clear : Palette.stroke, lineWidth: 1))
-                    }.buttonStyle(.plain)
+                    }.buttonStyle(.plain).accessibilityAddTraits(visibility == v ? .isSelected : [])
                 }
             }
         }
@@ -144,11 +181,17 @@ struct ComposeThoughtView: View {
 
     private func saveThought() {
         let s = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !s.isEmpty else { return }
-        if var e = editing {
+        guard canSave, !s.isEmpty else { return }
+        if let original = editing {
+            guard var e = session.thoughts.first(where: { $0.id == original.id }) else {
+                saveError = "This thought was removed while you were editing. Your draft is still here; copy it before closing."
+                return
+            }
             e.text = s; e.tag = tag; e.visibility = visibility
+            saving = true
             session.updateThought(e)
         } else {
+            saving = true
             var t = HighThought(text: s, tag: tag)
             t.visibility = visibility
             session.addThought(t)

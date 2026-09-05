@@ -38,14 +38,23 @@ struct SeshIdentity {
 /// Typed networking failures so the UI can show meaningful messages instead of
 /// silently no-op'ing.
 enum APIError: Error {
+    case cancelled
+    case cooldown(TimeInterval)
     case network          // no connection / request threw
     case rateLimited      // HTTP 429 — too many requests
     case notFound         // HTTP 404
     case server(Int)      // other non-2xx
     case invalidRequest   // couldn't build the request
 
+    var retryDelay: TimeInterval? {
+        if case .cooldown(let delay) = self { return delay }
+        return nil
+    }
+
     var userMessage: String {
         switch self {
+        case .cancelled:     return "Request cancelled. Your saved data is unchanged."
+        case .cooldown:      return "The service is busy. Your action is saved for a later retry."
         case .network:       return "No connection. Check your internet and try again."
         case .rateLimited:   return "Slow down a sec — too many requests. Try again shortly."
         case .notFound:      return "Couldn't find that."
@@ -69,27 +78,20 @@ struct SeshAPI {
         let c = URLSessionConfiguration.default
         c.timeoutIntervalForRequest = 8
         c.waitsForConnectivity = false
+        c.timeoutIntervalForResource = 30
+        c.requestCachePolicy = .reloadIgnoringLocalCacheData
+        c.urlCache = nil
         return URLSession(configuration: c)
     }()
     private var session: URLSession { Self.sharedSession }
 
-    /// Cached ISO-8601 formatters. The Worker emits `Date().toISOString()`,
-    /// which carries fractional seconds — Foundation's plain `.iso8601`
-    /// strategy rejects those, so try fractional first, then second-precision.
-    private static let isoFractional: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return f
-    }()
-    private static let isoPlain = ISO8601DateFormatter()
-
-    /// Shared decoder (fraction-tolerant ISO-8601 dates) so each call doesn't
-    /// allocate one.
+    /// Fraction-tolerant ISO-8601 decoding uses value-type formatting rules,
+    /// never actor-isolated mutable date formatters from a Sendable closure.
     private static let decoder: JSONDecoder = {
         let d = JSONDecoder()
         d.dateDecodingStrategy = .custom { dec in
             let s = try dec.singleValueContainer().decode(String.self)
-            if let date = isoFractional.date(from: s) ?? isoPlain.date(from: s) {
+            if let date = SeshReliabilityPolicy.serverDate(s) {
                 return date
             }
             throw DecodingError.dataCorrupted(.init(
@@ -102,7 +104,8 @@ struct SeshAPI {
     private func makeRequest(_ path: String, method: String = "GET",
                              identity: SeshIdentity?, body: Data? = nil,
                              idempotencyKey: String? = nil) -> URLRequest? {
-        guard let url = SeshUnifiedWorker.url(path) else { return nil }
+        guard body?.count ?? 0 <= SeshReliabilityPolicy.maxJSONBytes,
+              let url = SeshUnifiedWorker.url(path) else { return nil }
         var req = URLRequest(url: url)
         req.httpMethod = method
         // (#C1) Verified session token — the Worker derives identity from this,
@@ -124,48 +127,56 @@ struct SeshAPI {
 
     /// (#C1) On a 401, silently refresh the session once and retry.
     private func send(_ req: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        try Task.checkCancellation()
+        let owner = SeshAuth.shared.uid
+        let accountGeneration = SeshAuth.shared.accountGeneration
         let (data, resp) = try await session.data(for: req)
-        let http = resp as? HTTPURLResponse
-        if http?.statusCode == 401, await SeshAuth.shared.refreshIfNeeded(),
+        try Task.checkCancellation()
+        guard owner == SeshAuth.shared.uid, accountGeneration == SeshAuth.shared.accountGeneration else { throw CancellationError() }
+        guard let http = resp as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+        if http.statusCode == 401, await SeshAuth.shared.refreshIfNeeded(),
            let token = SeshAuth.shared.token {
+            try Task.checkCancellation()
+            guard owner == SeshAuth.shared.uid, accountGeneration == SeshAuth.shared.accountGeneration else { throw CancellationError() }
             var retry = req
             retry.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data2, resp2) = try await session.data(for: retry)
-            return (data2, (resp2 as? HTTPURLResponse) ?? HTTPURLResponse())
+            try Task.checkCancellation()
+            guard owner == SeshAuth.shared.uid, accountGeneration == SeshAuth.shared.accountGeneration else { throw CancellationError() }
+            guard let http2 = resp2 as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+            return (data2, http2)
         }
-        return (data, http ?? HTTPURLResponse())
+        return (data, http)
     }
 
-    /// (#C7) Retry wrapper for SAFE (idempotent, read-only) requests: up to
-    /// `attempts` tries with exponential backoff + jitter. Respects
-    /// cancellation, skips retries while the device is offline, and honors
-    /// Retry-After on 429/503.
+    /// Only safe reads retry. A server cooldown is a minimum, never a jittered suggestion.
     private func sendWithRetry(_ req: URLRequest, attempts: Int = 3) async throws -> (Data, HTTPURLResponse) {
-        var backoff: Double = 0.5
-        var lastError: Error = APIError.network
-        for attempt in 0..<attempts {
-            if Task.isCancelled { break }
-            if attempt > 0 && !ConnectivityMonitor.shared.pathSatisfied { break }
+        let limit = min(5, max(1, attempts))
+        let requestOwner = SeshAuth.shared.uid
+        let accountGeneration = SeshAuth.shared.accountGeneration
+        for attempt in 0..<limit {
+            try Task.checkCancellation()
+            guard requestOwner == SeshAuth.shared.uid,
+                  accountGeneration == SeshAuth.shared.accountGeneration else { throw CancellationError() }
+            guard ConnectivityMonitor.shared.pathSatisfied else { throw URLError(.notConnectedToInternet) }
+            let response: (Data, HTTPURLResponse)
             do {
-                let (data, resp) = try await send(req)
-                if resp.statusCode == 429 || resp.statusCode == 503 {
-                    let retryAfter = Double(resp.value(forHTTPHeaderField: "Retry-After") ?? "")
-                    let delay = retryAfter ?? (backoff + Double.random(in: 0...0.3))
-                    Diag.network.info("retrying \(req.url?.path ?? "?", privacy: .public) after \(delay, privacy: .public)s (\(resp.statusCode))")
-                    try await Task.sleep(for: .seconds(delay))
-                    backoff = min(backoff * 2, 8)
-                    continue
-                }
-                return (data, resp)
+                response = try await send(req)
             } catch {
-                lastError = error
-                if attempt < attempts - 1 {
-                    try? await Task.sleep(for: .seconds(backoff + Double.random(in: 0...0.3)))
-                    backoff = min(backoff * 2, 8)
-                }
+                if Task.isCancelled || error is CancellationError || (error as? URLError)?.code == .cancelled { throw CancellationError() }
+                guard attempt + 1 < limit, SeshReliabilityPolicy.transient(error) else { throw error }
+                try await Task.sleep(for: .seconds(min(pow(2, Double(attempt)) * 0.5, 8) + Double.random(in: 0...0.3)))
+                continue
             }
+            let status = response.1.statusCode
+            guard status == 429 || (500...599).contains(status), attempt + 1 < limit else { return response }
+            let delay = SeshReliabilityPolicy.retryAfter(response.1.value(forHTTPHeaderField: "Retry-After"))
+                ?? min(pow(2, Double(attempt)) * 0.5, 8) + Double.random(in: 0...0.3)
+            // Preserve the actual HTTP failure; a long cooldown must not pin a foreground task.
+            guard delay <= 10 else { return response }
+            try await Task.sleep(for: .seconds(delay))
         }
-        throw lastError
+        throw APIError.network
     }
 
     // MARK: Reads
@@ -199,7 +210,7 @@ struct SeshAPI {
     }
 
     func fetchMessages(roomID: String, identity: SeshIdentity?) async -> [ChatMessage]? {
-        guard let req = makeRequest("/api/rooms/\(roomID)/messages", identity: identity) else { return nil }
+        guard let req = makeRequest("/api/rooms/\(SeshReliabilityPolicy.pathSegment(roomID))/messages", identity: identity) else { return nil }
         do {
             let (data, resp) = try await sendWithRetry(req)
             guard resp.statusCode == 200 else { return nil }
@@ -257,11 +268,15 @@ struct SeshAPI {
             let (_, resp) = try await send(req)
             switch resp.statusCode {
             case 200...299: return .success(())
-            case 429:        return .failure(.rateLimited)
+            case 429, 503:
+                if let delay = SeshReliabilityPolicy.retryAfter(resp.value(forHTTPHeaderField: "Retry-After")) { return .failure(.cooldown(delay)) }
+                return resp.statusCode == 429 ? .failure(.rateLimited) : .failure(.server(503))
+            case 400, 413, 422: return .failure(.invalidRequest)
             case 404:        return .failure(.notFound)
             default:         return .failure(.server(resp.statusCode))
             }
         } catch {
+            if Task.isCancelled || error is CancellationError || (error as? URLError)?.code == .cancelled { return .failure(.cancelled) }
             return .failure(.network)
         }
     }
@@ -317,7 +332,7 @@ struct SeshAPI {
 
     /// Register the caller as a member of a chat room (drives "N members").
     func joinRoom(_ roomID: String, identity: SeshIdentity?) async {
-        let safeID = roomID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? roomID
+        let safeID = SeshReliabilityPolicy.pathSegment(roomID)
         _ = await post("/api/rooms/\(safeID)/join", body: RoomJoinBody(roomID: roomID))
     }
 
@@ -437,14 +452,14 @@ struct SeshAPI {
                    ["id": c.id, "title": c.title, "strain": c.strainName ?? "",
                     "live": c.isLive, "visibility": c.visibility.rawValue])
     }
-    func joinCypher(_ id: String, identity: SeshIdentity?) async { await post("/api/cyphers/\(id)/join", identity: identity, [:]) }
-    func leaveCypher(_ id: String, identity: SeshIdentity?) async { await post("/api/cyphers/\(id)/leave", identity: identity, [:]) }
+    func joinCypher(_ id: String, identity: SeshIdentity?) async { await post("/api/cyphers/\(SeshReliabilityPolicy.pathSegment(id))/join", identity: identity, [:]) }
+    func leaveCypher(_ id: String, identity: SeshIdentity?) async { await post("/api/cyphers/\(SeshReliabilityPolicy.pathSegment(id))/leave", identity: identity, [:]) }
 
     func startLive(_ s: LiveStream, identity: SeshIdentity?) async {
         await post("/api/live", identity: identity,
                    ["id": s.id, "title": s.title, "strain": s.strainName ?? "", "cypher": s.cypherID ?? ""])
     }
-    func endLive(_ id: String, identity: SeshIdentity?) async { await post("/api/live/\(id)/end", identity: identity, [:]) }
+    func endLive(_ id: String, identity: SeshIdentity?) async { await post("/api/live/\(SeshReliabilityPolicy.pathSegment(id))/end", identity: identity, [:]) }
 
     /// Register this device's APNs token so friends' "went live" events can push.
     func registerPush(token: String, identity: SeshIdentity?) async {
@@ -456,7 +471,7 @@ struct SeshAPI {
     }
 
     func sendMessage(_ m: ChatMessage, identity: SeshIdentity?) async {
-        _ = await post("/api/rooms/\(m.roomID)/messages", body: MessageBody(id: m.id, text: m.text),
+        _ = await post("/api/rooms/\(SeshReliabilityPolicy.pathSegment(m.roomID))/messages", body: MessageBody(id: m.id, text: m.text),
                        idempotencyKey: m.id)
     }
 
@@ -487,7 +502,7 @@ struct SeshAPI {
 
     /// Fetch a page of older messages before a given timestamp (pagination).
     func fetchMessages(roomID: String, before: Date?, limit: Int, identity: SeshIdentity?) async -> [ChatMessage]? {
-        var path = "/api/rooms/\(roomID)/messages?limit=\(limit)"
+        var path = "/api/rooms/\(SeshReliabilityPolicy.pathSegment(roomID))/messages?limit=\(min(100, max(1, limit)))"
         if let before {
             let iso = Self.isoFormatter.string(from: before)
             if let encoded = iso.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
@@ -542,7 +557,7 @@ extension SeshAPI {
 
     /// Full post plus comments for the expanded view (Phase 3).
     func fetchLoungePost(id: String, identity: SeshIdentity?) async -> LoungePostDetail? {
-        let safeID = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
+        let safeID = SeshReliabilityPolicy.pathSegment(id)
         guard let req = makeRequest("/api/lounge/post/\(safeID)", identity: identity) else { return nil }
         do {
             let (data, resp) = try await sendWithRetry(req)
@@ -561,7 +576,7 @@ extension SeshAPI {
     /// room (Phase 4). Returns nil on any failure so callers can keep the last
     /// known count instead of flashing to zero.
     func fetchRoomPresence(roomID: String, identity: SeshIdentity?) async -> Int? {
-        let safeID = roomID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? roomID
+        let safeID = SeshReliabilityPolicy.pathSegment(roomID)
         guard let req = makeRequest("/api/rooms/\(safeID)/presence", identity: identity) else { return nil }
         struct PresenceResponse: Decodable { let count: Int }
         do {
