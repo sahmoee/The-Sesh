@@ -53,3 +53,7 @@ _worker/**/package-lock.json
 # Local QA build reservations
 .qa-build/
 scripts/__pycache__/
+
+# Local development guidance
+/AGENTS.md
+/CLAUDE.md
