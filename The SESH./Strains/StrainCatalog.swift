@@ -107,11 +107,7 @@ struct StrainProfile: Codable, Identifiable, Hashable {
         ([name] + aka).map(Self.normalizedSearchText)
     }
 
-    static func normalizedSearchText(_ value: String) -> String {
-        value.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-            .components(separatedBy: CharacterSet.alphanumerics.inverted)
-            .filter { !$0.isEmpty }.joined(separator: " ")
-    }
+    static func normalizedSearchText(_ value: String) -> String { CatalogSearchIndex.normalize(value) }
 
     /// Factual field coverage, used to favor informative profiles without
     /// inventing ratings or popularity.
@@ -137,191 +133,139 @@ struct StrainProfile: Codable, Identifiable, Hashable {
 // MARK: - Store (local, observable)
 
 /// Holds the bundled library plus any user-added custom strains, and exposes
-/// lookup/search. Custom strains persist to UserDefaults.
+/// lookup/search. Custom strains commit to a protected local file before mirroring legacy defaults.
+@MainActor
 @Observable
 final class StrainStore {
-    /// User-added strains (persisted). Bundled strains live in `BundledStrains`.
     private(set) var customStrains: [StrainProfile] = []
-
+    private(set) var storageError: String?
+    private var catalogRevision = 0
     private let customKey = "ht.customStrains.v1"
-
-    /// Cached deduped catalog + lowercased search index, rebuilt only when the
-    /// custom strains change (not on every access). The bundled list is 627+
-    /// strains, so rebuilding per keystroke was wasteful.
+    @ObservationIgnored private let persistence = ProtectedCollectionStore<StrainProfile>(url: ProtectedCollectionStore<StrainProfile>.applicationURL("custom-strains-v1.json"))
     @ObservationIgnored private var cachedStrains: [StrainProfile]?
+    @ObservationIgnored private var searchIndex: CatalogSearchIndex?
+    @ObservationIgnored private var byID: [String: StrainProfile] = [:]
+    private struct Query: Hashable { let term: String; let type: String?; let detailed: Bool }
+    @ObservationIgnored private var searchCache: [Query: [String]] = [:]
+    var canEdit: Bool { !persistence.blocked }
 
-    private func invalidateCache() { cachedStrains = nil }
+    init() { loadCustom() }
+    func retryLoading() { loadCustom() }
 
-    init() {
-        loadCustom()
+    private func invalidateCache() {
+        cachedStrains = nil; searchIndex = nil; byID = [:]; searchCache = [:]
+        catalogRevision += 1
     }
 
-    /// Full catalog: custom first (so user edits win on name clashes), then bundled.
+    /// Custom names override the bundled reference. Distinct IDs protect SwiftUI row identity.
     var strains: [StrainProfile] {
+        _ = catalogRevision // Cached reads still subscribe to custom catalog changes.
         if let cachedStrains { return cachedStrains }
-        let built = buildStrains()
-        cachedStrains = built
-        return built
-    }
-
-    private func buildStrains() -> [StrainProfile] {
-        var seen = Set<String>()
-        var out: [StrainProfile] = []
-        for s in customStrains + BundledStrains.all {
-            let key = s.name.lowercased().trimmingCharacters(in: .whitespaces)
-            if seen.insert(key).inserted { out.append(s) }
+        var names = Set<String>(), ids = Set<String>()
+        let result = (customStrains + BundledStrains.all).filter {
+            let key = StrainProfile.normalizedSearchText($0.name)
+            guard !names.contains(key), !ids.contains($0.id) else { return false }
+            names.insert(key); ids.insert($0.id); return true
         }
-        return out
+        cachedStrains = result
+        byID = Dictionary(result.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        searchIndex = CatalogSearchIndex(result.map { CatalogSearchDocument(id: $0.id, name: $0.name,
+            type: $0.type.rawValue, aliases: $0.aka,
+            traits: ($0.effects + $0.flavors + $0.terpenes).map(\.name), breeder: $0.breeder ?? "", coverage: $0.completenessScore) })
+        return result
     }
 
-    // MARK: Lookup & search
+    private var index: CatalogSearchIndex { _ = strains; return searchIndex ?? CatalogSearchIndex([]) }
 
     func strain(named query: String) -> StrainProfile? {
-        let key = query.lowercased().trimmingCharacters(in: .whitespaces)
-        guard !key.isEmpty else { return nil }
-        if let exact = strains.first(where: { $0.matchKeys.contains(key) }) { return exact }
-        return strains.first { $0.matchKeys.contains { $0.hasPrefix(key) } }
+        let index = self.index
+        if let id = index.exactID(query) { return byID[id] }
+        return index.prefixID(query).flatMap { byID[$0] }
     }
-
-    /// Ranked type-ahead suggestions: prefix matches first, then contains.
     func suggestions(for query: String, limit: Int = 6) -> [StrainProfile] {
-        let key = StrainProfile.normalizedSearchText(query)
-        guard !key.isEmpty else { return [] }
-        let all = strains
-        // Single pass: bucket into prefix vs. contains matches. Using a Set of ids
-        // to dedupe avoids the previous O(n^2) `prefix.contains(s)` array scan
-        // (StrainProfile equality compares every field), which ran on each keystroke.
-        var prefix: [StrainProfile] = []
-        var contains: [StrainProfile] = []
-        var prefixIDs = Set<String>()
-        for s in all {
-            let keys = s.matchKeys
-            if keys.contains(where: { $0.hasPrefix(key) }) {
-                prefix.append(s)
-                prefixIDs.insert(s.id)
-            } else if keys.contains(where: { $0.contains(key) }) {
-                contains.append(s)
-            }
-        }
-        let merged = prefix + contains.filter { !prefixIDs.contains($0.id) }
-        return Array(merged.prefix(limit))
+        index.suggestions(query, limit: limit).compactMap { byID[$0] }
     }
-
-    /// Relevance-ranked catalog search. Exact and prefix name matches lead,
-    /// followed by aliases, breeder, effects, flavors, and terpenes.
     func search(_ query: String, type: StrainType? = nil, detailedOnly: Bool = false) -> [StrainProfile] {
-        let term = StrainProfile.normalizedSearchText(query)
-        return strains.compactMap { strain -> (StrainProfile, Int)? in
-            guard type == nil || strain.type == type,
-                  !detailedOnly || strain.completenessScore >= 4 else { return nil }
-            guard !term.isEmpty else { return (strain, strain.completenessScore) }
-            let name = StrainProfile.normalizedSearchText(strain.name)
-            let aliases = strain.aka.map(StrainProfile.normalizedSearchText)
-            let traits = (strain.effects + strain.flavors + strain.terpenes).map { StrainProfile.normalizedSearchText($0.name) }
-            let breeder = StrainProfile.normalizedSearchText(strain.breeder ?? "")
-            let rank: Int
-            if name == term { rank = 100 }
-            else if name.hasPrefix(term) { rank = 80 }
-            else if aliases.contains(where: { $0 == term || $0.hasPrefix(term) }) { rank = 70 }
-            else if name.contains(term) { rank = 60 }
-            else if breeder.contains(term) { rank = 40 }
-            else if traits.contains(where: { $0.contains(term) }) { rank = 30 }
-            else { return nil }
-            return (strain, rank + strain.completenessScore)
-        }
-        .sorted {
-            $0.1 == $1.1
-                ? $0.0.name.localizedCaseInsensitiveCompare($1.0.name) == .orderedAscending
-                : $0.1 > $1.1
-        }
-        .map(\.0)
+        let index = self.index
+        let request = Query(term: CatalogSearchIndex.normalize(query), type: type?.rawValue, detailed: detailedOnly)
+        if let cached = searchCache[request] { return cached.compactMap { byID[$0] } }
+        let ids = index.search(request.term, type: request.type, detailedOnly: detailedOnly)
+        if searchCache.count >= 16 { searchCache.removeAll(keepingCapacity: true) }
+        searchCache[request] = ids
+        return ids.compactMap { byID[$0] }
     }
-
-    /// True if no strain (bundled or custom) matches the name exactly.
     func isUnknown(_ name: String) -> Bool {
-        let key = name.lowercased().trimmingCharacters(in: .whitespaces)
-        guard !key.isEmpty else { return false }
-        return !strains.contains { $0.matchKeys.contains(key) }
+        !CatalogSearchIndex.normalize(name).isEmpty && index.exactID(name) == nil
     }
+    func sorted() -> [StrainProfile] { index.alphabeticIDs.compactMap { byID[$0] } }
+    func filtered(by type: StrainType?) -> [StrainProfile] { sorted().filter { type == nil || $0.type == type } }
 
-    func sorted() -> [StrainProfile] {
-        strains.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-    }
-
-    func filtered(by type: StrainType?) -> [StrainProfile] {
-        let base = sorted()
-        guard let type else { return base }
-        return base.filter { $0.type == type }
-    }
-
-    // MARK: Custom strain CRUD
-
-    /// Add or update a custom strain (matched by id). Returns the saved profile.
     @discardableResult
-    func upsertCustom(_ strain: StrainProfile) -> StrainProfile {
-        var s = strain
-        s.isCustom = true
-        if s.sources.isEmpty { s.sources = ["My strains"] }
-        if let i = customStrains.firstIndex(where: { $0.id == s.id }) {
-            customStrains[i] = s
-        } else {
-            customStrains.insert(s, at: 0)
+    func upsertCustom(_ strain: StrainProfile, replacing expected: StrainProfile? = nil, creating: Bool = false) throws -> StrainProfile {
+        var value = strain
+        value.name = JournalInputPolicy.trimmed(value.name)
+        guard !CatalogSearchIndex.normalize(value.name).isEmpty else { throw EditError.message("Enter a strain name.") }
+        for number in [value.thc, value.cbd].compactMap({ $0 }) {
+            guard CatalogValuePolicy.percentage(number) != nil else { throw EditError.message("THC and CBD must be between 0 and 100 percent.") }
         }
-        saveCustom()
-        return s
+        if let expected {
+            guard let current = customStrains.first(where: { $0.id == expected.id }) else { throw EditError.message("This strain was removed while you were editing. Your draft has been kept.") }
+            guard current == expected else { throw EditError.message("This strain changed while you were editing. Reopen it before saving over those changes.") }
+        }
+        if creating { value.id = "custom-" + UUID().uuidString.lowercased() }
+        let nameKey = CatalogSearchIndex.normalize(value.name)
+        guard !customStrains.contains(where: { $0.id != value.id && CatalogSearchIndex.normalize($0.name) == nameKey }) else {
+            throw EditError.message("A custom strain with this name already exists. Edit its existing profile instead.")
+        }
+        value.isCustom = true
+        if value.sources.isEmpty { value.sources = ["My strains"] }
+        var candidate = customStrains
+        if let i = candidate.firstIndex(where: { $0.id == value.id }) { candidate[i] = value }
+        else { candidate.insert(value, at: 0) }
+        try commit(candidate)
+        return value
     }
 
-    /// Convenience: create a custom strain from a name (+ optional fields).
     @discardableResult
     func addCustom(name: String, type: StrainType = .hybrid,
                    thc: Double? = nil, cbd: Double? = nil,
-                   effects: [String] = [], flavors: [String] = [],
-                   summary: String? = nil) -> StrainProfile {
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
-        let profile = StrainProfile(
-            id: StrainProfile.slug(from: trimmed),
-            name: trimmed,
-            type: type,
-            thc: thc, cbd: cbd,
+                   effects: [String] = [], flavors: [String] = [], summary: String? = nil) throws -> StrainProfile {
+        let key = CatalogSearchIndex.normalize(name)
+        if let existing = customStrains.first(where: { CatalogSearchIndex.normalize($0.name) == key }) { return existing }
+        return try upsertCustom(StrainProfile(id: "", name: name, type: type, thc: thc, cbd: cbd,
             effects: effects.map { StrainTrait(name: $0, intensity: nil) },
-            flavors: flavors.map { StrainTrait(name: $0, intensity: nil) },
-            summary: (summary?.isEmpty ?? true) ? nil : summary,
-            sources: ["My strains"],
-            isCustom: true
-        )
-        return upsertCustom(profile)
+            flavors: flavors.map { StrainTrait(name: $0, intensity: nil) }, summary: summary,
+            sources: ["My strains"], isCustom: true), creating: true)
     }
-
-    func deleteCustom(_ strain: StrainProfile) {
-        customStrains.removeAll { $0.id == strain.id }
-        saveCustom()
+    func deleteCustom(_ strain: StrainProfile) throws { try commit(customStrains.filter { $0.id != strain.id }) }
+    func isCustom(_ strain: StrainProfile) -> Bool { customStrains.contains { $0.id == strain.id } }
+    func clearCustom() throws {
+        try persistence.reset()
+        UserDefaults.standard.removeObject(forKey: customKey)
+        customStrains = []; storageError = nil; invalidateCache()
     }
-
-    func isCustom(_ strain: StrainProfile) -> Bool {
-        customStrains.contains { $0.id == strain.id }
-    }
-
-    /// Clears user-added strains (used by full reset).
-    func clearCustom() {
-        customStrains.removeAll()
-        saveCustom()
-    }
-
-    // MARK: Persistence
-
-    private func saveCustom() {
-        invalidateCache()
-        if let data = try? JSONEncoder().encode(customStrains) {
+    private func commit(_ values: [StrainProfile]) throws {
+        do {
+            let data = try persistence.write(values)
             UserDefaults.standard.set(data, forKey: customKey)
-        }
+            customStrains = values; storageError = nil; invalidateCache()
+        } catch { storageError = error.localizedDescription; throw error }
     }
-
     private func loadCustom() {
-        if let data = UserDefaults.standard.data(forKey: customKey),
-           let v = try? JSONDecoder().decode([StrainProfile].self, from: data) {
-            customStrains = v
-        }
-        invalidateCache()
+        do {
+            var values = try persistence.load(legacy: UserDefaults.standard.data(forKey: customKey))
+            var ids = Set<String>(), repaired = false
+            for i in values.indices {
+                if values[i].id.isEmpty || !ids.insert(values[i].id).inserted {
+                    values[i].id = "custom-" + UUID().uuidString.lowercased(); ids.insert(values[i].id); repaired = true
+                }
+            }
+            if repaired { try commit(values) } else { customStrains = values; storageError = nil; invalidateCache() }
+        } catch { storageError = "Custom strains could not be read. Original data is preserved. " + error.localizedDescription }
+    }
+    enum EditError: LocalizedError {
+        case message(String)
+        var errorDescription: String? { if case .message(let message) = self { message } else { nil } }
     }
 }
 

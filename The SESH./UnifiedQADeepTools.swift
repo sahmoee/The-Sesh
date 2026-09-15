@@ -124,6 +124,14 @@ struct UnifiedQAProfile {
     ]
 
     static let sesh = [
+        item("watch-pair-v1", "Apple Watch", "Pair, activate and initial sync", "On paired hardware, install both apps and verify private initial copy, enabled state, last-sync date, and reachable/offline status. Generic builds do not verify delivery."),
+        item("watch-outbox-v1", "Apple Watch", "Offline private logging and receipts", "Log offline, restart Watch, reconnect, and confirm exactly one iPhone entry per command; distinguish queued, rejected and confirmed states, including queue capacity and removal."),
+        item("watch-stash-v1", "Apple Watch", "Linked stash deduction", "A linked log deducts exactly once, wrong/insufficient stash rejects without deduction, explicit new-strain logging clears the old linkage, and a resumed timer visibly preserves its link."),
+        item("watch-timer-v1", "Apple Watch", "Timer and background delivery", "Start, background, restart, resume and save a private Watch timer. Verify receipt persistence during watchConnectivity background delivery; an existing iPhone session is clearly distinguished."),
+        item("watch-browse-v1", "Apple Watch", "Full history and catalog pages", "Search and page beyond the offline cache, confirm accurate detail, favorite/pin/goal acknowledgements, no stale page after reset, and clear offline/timeout states."),
+        item("watch-reset-v1", "Apple Watch", "Reset isolation and delayed packets", "Verify phone reset requires current handshake before watch epoch replacement; old queued UUIDs cannot apply, delayed old contexts cannot restore private data, and disabled access clears visible phone copy."),
+        item("watch-drafts-v1", "Apple Watch", "Private drafts and recovery", "Unfinished decimal, log, thought, stash and goal fields survive restart; invalid/corrupt/locked storage preserves original data and offers retry. No action posts to Community."),
+        item("watch-accessibility-v1", "Apple Watch", "Watch accessibility and privacy", "Check smallest/largest Watch, VoiceOver, Dynamic Type, Digital Crown, targets, long labels, privacy-sensitive previews, private-text setting, and pending/error contrast on paired hardware."),
         item("launch", "App", "Cold launch and resume", "Sesh launches and restores the correct tab and active session."),
         item("onboarding", "Profile", "Onboarding and profile", "Profile, theme, consent, and account state persist correctly."),
         item("log", "Sessions", "Log a sesh", "Strain, method, mood, effects, duration, rating, price, photo, and notes save."),

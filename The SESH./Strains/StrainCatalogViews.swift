@@ -45,8 +45,8 @@ struct StrainCatalogDetailView: View {
                                         Text(shown.name).font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
                                         HStack(spacing: 8) {
                                             infoPill(shown.type.rawValue, color: shown.type.tint)
-                                            if let thc = shown.thc { infoPill("THC \(Int(thc))%", color: Palette.gold) }
-                                            if let cbd = shown.cbd, cbd >= 1 { infoPill("CBD \(Int(cbd))%", color: Palette.greenBright) }
+                                            if let thc = CatalogValuePolicy.percentage(shown.thc) { infoPill("THC \(thc.formatted(.number.precision(.fractionLength(0...1))))%", color: Palette.gold) }
+                                            if let cbd = CatalogValuePolicy.percentage(shown.cbd), cbd >= 1 { infoPill("CBD \(cbd.formatted(.number.precision(.fractionLength(0...1))))%", color: Palette.greenBright) }
                                         }
                                     }
                                     Spacer()
@@ -175,13 +175,13 @@ struct StrainCatalogDetailView: View {
                         }
 
                         // Potency bars (THC / CBD)
-                        if shown.thc != nil || (shown.cbd ?? 0) >= 0.1 {
+                        if CatalogValuePolicy.percentage(shown.thc) != nil || (CatalogValuePolicy.percentage(shown.cbd) ?? 0) >= 0.1 {
                             Text("Potency").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text).padding(.top, 4)
                             VStack(spacing: 10) {
-                                if let thc = shown.thc {
+                                if let thc = CatalogValuePolicy.percentage(shown.thc) {
                                     potencyBar("THC", value: thc, max: 30, color: Palette.gold)
                                 }
-                                if let cbd = shown.cbd, cbd >= 0.1 {
+                                if let cbd = CatalogValuePolicy.percentage(shown.cbd), cbd >= 0.1 {
                                     potencyBar("CBD", value: cbd, max: 20, color: Palette.greenBright)
                                 }
                             }
@@ -300,6 +300,7 @@ struct StrainCatalogDetailView: View {
 struct StrainEditorView: View {
     @Environment(StrainStore.self) private var strains
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     var editing: StrainProfile? = nil
 
     @State private var name = ""
@@ -311,15 +312,27 @@ struct StrainEditorView: View {
     @State private var summary = ""
     @State private var photoName: String?
     @State private var didLoad = false
+    @State private var baseline: String?
+    @State private var confirmDiscard = false
+    @State private var confirmDelete = false
+    @State private var saving = false
+    @State private var saveError: String?
 
     private var isEditing: Bool { editing != nil }
-    private var canSave: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty }
+    private var canSave: Bool {
+        !CatalogSearchIndex.normalize(name).isEmpty && validPercent(thc) && validPercent(cbd) && !saving && strains.canEdit
+    }
+    private var fingerprint: String { JournalInputPolicy.fingerprint([name, type.rawValue, thc, cbd, effects, flavors, summary, photoName ?? ""]) }
+    private var hasEdits: Bool { baseline.map { $0 != fingerprint } ?? false }
+    private func validPercent(_ text: String) -> Bool {
+        JournalInputPolicy.trimmed(text).isEmpty || CatalogValuePolicy.percentage(JournalInputPolicy.decimal(text)) != nil
+    }
 
     var body: some View {
         ZStack {
             AppBackground()
             VStack(spacing: 0) {
-                ScreenHeader(title: isEditing ? "Edit Strain" : "Add Strain", onBack: { dismiss() })
+                ScreenHeader(title: isEditing ? "Edit Strain" : "Add Strain", onBack: { if hasEdits { confirmDiscard = true } else { dismiss() } })
                     .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
 
                 ScrollView {
@@ -339,15 +352,15 @@ struct StrainEditorView: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             FieldLabel(text: "Type")
-                            Picker("", selection: $type) {
-                                ForEach(StrainType.allCases.filter { $0 != .unknown }) { t in
+                            Picker("Strain type", selection: $type) {
+                                ForEach(StrainType.allCases) { t in
                                     Text(t.rawValue).tag(t)
                                 }
                             }
-                            .pickerStyle(.segmented)
+                            .pickerStyle(.menu).tint(Palette.greenBright).accessibilityLabel("Strain type")
                         }
 
-                        HStack(spacing: 12) {
+                        (dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(spacing: 12))) {
                             numberField("THC %", $thc)
                             numberField("CBD %", $cbd)
                         }
@@ -356,13 +369,16 @@ struct StrainEditorView: View {
                         InputField(label: "Flavors (comma-separated)", placeholder: "Sweet, Citrus", value: $flavors)
                         NotesField(label: "Notes (optional)", placeholder: "Describe the strain...", text: $summary, minHeight: 80)
 
+                        if let message = saveError ?? strains.storageError {
+                            Label(message, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Palette.moodAngry)
+                        }
                         PrimaryButton(title: isEditing ? "Save Changes" : "Add Strain") { save() }
                             .opacity(canSave ? 1 : 0.5)
                             .disabled(!canSave)
 
-                        if isEditing, let e = editing {
+                        if isEditing {
                             Button(role: .destructive) {
-                                Haptics.warning(); strains.deleteCustom(e); dismiss()
+                                confirmDelete = true
                             } label: {
                                 Text("Delete Strain").font(.system(size: 15, weight: .semibold))
                                     .foregroundStyle(Palette.moodAngry)
@@ -373,12 +389,23 @@ struct StrainEditorView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal, 18).padding(.bottom, 40)
+                    .padding(.horizontal, 18).padding(.bottom, 40).seshReadableForm()
                 }
                 .scrollDismissesKeyboard(.interactively)
             }
         }
+        .seshEditorPresentation().interactiveDismissDisabled(hasEdits || saving)
         .onAppear(perform: load)
+        .confirmationDialog("Discard strain changes?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard Changes", role: .destructive) { dismiss() }; Button("Keep Editing", role: .cancel) { }
+        }
+        .confirmationDialog("Delete this custom strain?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("Delete Strain", role: .destructive) {
+                guard let editing else { return }
+                do { try strains.deleteCustom(editing); Haptics.warning(); dismiss() }
+                catch { saveError = error.localizedDescription }
+            }
+        } message: { Text("Your journal records remain. Only this custom reference profile is removed.") }
     }
 
     private func numberField(_ label: String, _ text: Binding<String>) -> some View {
@@ -386,52 +413,55 @@ struct StrainEditorView: View {
             FieldLabel(text: label)
             TextField("", text: text, prompt: Text("—").foregroundStyle(Palette.textTertiary))
                 .keyboardType(.decimalPad)
+                .accessibilityLabel(label + ", optional percentage")
                 .foregroundStyle(Palette.text)
                 .padding(.horizontal, 14).padding(.vertical, 13)
                 .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
                 .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+            if !validPercent(text.wrappedValue) {
+                Text("Enter 0–100 using your region's decimal separator; omit the % symbol.").font(.footnote).foregroundStyle(Palette.moodAngry)
+            }
         }
     }
 
     private func load() {
         guard !didLoad else { return }
         didLoad = true
+        defer { baseline = fingerprint }
         guard let e = editing else { return }
         name = e.name; type = e.type
-        if let t = e.thc { thc = t.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(t)) : String(t) }
-        if let c = e.cbd { cbd = c.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(c)) : String(c) }
+        thc = e.thc.map { JournalInputPolicy.editableDecimal($0) } ?? ""
+        cbd = e.cbd.map { JournalInputPolicy.editableDecimal($0) } ?? ""
         effects = e.effects.map(\.name).joined(separator: ", ")
         flavors = e.flavors.map(\.name).joined(separator: ", ")
         summary = e.summary ?? ""
         photoName = e.photoName
     }
 
-    private func splitList(_ s: String) -> [String] {
-        s.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    private func traits(_ text: String, preserving previous: [StrainTrait]) -> [StrainTrait] {
+        var seen = Set<String>()
+        return text.split(separator: ",").compactMap {
+            let name = JournalInputPolicy.trimmed(String($0)), key = CatalogSearchIndex.normalize(String($0))
+            guard !key.isEmpty, seen.insert(key).inserted else { return nil }
+            return previous.first { CatalogSearchIndex.normalize($0.name) == key } ?? StrainTrait(name: name, intensity: nil)
+        }
     }
 
     private func save() {
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        let thcVal = Double(thc.filter { "0123456789.".contains($0) })
-        let cbdVal = Double(cbd.filter { "0123456789.".contains($0) })
-        let summaryText = summary.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        var profile = editing ?? StrainProfile(id: StrainProfile.slug(from: trimmed), name: trimmed, type: type)
-        profile.name = trimmed
-        profile.type = type
-        profile.thc = thcVal
-        profile.cbd = cbdVal
-        profile.effects = splitList(effects).map { StrainTrait(name: $0, intensity: nil) }
-        profile.flavors = splitList(flavors).map { StrainTrait(name: $0, intensity: nil) }
-        profile.summary = summaryText.isEmpty ? nil : summaryText
-        profile.photoName = photoName
-        profile.isCustom = true
-        if profile.sources.isEmpty { profile.sources = ["My strains"] }
-
-        strains.upsertCustom(profile)
-        Haptics.success()
-        dismiss()
+        guard canSave else { return }
+        saving = true; defer { saving = false }
+        var profile = editing ?? StrainProfile(id: "", name: "", type: type)
+        profile.name = JournalInputPolicy.trimmed(name); profile.type = type
+        profile.thc = JournalInputPolicy.trimmed(thc).isEmpty ? nil : JournalInputPolicy.decimal(thc)
+        profile.cbd = JournalInputPolicy.trimmed(cbd).isEmpty ? nil : JournalInputPolicy.decimal(cbd)
+        profile.effects = traits(effects, preserving: profile.effects)
+        profile.flavors = traits(flavors, preserving: profile.flavors)
+        let notes = JournalInputPolicy.trimmed(summary)
+        profile.summary = notes.isEmpty ? nil : notes; profile.photoName = photoName
+        do {
+            try strains.upsertCustom(profile, replacing: editing, creating: editing == nil)
+            Haptics.success(); dismiss()
+        } catch { saveError = error.localizedDescription }
     }
 }
 

@@ -44,6 +44,12 @@ struct StrainLibraryView: View {
                     FilterPills(items: filterLabels, selection: filterBinding)
                         .padding(.horizontal, 18).padding(.bottom, 8)
                     resultsSummary
+                    if let error = strains.storageError {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Palette.moodAngry)
+                            Button("Retry reading saved strains") { strains.retryLoading() }.minimumTapTarget().foregroundStyle(Palette.greenBright)
+                        }.padding(.horizontal, 18)
+                    }
                     libraryListContent
                 }
                 floatingAddButton
@@ -69,7 +75,8 @@ struct StrainLibraryView: View {
                     .foregroundStyle(detailedOnly ? Palette.greenBright : Palette.textSecondary)
             }
             .buttonStyle(.plain)
-            .accessibilityValue(detailedOnly ? "On" : "Off")
+            .minimumTapTarget().accessibilityValue(detailedOnly ? "On" : "Off")
+            .accessibilityAddTraits(detailedOnly ? .isSelected : [])
         }
         .padding(.horizontal, 18).padding(.bottom, 8)
     }
@@ -83,9 +90,9 @@ struct StrainLibraryView: View {
                 Spacer()
                 Button { showAdd = true } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
+                        .font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text).minimumTapTarget()
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.plain).accessibilityLabel("Add custom strain")
             }
         }
         .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
@@ -99,8 +106,8 @@ struct StrainLibraryView: View {
                 .foregroundStyle(Palette.text)
             if !query.isEmpty {
                 Button { query = "" } label: {
-                    Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.textSecondary)
-                }.buttonStyle(.plain)
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.textSecondary).minimumTapTarget()
+                }.buttonStyle(.plain).accessibilityLabel("Clear strain search")
             }
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
@@ -285,6 +292,7 @@ private struct ForYouRow: View {
     let profile: StrainProfile
     let onLog: (StrainProfile) -> Void
     let onEdit: (StrainProfile) -> Void
+    @State private var confirmDelete = false
 
     var body: some View {
         NavigationLink {
@@ -317,6 +325,7 @@ private struct StrainListRow: View {
     let profile: StrainProfile
     let onLog: (StrainProfile) -> Void
     let onEdit: (StrainProfile) -> Void
+    @State private var confirmDelete = false
 
     var body: some View {
         NavigationLink {
@@ -328,10 +337,10 @@ private struct StrainListRow: View {
         .listRowInsets(EdgeInsets(top: 6, leading: 18, bottom: 6, trailing: 18))
         .listRowSeparator(.hidden)
         .listRowBackground(Color.clear)
-        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             if strains.isCustom(profile) {
                 Button(role: .destructive) {
-                    Haptics.warning(); strains.deleteCustom(profile)
+                    confirmDelete = true
                 } label: { Label("Delete", systemImage: "trash") }
                 Button {
                     onEdit(profile)
@@ -343,9 +352,15 @@ private struct StrainListRow: View {
             Button { onLog(profile) } label: { Label("Log this strain", systemImage: "plus") }
             if strains.isCustom(profile) {
                 Button { onEdit(profile) } label: { Label("Edit", systemImage: "pencil") }
-                Button(role: .destructive) { strains.deleteCustom(profile) } label: { Label("Delete", systemImage: "trash") }
+                Button(role: .destructive) { confirmDelete = true } label: { Label("Delete", systemImage: "trash") }
             }
         }
+        .confirmationDialog("Delete this custom strain?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("Delete Strain", role: .destructive) {
+                do { try strains.deleteCustom(profile); Haptics.warning() }
+                catch { /* The store publishes a recoverable error in the library. */ }
+            }
+        } message: { Text("Journal entries remain. Only this custom reference profile is removed.") }
     }
 }
 
@@ -370,8 +385,8 @@ struct StrainRow: View {
                     HStack(spacing: 8) {
                         Text(profile.type.rawValue)
                             .font(.system(size: 12, weight: .medium)).foregroundStyle(profile.type.tint)
-                        if let thc = profile.thc {
-                            Text("THC \(Int(thc))%").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+                        if let thc = CatalogValuePolicy.percentage(profile.thc) {
+                            Text("THC \(thc.formatted(.number.precision(.fractionLength(0...1))))%").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
                         }
                     }
                     if !profile.effects.isEmpty {

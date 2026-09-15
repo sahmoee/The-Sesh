@@ -166,7 +166,7 @@ struct AddPurchaseView: View {
                             FieldLabel(text: "Strain")
                             InputField(label: "", placeholder: "Strain name…", value: $strain)
                             if !strain.isEmpty {
-                                let matches = strains.strains.filter { $0.name.lowercased().contains(strain.lowercased()) }.prefix(4)
+                                let matches = strains.suggestions(for: strain, limit: 4)
                                 ForEach(Array(matches)) { m in
                                     Button { strain = m.name; Haptics.selection() } label: {
                                         HStack { Text(m.name).font(.system(size: 14)).foregroundStyle(Palette.text); Spacer() }.padding(.vertical, 5)

@@ -9,8 +9,8 @@ import SwiftUI
 struct SeshApp: App {
     @UIApplicationDelegateAdaptor(SeshAppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
-    @State private var session = AppSession()
-    @State private var strains = StrainStore()
+    @State private var session: AppSession
+    @State private var strains: StrainStore
     @State private var social = SocialStore()
     @State private var wishlist = WishlistStore()
     @State private var comparisonHistory = ComparisonHistoryStore()
@@ -25,6 +25,15 @@ struct SeshApp: App {
     @AppStorage("sesh.skippedSignIn") private var skippedSignIn = false
     @AppStorage("sesh.onboarded.v2") private var onboarded = false
     @AppStorage(UnifiedQASettings.enabledKey) private var qaEnabled = false
+
+    init() {
+        let journal = AppSession()
+        let catalog = StrainStore()
+        _session = State(initialValue: journal)
+        _strains = State(initialValue: catalog)
+        // Activate before UI onboarding or any optional social/network await.
+        SeshPhoneWatchBridge.shared.configure(session: journal, strains: catalog)
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -100,6 +109,7 @@ struct SeshApp: App {
                 // Foreground -> in-app banner; background -> lock-screen alert.
                 notifications.scenePhaseActive = (phase == .active)
                 if phase == .active {
+                    SeshPhoneWatchBridge.shared.refresh()
                     notifications.dismissBanner()
                     PushManager.shared.requestAndRegister()
                     // Opening the app makes you "ready" — but only if you were away

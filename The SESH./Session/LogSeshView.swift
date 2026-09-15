@@ -655,10 +655,10 @@ struct LogSeshView: View {
     private func addNewStrain() {
         let trimmed = strain.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
-        let created = strains.addCustom(name: trimmed, type: .hybrid)
-        matched = created
-        showSuggestions = false
-        Haptics.success()
+        do {
+            let created = try strains.addCustom(name: trimmed, type: .hybrid)
+            matched = created; showSuggestions = false; Haptics.success()
+        } catch { saveError = error.localizedDescription }
     }
 
     private func strainSubtitle(_ s: StrainProfile) -> String {

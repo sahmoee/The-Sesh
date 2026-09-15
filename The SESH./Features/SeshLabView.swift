@@ -19,9 +19,11 @@ struct SeshLabView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     FieldLabel(text: "Sesh Lab")
-                    Text("New tools built on your own data. Everything here stays on your device.")
-                        .font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
+                    Text("Tools for your personal journal, plus an optional friend card you can share.")
+                        .font(.seshScaled(13)).foregroundStyle(Palette.textSecondary)
 
+                    labLink("books.vertical", "Journal Studio",
+                            "Notebooks, reflections, comparison, and private exports") { JournalStudioView() }
                     labLink("hourglass.bottomhalf.filled", "Stash Forecast",
                             "When each jar runs low, from your logged use") { StashForecastView() }
                     labLink("dollarsign.arrow.circlepath", "Cost per Sesh",
@@ -35,7 +37,7 @@ struct SeshLabView: View {
                     labLink("calendar.badge.minus", "Rest Days",
                             "Plan breaks and watch tolerance patterns") { TolerancePlannerView() }
                 }
-                .padding(16)
+                .padding(16).seshReadableForm()
             }
         }
         .navigationTitle("Sesh Lab")
@@ -46,17 +48,16 @@ struct SeshLabView: View {
         NavigationLink {
             dest()
                 .environment(session).environment(social)
-                .navigationBarBackButtonHidden(true)
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: symbol)
-                    .font(.system(size: 17)).foregroundStyle(Palette.greenBright).frame(width: 28)
+                    .font(.seshScaled(17)).foregroundStyle(Palette.greenBright).frame(width: 28)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
-                    Text(subtitle).font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
+                    Text(title).font(.seshScaled(15, weight: .semibold)).foregroundStyle(Palette.text)
+                    Text(subtitle).font(.seshScaled(12)).foregroundStyle(Palette.textTertiary)
                 }
                 Spacer()
-                Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
+                Image(systemName: "chevron.right").font(.seshScaled(13)).foregroundStyle(Palette.textTertiary)
             }
             .padding(13)
             .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))

@@ -66,207 +66,181 @@ struct GoalsView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
     @State private var showAdd = false
+    @State private var editing: SeshGoal?
+    @State private var pendingDeletion: SeshGoal?
 
     var body: some View {
         VStack(spacing: 0) {
             ScreenHeader(title: "Goals", onBack: { dismiss() }) {
-                Button { showAdd = true } label: {
-                    Image(systemName: "plus").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.text)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
-
-            if session.goals.isEmpty {
-                emptyState
-            } else {
-                ScrollView {
-                    VStack(spacing: 14) {
-                        ForEach(session.goals) { goal in
-                            goalCard(goal)
+                Button { showAdd = true } label: { Image(systemName: "plus").minimumTapTarget() }
+                    .buttonStyle(.plain).foregroundStyle(Palette.text).accessibilityLabel("Add a personal goal")
+            }.padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
+            ScrollView {
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    let summary = PersonalGoalPolicy.week(now: context.date, sessionDates: session.entries.map(\.date), purchases: session.purchases.map { ($0.date, $0.cost) })
+                    LazyVStack(alignment: .leading, spacing: 14) {
+                        if let error = session.goalStorageError {
+                            Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Palette.moodAngry)
+                            Button("Retry reading goals") { session.retryLoadingGoals() }.foregroundStyle(Palette.greenBright).minimumTapTarget()
                         }
-                        Color.clear.frame(height: 20)
-                    }
-                    .padding(.horizontal, 18)
+                        if session.goals.isEmpty {
+                            EmptyStateView(icon: "target", title: "Set a personal goal", message: "Keep your own intentions and weekly limits in one place.", actionTitle: "Add a goal", actionIcon: "plus") { showAdd = true }
+                        } else {
+                            Text("Week of \(summary.start.formatted(.dateTime.month(.abbreviated).day())) · recorded through now")
+                                .font(.footnote).foregroundStyle(Palette.textSecondary)
+                            if summary.ignoredCosts > 0 {
+                                Label("\(summary.ignoredCosts) invalid recorded cost(s) excluded from the total.", systemImage: "exclamationmark.circle")
+                                    .font(.footnote).foregroundStyle(Palette.moodAngry)
+                            }
+                            ForEach(session.goals.sorted { $0.createdAt == $1.createdAt ? $0.id.uuidString < $1.id.uuidString : $0.createdAt > $1.createdAt }) { goal in
+                                goalCard(goal, summary: summary)
+                            }
+                        }
+                    }.padding(.horizontal, 18).padding(.bottom, 28).seshReadableForm()
                 }
             }
         }
         .background(AppBackground())
         .sheet(isPresented: $showAdd) { AddGoalSheet() }
+        .sheet(item: $editing) { AddGoalSheet(editing: $0) }
+        .confirmationDialog("Delete this goal?", isPresented: Binding(get: { pendingDeletion != nil }, set: { if !$0 { pendingDeletion = nil } }), titleVisibility: .visible) {
+            if let goal = pendingDeletion { Button("Delete Goal", role: .destructive) { if session.deleteGoal(goal) { pendingDeletion = nil; Haptics.warning() } } }
+            Button("Keep Goal", role: .cancel) { pendingDeletion = nil }
+        } message: { Text("Only the goal is removed. Your journal and historical records remain.") }
     }
 
-    private var emptyState: some View {
-        VStack(spacing: 14) {
-            Spacer()
-            Image(systemName: "target").font(.system(size: 44)).foregroundStyle(Palette.greenBright)
-            Text("Set a goal").font(.system(size: 20, weight: .bold)).foregroundStyle(Palette.text)
-            Text("Smoke less, spend less, take a tolerance break — track what matters to you.")
-                .font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
-                .multilineTextAlignment(.center).padding(.horizontal, 40)
-            Button { showAdd = true } label: {
-                Text("Add a goal").font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Palette.onGreen)
-                    .padding(.horizontal, 22).padding(.vertical, 13)
-                    .background(Capsule().fill(Palette.greenBright))
-            }
-            .buttonStyle(.plain)
-            Spacer(); Spacer()
-        }
-    }
-
-    private func goalCard(_ goal: SeshGoal) -> some View {
+    private func goalCard(_ goal: SeshGoal, summary: PersonalGoalPolicy.WeekSummary) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                Image(systemName: goal.kind.symbol).font(.system(size: 18)).foregroundStyle(Palette.greenBright).frame(width: 26)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(goal.title).font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
-                    Text(goal.kind.rawValue).font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
+                Image(systemName: goal.kind.symbol).foregroundStyle(Palette.greenBright).accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(goal.title).font(.headline).foregroundStyle(Palette.text).fixedSize(horizontal: false, vertical: true)
+                    Text(goal.active ? goal.kind.rawValue : "Paused · " + goal.kind.rawValue).font(.caption).foregroundStyle(Palette.textTertiary)
                 }
                 Spacer()
                 Menu {
-                    Button(role: .destructive) { session.deleteGoal(goal) } label: { Label("Delete", systemImage: "trash") }
-                } label: {
-                    Image(systemName: "ellipsis").font(.system(size: 16)).foregroundStyle(Palette.textSecondary).frame(width: 30, height: 30)
+                    Button("Edit Goal", systemImage: "pencil") { editing = goal }
+                    Button("Delete Goal", systemImage: "trash", role: .destructive) { pendingDeletion = goal }
+                } label: { Image(systemName: "ellipsis").minimumTapTarget().foregroundStyle(Palette.textSecondary) }
+                .accessibilityLabel("Options for \(goal.title)")
+            }
+            if goal.kind.isMeasurable {
+                if let target = goal.target, PersonalGoalPolicy.validTarget(target, wholeNumber: goal.kind == .smokeLess) {
+                    progressBlock(goal, target: target, actual: goal.kind == .smokeLess ? Double(summary.sessions) : summary.spent)
+                } else {
+                    Text("A valid weekly target is needed to show usage.").font(.footnote).foregroundStyle(Palette.textSecondary)
+                    Button("Set a target") { editing = goal }.foregroundStyle(Palette.greenBright).minimumTapTarget()
                 }
             }
-            if goal.kind.isMeasurable, let target = goal.target, target > 0 {
-                progressBlock(goal, target: target)
-            }
-            if !goal.note.isEmpty {
-                Text(goal.note).font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
-            }
+            if !goal.note.isEmpty { Text(goal.note).font(.subheadline).foregroundStyle(Palette.textSecondary).fixedSize(horizontal: false, vertical: true) }
         }
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
+        .padding(16).background(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).fill(Palette.card))
         .overlay(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+        .accessibilityElement(children: .contain)
     }
 
-    private func progressBlock(_ goal: SeshGoal, target: Double) -> some View {
-        let actual = currentValue(for: goal)
-        let ratio = min(1.5, actual / target)        // can exceed (over budget)
+    private func progressBlock(_ goal: SeshGoal, target: Double, actual: Double) -> some View {
+        let usage = PersonalGoalPolicy.usage(actual: actual, target: target) ?? 0
         let over = actual > target
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text("This week").font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
-                Spacer()
-                Text("\(format(actual)) / \(format(target)) \(goal.unit ?? "")")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(over ? Palette.moodAngry : Palette.greenBright)
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Palette.field).frame(height: 8)
-                    Capsule().fill(over ? Palette.moodAngry : Palette.greenBright)
-                        .frame(width: geo.size.width * min(1.0, ratio / 1.0), height: 8)
-                }
-            }
-            .frame(height: 8)
-            Text(over ? "Over your target — ease back to hit it." : "On track. Keep it up!")
-                .font(.system(size: 12)).foregroundStyle(over ? Palette.moodAngry : Palette.textSecondary)
+        let unit = goal.kind == .smokeLess ? "sessions" : "USD"
+        return VStack(alignment: .leading, spacing: 7) {
+            Text("\(PersonalGoalPolicy.number(actual)) of \(PersonalGoalPolicy.number(target)) \(unit) recorded")
+                .font(.subheadline.weight(.semibold)).foregroundStyle(over ? Palette.moodAngry : Palette.greenBright)
+            ProgressView(value: usage).tint(over ? Palette.moodAngry : Palette.greenBright)
+                .accessibilityLabel("Weekly recorded usage")
+                .accessibilityValue("\(PersonalGoalPolicy.number(actual)) recorded; limit \(PersonalGoalPolicy.number(target)) \(unit)")
+            Text(over ? "Above your chosen weekly limit." : "Within your chosen weekly limit.")
+                .font(.footnote).foregroundStyle(Palette.textSecondary)
         }
-    }
-
-    /// Pulls the real value from session data for the current week.
-    private func currentValue(for goal: SeshGoal) -> Double {
-        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
-        switch goal.kind {
-        case .smokeLess:
-            return Double(session.entries.filter { $0.date >= weekAgo }.count)
-        case .spendLess:
-            return session.purchases.filter { $0.date >= weekAgo }.map(\.cost).reduce(0, +)
-        default:
-            return 0
-        }
-    }
-    private func format(_ v: Double) -> String {
-        v.rounded() == v ? String(Int(v)) : String(format: "%.1f", v)
     }
 }
-
-// MARK: - Add Goal sheet
 
 struct AddGoalSheet: View {
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    var editing: SeshGoal? = nil
     @State private var kind: GoalKind = .smokeLess
     @State private var title = ""
     @State private var targetText = ""
     @State private var note = ""
+    @State private var baseline: String?
+    @State private var confirmDiscard = false
+    @State private var saving = false
+    @State private var saveError: String?
+    private var fingerprint: String { JournalInputPolicy.fingerprint([kind.rawValue, title, targetText, note]) }
+    private var hasEdits: Bool { baseline.map { $0 != fingerprint } ?? false }
+    private var target: Double? { kind.isMeasurable ? JournalInputPolicy.decimal(targetText) : nil }
+    private var canSave: Bool { !saving && (!kind.isMeasurable || PersonalGoalPolicy.validTarget(target, wholeNumber: kind == .smokeLess)) }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("What's your goal?").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.textSecondary)
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                        ForEach(GoalKind.allCases) { k in
-                            kindTile(k)
+        ZStack {
+            AppBackground()
+            VStack(spacing: 0) {
+                ScreenHeader(title: editing == nil ? "New Goal" : "Edit Goal", onBack: { if hasEdits { confirmDiscard = true } else { dismiss() } })
+                    .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        Text("What matters to you?").font(.headline).foregroundStyle(Palette.text)
+                        LazyVGrid(columns: dynamicTypeSize.isAccessibilitySize ? [GridItem(.flexible())] : [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
+                            ForEach(GoalKind.allCases) { kindTile($0) }
                         }
-                    }
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Title").font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
-                        TextField(kind.rawValue, text: $title)
-                            .textFieldStyle(.plain).foregroundStyle(Palette.text)
-                            .padding(14)
-                            .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.field))
-                            .overlay(RoundedRectangle(cornerRadius: Radius.md).stroke(Palette.stroke, lineWidth: 1))
-                    }
-                    if kind.isMeasurable {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(kind == .spendLess ? "Weekly budget ($)" : "Sessions per week")
-                                .font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
-                            TextField(kind == .spendLess ? "40" : "5", text: $targetText)
+                        InputField(label: "Title", placeholder: kind.rawValue, value: $title)
+                        if kind.isMeasurable {
+                            InputField(label: kind == .spendLess ? "Weekly limit (USD)" : "Sessions per calendar week", placeholder: "0", value: $targetText)
                                 .keyboardType(.decimalPad)
-                                .textFieldStyle(.plain).foregroundStyle(Palette.text)
-                                .padding(14)
-                                .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.field))
-                                .overlay(RoundedRectangle(cornerRadius: Radius.md).stroke(Palette.stroke, lineWidth: 1))
+                            Text(kind == .smokeLess ? "Enter a whole number, including zero." : "Use your region's decimal separator. A zero limit is allowed.")
+                                .font(.footnote).foregroundStyle(Palette.textSecondary)
+                            if !targetText.isEmpty && !canSave && !saving {
+                                Label("Enter a complete nonnegative number\(kind == .smokeLess ? " with no fractional sessions" : "").", systemImage: "exclamationmark.circle")
+                                    .font(.footnote).foregroundStyle(Palette.moodAngry)
+                            }
                         }
-                    }
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Note (optional)").font(.system(size: 13, weight: .medium)).foregroundStyle(Palette.textSecondary)
-                        TextField("Why does this matter to you?", text: $note, axis: .vertical)
-                            .lineLimit(2...4)
-                            .textFieldStyle(.plain).foregroundStyle(Palette.text)
-                            .padding(14)
-                            .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.field))
-                            .overlay(RoundedRectangle(cornerRadius: Radius.md).stroke(Palette.stroke, lineWidth: 1))
-                    }
-                }
-                .padding(18)
-            }
-            .background(AppBackground())
-            .navigationTitle("New Goal")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Save") { save() }.fontWeight(.semibold) }
+                        NotesField(label: "Note (optional)", placeholder: "Why does this matter to you?", text: $note, minHeight: 80)
+                        if let saveError { Label(saveError, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Palette.moodAngry) }
+                        PrimaryButton(title: editing == nil ? "Save Goal" : "Save Changes", icon: "checkmark") { save() }
+                            .disabled(!canSave).opacity(canSave ? 1 : 0.5)
+                    }.padding(.horizontal, 18).padding(.bottom, 28).seshReadableForm()
+                }.scrollDismissesKeyboard(.interactively)
             }
         }
+        .seshEditorPresentation().interactiveDismissDisabled(hasEdits || saving)
+        .onAppear {
+            guard baseline == nil else { return }
+            if let editing {
+                kind = editing.kind; title = editing.title; note = editing.note
+                targetText = editing.target.map { JournalInputPolicy.editableDecimal($0) } ?? ""
+            }
+            baseline = fingerprint
+        }
+        .confirmationDialog("Discard goal changes?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard Changes", role: .destructive) { dismiss() }; Button("Keep Editing", role: .cancel) { }
+        }
     }
-
-    private func kindTile(_ k: GoalKind) -> some View {
-        let isSel = kind == k
-        return Button { kind = k; Haptics.selection() } label: {
+    private func kindTile(_ choice: GoalKind) -> some View {
+        let selected = kind == choice
+        return Button { kind = choice; Haptics.selection() } label: {
             VStack(spacing: 8) {
-                Image(systemName: k.symbol).font(.system(size: 20)).foregroundStyle(isSel ? Palette.greenBright : Palette.textSecondary)
-                Text(k.rawValue).font(.system(size: 13, weight: .medium)).foregroundStyle(isSel ? Palette.text : Palette.textSecondary)
-                    .multilineTextAlignment(.center)
+                HStack { Image(systemName: choice.symbol); if selected { Image(systemName: "checkmark") } }.accessibilityHidden(true)
+                Text(choice.rawValue).font(.subheadline.weight(.semibold)).multilineTextAlignment(.center)
             }
-            .frame(maxWidth: .infinity).padding(.vertical, 16)
+            .foregroundStyle(selected ? Palette.greenBright : Palette.textSecondary)
+            .frame(maxWidth: .infinity).padding(14)
             .background(RoundedRectangle(cornerRadius: Radius.md).fill(Palette.card))
-            .overlay(RoundedRectangle(cornerRadius: Radius.md).stroke(isSel ? Palette.greenBright : Palette.stroke, lineWidth: isSel ? 2 : 1))
-        }
-        .buttonStyle(.plain)
+            .overlay(RoundedRectangle(cornerRadius: Radius.md).stroke(selected ? Palette.greenBright : Palette.stroke, lineWidth: selected ? 2 : 1))
+        }.buttonStyle(.plain).accessibilityLabel(choice.rawValue).accessibilityAddTraits(selected ? .isSelected : [])
     }
-
     private func save() {
-        let finalTitle = title.trimmingCharacters(in: .whitespaces).isEmpty ? kind.rawValue : title
-        let target = Double(targetText)
-        let unit = kind == .spendLess ? "$/week" : (kind == .smokeLess ? "sessions/week" : nil)
-        session.addGoal(SeshGoal(kind: kind, title: finalTitle, target: target, unit: unit, note: note))
-        Haptics.success()
-        dismiss()
+        guard canSave else { return }
+        saving = true; defer { saving = false }
+        let name = JournalInputPolicy.trimmed(title)
+        var value = editing ?? SeshGoal(kind: kind, title: kind.rawValue)
+        value.kind = kind; value.title = name.isEmpty ? kind.rawValue : name
+        value.target = target; value.unit = kind.isMeasurable ? (kind == .spendLess ? "$/week" : "sessions/week") : nil
+        value.note = JournalInputPolicy.trimmed(note)
+        let saved = editing == nil ? session.addGoal(value) : session.updateGoal(value, replacing: editing)
+        guard saved else { saveError = session.goalStorageError; return }
+        Haptics.success(); dismiss()
     }
 }
 

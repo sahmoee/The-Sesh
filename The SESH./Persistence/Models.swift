@@ -128,6 +128,7 @@ final class AppSession {
 
     func add(_ entry: JournalEntry) { entries.insert(entry, at: 0); save() }
     func delete(_ entry: JournalEntry) {
+        JournalStudioStore.shared.removeReferences(to: entry.id)
         PhotoStore.delete(entry.photoName)
         entries.removeAll { $0.id == entry.id }
         save()
@@ -170,24 +171,33 @@ final class AppSession {
     // MARK: Maintenance
 
     /// Wipes all journal data and associated photos.
-    func clearAll() {
+    @discardableResult func clearAll() -> Bool {
+        guard SeshPhoneWatchBridge.shared.resetJournalEpoch() else { goalStorageError = SeshPhoneWatchBridge.shared.error; return false }
+        JournalStudioStore.shared.clear()
         for e in entries { PhotoStore.delete(e.photoName) }
         entries.removeAll(); thoughts.removeAll()
         store.wipe()
         pushToCloud()
+        SeshPhoneWatchBridge.shared.scheduleSnapshot()
+        return true
     }
 
     /// Full reset: clears data, restores the default identity, and returns the
     /// app to a fresh first-launch state (re-shows onboarding, allows reseeding).
     /// Used by "Reset All Data & Log Out".
-    func resetEverything() {
-        clearAll()
+    @discardableResult func resetEverything() -> Bool {
+        do { try goalPersistence.reset() }
+        catch { goalStorageError = error.localizedDescription; return false }
+        goals = []; goalStorageError = nil
+        CloudSync.set(Data("[]".utf8), forKey: goalsKey)
+        guard clearAll() else { return false }
         userName = "Alex"
         let d = UserDefaults.standard
         d.removeObject(forKey: nameKey)
         d.removeObject(forKey: seededKey)      // allow first-launch seed again
         d.removeObject(forKey: "ht.onboarded.v1") // re-show Home onboarding hint
         d.synchronize()
+        return true
     }
 
     // MARK: Derived stats
@@ -243,6 +253,7 @@ final class AppSession {
         savePurchases()
     }
     private func savePurchases() {
+        defer { SeshPhoneWatchBridge.shared.scheduleSnapshot() }
         // (#10) Record-level SwiftData storage; UserDefaults no longer grows
         // with the stash. iCloud KVS mirror kept for cross-device sync.
         store.syncCollection("purchases", items: purchases.compactMap { p in
@@ -271,24 +282,47 @@ final class AppSession {
     // MARK: Goals (#goals — "smoke less", "spend less", etc.)
 
     var goals: [SeshGoal] = []
+    var goalStorageError: String?
     private let goalsKey = "ht.goals.v1"
+    @ObservationIgnored private let goalPersistence = ProtectedCollectionStore<SeshGoal>(url: ProtectedCollectionStore<SeshGoal>.applicationURL("personal-goals-v1.json"))
 
-    func addGoal(_ g: SeshGoal) { goals.insert(g, at: 0); saveGoals() }
-    func updateGoal(_ g: SeshGoal) {
-        if let i = goals.firstIndex(where: { $0.id == g.id }) { goals[i] = g; saveGoals() }
+    @discardableResult func addGoal(_ goal: SeshGoal) -> Bool {
+        guard !goals.contains(where: { $0.id == goal.id }) else { goalStorageError = "This goal is already saved."; return false }
+        guard validGoal(goal) else { return false }
+        return saveGoals([goal] + goals)
     }
-    func deleteGoal(_ g: SeshGoal) { goals.removeAll { $0.id == g.id }; saveGoals() }
-    private func saveGoals() {
-        if let data = try? Self.jsonEncoder.encode(goals) {
-            UserDefaults.standard.set(data, forKey: goalsKey)
-            CloudSync.set(data, forKey: goalsKey)
+    @discardableResult func updateGoal(_ goal: SeshGoal, replacing expected: SeshGoal? = nil) -> Bool {
+        guard let index = goals.firstIndex(where: { $0.id == goal.id }) else { goalStorageError = "This goal was removed while you were editing. Your draft is kept."; return false }
+        if let expected, goals[index] != expected { goalStorageError = "This goal changed while you were editing. Reopen it to review the current version."; return false }
+        guard validGoal(goal) else { return false }
+        var candidate = goals; candidate[index] = goal
+        return saveGoals(candidate)
+    }
+    @discardableResult func deleteGoal(_ goal: SeshGoal) -> Bool { saveGoals(goals.filter { $0.id != goal.id }) }
+    private func validGoal(_ goal: SeshGoal) -> Bool {
+        guard !JournalInputPolicy.trimmed(goal.title).isEmpty,
+              !goal.kind.isMeasurable || PersonalGoalPolicy.validTarget(goal.target, wholeNumber: goal.kind == .smokeLess) else {
+            goalStorageError = "Enter a name and a nonnegative target; session limits must be whole numbers."; return false
         }
+        return true
     }
+    private func saveGoals(_ candidate: [SeshGoal]) -> Bool {
+        defer { SeshPhoneWatchBridge.shared.scheduleSnapshot() }
+        do {
+            let data = try goalPersistence.write(candidate)
+            goals = candidate; goalStorageError = nil
+            CloudSync.set(data, forKey: goalsKey) // Compatible optional mirror, after the protected local commit.
+            return true
+        } catch { goalStorageError = error.localizedDescription; return false }
+    }
+    func retryLoadingGoals() { loadGoals() }
     private func loadGoals() {
-        if let data = UserDefaults.standard.data(forKey: goalsKey),
-           let v = try? Self.jsonDecoder.decode([SeshGoal].self, from: data) {
-            goals = v
-        }
+        do {
+            var loaded = try goalPersistence.load(legacy: UserDefaults.standard.data(forKey: goalsKey))
+            var ids = Set<UUID>(), repaired = false
+            for i in loaded.indices where !ids.insert(loaded[i].id).inserted { loaded[i].id = UUID(); ids.insert(loaded[i].id); repaired = true }
+            if repaired { _ = saveGoals(loaded) } else { goals = loaded; goalStorageError = nil }
+        } catch { goalStorageError = "Goals could not be read. Original data is preserved. " + error.localizedDescription }
         loadQuickActions()
     }
 
@@ -490,6 +524,7 @@ final class AppSession {
     var hasActiveSesh: Bool { liveSesh != nil }
 
     func saveLiveSesh(_ state: LiveSeshState) {
+        defer { SeshPhoneWatchBridge.shared.scheduleSnapshot() }
         liveSesh = state
         if let data = try? Self.jsonEncoder.encode(state) {
             UserDefaults.standard.set(data, forKey: liveSeshKey)
@@ -498,6 +533,7 @@ final class AppSession {
         SeshReminders.scheduleForActiveSesh()
     }
     func clearLiveSesh() {
+        defer { SeshPhoneWatchBridge.shared.scheduleSnapshot() }
         liveSesh = nil
         UserDefaults.standard.removeObject(forKey: liveSeshKey)
         SeshReminders.cancel()   // (#App18)
@@ -617,7 +653,7 @@ final class AppSession {
     /// Days since the last logged session (nil if none).
     var daysSinceLastSesh: Int? {
         guard let last = entries.map(\.date).max() else { return nil }
-        return Calendar.current.dateComponents([.day], from: last, to: Date()).day
+        return max(0, Calendar.current.dateComponents([.day], from: last, to: Date()).day ?? 0)
     }
 
     /// The longest tracking streak ever achieved (for permanent milestones),
@@ -893,17 +929,9 @@ final class AppSession {
 
     /// Spending grouped into weekly buckets for the current month chart.
     var weeklySpend: [(label: String, amount: Double)] {
-        let cal = Calendar.current
-        let labels = ["May 1", "May 8", "May 15", "May 22", "May 29"]
-        // Bucket by day-of-month into 5 weekly windows.
-        var buckets = [Double](repeating: 0, count: 5)
-        for e in entries {
-            guard let price = e.price else { continue }
-            let day = cal.component(.day, from: e.date)
-            let idx = min(4, max(0, (day - 1) / 7))
-            buckets[idx] += price
-        }
-        return zip(labels, buckets).map { ($0, $1) }
+        JournalStudioPolicy.monthlySpend(entries.compactMap { entry in
+            entry.price.map { (entry.date, $0) }
+        }, now: Date()).map { ($0.0.formatted(.dateTime.month(.abbreviated).day()), $0.1) }
     }
 
     var recentTransactions: [JournalEntry] {
@@ -927,6 +955,16 @@ final class AppSession {
         // SwiftData database on every save.
         store.sync(entries: entries, thoughts: thoughts)
         scheduleCloudPush()
+        SeshPhoneWatchBridge.shared.scheduleSnapshot()
+    }
+
+    /// Called only after a watch transaction committed durably, never after queueing.
+    func watchDidCommit() {
+        load()
+        loadPurchases()
+        scheduleCloudPush()
+        if let data = try? Self.jsonEncoder.encode(purchases) { CloudSync.set(data, forKey: purchasesKey) }
+        SeshPhoneWatchBridge.shared.scheduleSnapshot()
     }
 
     private var cloudPushTask: Task<Void, Never>?

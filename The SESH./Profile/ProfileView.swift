@@ -196,6 +196,7 @@ struct ProfileSettingsView: View {
     @Environment(NotificationManager.self) private var notifications
     @State private var name = ""
     @State private var showResetConfirm = false
+    @State private var resetError: String?
     @State private var showClearMusicConfirm = false
     @State private var hapticsOn = true
     @State private var iCloudOn = CloudSync.isEnabled
@@ -227,6 +228,11 @@ struct ProfileSettingsView: View {
 
                         Divider().overlay(Palette.stroke).padding(.vertical, 4)
 
+                        NavigationLink { SeshWatchSettingsView() } label: {
+                            Label("Apple Watch · private companion", systemImage: "applewatch")
+                                .foregroundStyle(Palette.greenBright).frame(maxWidth: .infinity, alignment: .leading).padding(14)
+                                .background(Palette.card, in: RoundedRectangle(cornerRadius: Radius.md))
+                        }.buttonStyle(.plain)
                         // iCloud sync
                         iCloudSection
 
@@ -392,6 +398,9 @@ struct ProfileSettingsView: View {
             }
         }
         .onAppear { name = session.userName; hapticsOn = session.hapticsEnabled }
+        .alert("Some data could not be reset", isPresented: Binding(get: { resetError != nil }, set: { if !$0 { resetError = nil } })) {
+            Button("OK") { resetError = nil }
+        } message: { Text(resetError ?? "") }
         .alert("Clear music history?", isPresented: $showClearMusicConfirm) {
             Button("Cancel", role: .cancel) {}
             Button("Clear", role: .destructive) {
@@ -403,10 +412,11 @@ struct ProfileSettingsView: View {
         .alert("Reset all data and log out?", isPresented: $showResetConfirm) {
             Button("Cancel", role: .cancel) {}
             Button("Reset & Log Out", role: .destructive) {
-                session.resetEverything()
-                strains.clearCustom()
-                Haptics.success()
-                dismiss()
+                do {
+                    try strains.clearCustom()
+                    guard session.resetEverything() else { resetError = session.goalStorageError; return }
+                    Haptics.success(); dismiss()
+                } catch { resetError = error.localizedDescription }
             }
         } message: {
             Text("This permanently erases everything on this device — sessions, thoughts, photos, and custom strains — and signs you out. This can't be undone.")
@@ -509,6 +519,7 @@ struct ExportView: View {
     @State private var shareURL: URL?
     @State private var showShare = false
     @State private var showClearConfirm = false
+    @State private var clearError: String?
 
     var body: some View {
         ZStack {
@@ -560,10 +571,11 @@ struct ExportView: View {
         }
         .alert("Clear all data?", isPresented: $showClearConfirm) {
             Button("Cancel", role: .cancel) {}
-            Button("Delete Everything", role: .destructive) { session.clearAll(); dismiss() }
+            Button("Delete Everything", role: .destructive) { if session.clearAll() { dismiss() } else { clearError = SeshPhoneWatchBridge.shared.error ?? "The journal could not be cleared. Retry after unlocking iPhone." } }
         } message: {
             Text("This permanently removes all sessions, thoughts, and photos on this device. This can't be undone.")
         }
+        .alert("Could not clear data", isPresented: Binding(get: { clearError != nil }, set: { if !$0 { clearError = nil } })) { Button("OK") { clearError = nil } } message: { Text(clearError ?? "") }
     }
 
     private static let exportDateFormatter = ISO8601DateFormatter()

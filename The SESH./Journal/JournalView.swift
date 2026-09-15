@@ -48,7 +48,7 @@ struct JournalView: View {
     @Environment(AppSession.self) private var session
     @State private var query = ""
     @State private var filter = "All"
-    @State private var sort: JournalSort = .newest
+    @AppStorage("journal.sortPreference") private var sort: JournalSort = .newest
     @State private var editing: JournalEntry?
     @State private var editingThought: HighThought?
     @State private var effectFilter: String?     // filter by an effect
@@ -74,12 +74,8 @@ struct JournalView: View {
     }
 
     private var filtered: [JournalEntry] {
-        let base = session.entries.filter { matches($0) }
-        switch sort {
-        case .newest: return base.sorted { $0.date > $1.date }
-        case .rating: return base.sorted { $0.rating > $1.rating }
-        case .price:  return base.sorted { ($0.price ?? 0) > ($1.price ?? 0) }
-        }
+        // The unified feed performs the one authoritative stable sort.
+        session.entries.filter { matches($0) }
     }
 
     private func matches(_ e: JournalEntry) -> Bool {
@@ -109,19 +105,6 @@ struct JournalView: View {
 
     private func matchesRating(_ e: JournalEntry) -> Bool {
         e.rating >= Double(minRating)
-    }
-
-    /// Grouped by relative day (only when sorting by date).
-    private var grouped: [(String, [JournalEntry])] {
-        guard sort == .newest else { return [("", filtered)] }
-        var order: [String] = []
-        var map: [String: [JournalEntry]] = [:]
-        for e in filtered {
-            let key = relativeDay(e.date)
-            if map[key] == nil { order.append(key); map[key] = [] }
-            map[key]?.append(e)
-        }
-        return order.map { ($0, map[$0] ?? []) }
     }
 
     // MARK: Unified Log feed (#combine Log)
@@ -193,6 +176,7 @@ struct JournalView: View {
             JournalFilterSheet(effectFilter: $effectFilter, minRating: $minRating,
                                availableEffects: availableEffects)
                 .presentationDetents([.medium, .large])
+                .seshEditorPresentation()
         }
         .sheet(isPresented: $showNewLog) {
             LogSeshView().environment(session)
@@ -227,20 +211,20 @@ struct JournalView: View {
                         }
                     }
                 } label: {
-                    Image(systemName: "arrow.up.arrow.down").font(.system(size: 16)).foregroundStyle(Palette.text).minimumTapTarget()
+                    Image(systemName: "arrow.up.arrow.down").font(.seshScaled(16)).foregroundStyle(Palette.text).minimumTapTarget()
                 }
                 .accessibilityLabel("Sort journal")
                 .accessibilityValue(sort.rawValue)
                 NavigationLink {
                     MusicMemoryView().navigationBarBackButtonHidden(true)
                 } label: {
-                    Image(systemName: "music.note.list").font(.system(size: 16)).foregroundStyle(Palette.text).minimumTapTarget()
+                    Image(systemName: "music.note.list").font(.seshScaled(16)).foregroundStyle(Palette.text).minimumTapTarget()
                 }
                 .accessibilityLabel("Music memory")
                 Button {
                     Haptics.tap(); showLogChooser = true
                 } label: {
-                    Image(systemName: "plus.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green).minimumTapTarget()
+                    Image(systemName: "plus.circle.fill").font(.seshScaled(22)).foregroundStyle(Palette.green).minimumTapTarget()
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("New log")
@@ -258,6 +242,8 @@ struct JournalView: View {
                     .foregroundStyle(Palette.text)
                     .accessibilityLabel("Search journal")
                     .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .submitLabel(.search)
                 if !query.isEmpty {
                     Button { query = "" } label: {
                         Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.textSecondary)
@@ -272,14 +258,14 @@ struct JournalView: View {
             Button { showFilters = true } label: {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 18))
+                        .font(.seshScaled(18))
                         .foregroundStyle(activeRefinements > 0 ? Palette.onGreen : Palette.text)
                         .frame(width: 46, height: 46)
                         .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                             .fill(activeRefinements > 0 ? Palette.green : Palette.field))
                         .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
                     if activeRefinements > 0 {
-                        Text("\(activeRefinements)").font(.system(size: 10, weight: .bold)).foregroundStyle(.white)
+                        Text("\(activeRefinements)").font(.seshScaled(10, weight: .bold)).foregroundStyle(.white)
                             .frame(width: 16, height: 16).background(Circle().fill(Palette.moodAngry)).offset(x: 4, y: -4)
                     }
                 }
@@ -312,13 +298,17 @@ struct JournalView: View {
     @ViewBuilder private var resultSummaryBar: some View {
         FlowLayout(spacing: 12) {
             Text(resultSummaryText)
-                .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+                .font(.seshScaled(12)).foregroundStyle(Palette.textSecondary)
+            NavigationLink { JournalStudioView() } label: {
+                Label("Studio", systemImage: "square.grid.2x2")
+                    .font(.seshScaled(12)).foregroundStyle(Palette.green).minimumTapTarget()
+            }.buttonStyle(.plain).accessibilityHint("Organize, reflect, compare, and export your private journal")
             Button { showManageCategories = true; Haptics.tap() } label: {
                 Label("Categories", systemImage: "tag")
                     .font(.seshScaled(12)).foregroundStyle(Palette.green).minimumTapTarget()
             }.buttonStyle(.plain)
             Label(filter == "Thoughts" ? "Newest" : sort.rawValue, systemImage: filter == "Thoughts" ? "clock" : sort.symbol)
-                .font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
+                .font(.seshScaled(12)).foregroundStyle(Palette.textSecondary)
         }
         .padding(.horizontal, 18).padding(.bottom, 8)
     }
@@ -357,11 +347,10 @@ struct JournalView: View {
                     }
                 } header: {
                     if !day.isEmpty {
-                        Text(day).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.textSecondary)
+                        Text(day).font(.seshScaled(14, weight: .semibold)).foregroundStyle(Palette.textSecondary)
                     }
                 }
             }
-            Color.clear.frame(height: 70).listRowBackground(Color.clear).listRowSeparator(.hidden)
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
@@ -395,7 +384,7 @@ private struct LogItemRow: View {
                     } label: { Label("Delete", systemImage: "trash") }
                     Button {
                         Haptics.selection(); session.toggleFavorite(e)
-                    } label: { Label("Favorite", systemImage: "heart") }
+                    } label: { Label(e.isFavorite ? "Unfavorite" : "Favorite", systemImage: e.isFavorite ? "heart.slash" : "heart") }
                     .tint(Palette.green)
                 }
                 .contextMenu {
@@ -425,7 +414,7 @@ private struct LogItemRow: View {
                     } label: { Label("Delete", systemImage: "trash") }
                     Button {
                         Haptics.selection(); session.toggleThoughtFavorite(t)
-                    } label: { Label("Favorite", systemImage: "star") }
+                    } label: { Label(t.isFavorite ? "Unfavorite" : "Favorite", systemImage: t.isFavorite ? "star.slash" : "star") }
                     .tint(Palette.gold)
                 }
                 .contextMenu {
@@ -451,20 +440,21 @@ struct JournalFilterSheet: View {
             AppBackground()
             VStack(spacing: 0) {
                 HStack {
-                    Text("Filters").font(.system(size: 20, weight: .bold, design: .serif)).foregroundStyle(Palette.text)
+                    Text("Filters").font(.seshScaled(20, weight: .bold, design: .serif)).foregroundStyle(Palette.text)
                     Spacer()
                     Button("Reset") { effectFilter = nil; minRating = 0; Haptics.tap() }
-                        .font(.system(size: 14, weight: .medium)).foregroundStyle(Palette.gold)
+                        .minimumTapTarget().disabled(effectFilter == nil && minRating == 0)
+                        .font(.seshScaled(14, weight: .medium)).foregroundStyle(Palette.gold)
                 }
                 .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 8)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("MINIMUM RATING").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+                            Text("MINIMUM RATING").font(.seshScaled(11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
                             HStack {
                                 Text(minRating == 0 ? "Any rating" : "\(minRating)+ / 10")
-                                    .font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                                    .font(.seshScaled(15, weight: .semibold)).foregroundStyle(Palette.text)
                                 Spacer()
                             }
                             Slider(value: Binding(get: { Double(minRating) }, set: { minRating = Int($0) }), in: 0...10, step: 1)
@@ -475,12 +465,12 @@ struct JournalFilterSheet: View {
 
                         if !availableEffects.isEmpty {
                             VStack(alignment: .leading, spacing: 10) {
-                                Text("EFFECT").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+                                Text("EFFECT").font(.seshScaled(11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
                                 FlowLayout(spacing: 8) {
                                     ForEach(availableEffects, id: \.self) { eff in
                                         let on = effectFilter == eff
                                         Button { effectFilter = on ? nil : eff; Haptics.selection() } label: {
-                                            Text(eff).font(.seshScaled(13, weight: .medium))
+                                            Label(eff, systemImage: on ? "checkmark.circle.fill" : "circle").font(.seshScaled(13, weight: .medium))
                                                 .foregroundStyle(on ? Palette.onGreen : Palette.text)
                                                 .padding(.horizontal, 14).padding(.vertical, 8)
                                                 .frame(minHeight: 44)
@@ -512,60 +502,62 @@ struct SessionCard: View {
             HStack(alignment: .top, spacing: 12) {
                 StoredImage(name: entry.photoName, size: 76)
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(entry.strain)
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.seshScaled(17, weight: .semibold))
                             .foregroundStyle(Palette.text)
-                        Spacer()
+                        HStack {
                         Button {
                             Haptics.selection(); session.toggleFavorite(entry)
                         } label: {
                             Image(systemName: entry.isFavorite ? "heart.fill" : "heart")
-                                .font(.system(size: 15))
+                                .font(.seshScaled(15))
                                 .foregroundStyle(entry.isFavorite ? Palette.moodAngry : Palette.textSecondary)
                                 .minimumTapTarget()
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(entry.isFavorite ? "Remove favorite" : "Add favorite")
+                        .accessibilityValue(entry.isFavorite ? "Favorite" : "Not favorite")
                         RatingBadge(value: entry.rating)
+                        }
                     }
                     Text(timeString(entry.date) + (entry.method.isEmpty ? "" : " · \(entry.method)"))
-                        .font(.system(size: 12))
+                        .font(.seshScaled(12))
                         .foregroundStyle(Palette.textSecondary)
 
                     // Session type · duration · companions (spec additions)
                     if entry.sessionType != nil || entry.durationMinutes != nil || entry.companionLine != nil {
-                        HStack(spacing: 8) {
+                        FlowLayout(spacing: 8) {
                             if let type = entry.sessionType,
                                let st = SessionType(rawValue: type) {
-                                Text(st.emoji + " " + st.rawValue).font(.system(size: 11)).foregroundStyle(Palette.textSecondary)
+                                Text(st.emoji + " " + st.rawValue).font(.seshScaled(11)).foregroundStyle(Palette.textSecondary)
                             }
                             if let mins = entry.durationMinutes {
-                                Text("· \(mins) min").font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
+                                Text("· \(mins) min").font(.seshScaled(11)).foregroundStyle(Palette.textTertiary)
                             }
                         }
                         if let line = entry.companionLine {
-                            Label(line, systemImage: "person.2.fill").font(.system(size: 11)).foregroundStyle(Palette.greenBright)
+                            Label(line, systemImage: "person.2.fill").font(.seshScaled(11)).foregroundStyle(Palette.greenBright)
                         }
                     }
 
                     if entry.attachedThoughtID != nil {
                         Label("1 thought attached", systemImage: "lightbulb.fill")
-                            .font(.system(size: 11)).foregroundStyle(Palette.gold)
+                            .font(.seshScaled(11)).foregroundStyle(Palette.gold)
                     }
 
                     if !entry.notes.isEmpty {
                         Text(entry.notes)
-                            .font(.system(size: 13))
+                            .font(.seshScaled(13))
                             .foregroundStyle(Palette.text.opacity(0.85))
-                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 1)
                     }
-                    HStack(spacing: 8) {
+                    FlowLayout(spacing: 8) {
                         if let mood = entry.mood { CategoryTag(text: mood.rawValue) }
                         if let cat = entry.category { CategoryTag(text: cat.rawValue) }
                         if let custom = entry.customCategory { CategoryTag(text: custom) }
                         if let price = entry.price { CategoryTag(text: Fmt.currency(price)) }
-                        Spacer()
                     }
                     .padding(.top, 2)
                 }
@@ -606,7 +598,7 @@ struct ManageCategoriesView: View {
                                     .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
                                     .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
                                 Button { add() } label: {
-                                    Image(systemName: "plus.circle.fill").font(.system(size: 24)).foregroundStyle(Palette.green)
+                                    Image(systemName: "plus.circle.fill").font(.seshScaled(24)).foregroundStyle(Palette.green)
                                 }
                                 .buttonStyle(.plain)
                                 .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -616,13 +608,13 @@ struct ManageCategoriesView: View {
 
                         // Built-in (read-only)
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("BUILT-IN").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+                            Text("BUILT-IN").font(.seshScaled(11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
                             ForEach(SeshCategory.allCases) { c in
                                 HStack(spacing: 10) {
-                                    Image(systemName: c.symbol).font(.system(size: 14)).foregroundStyle(Palette.gold).frame(width: 22)
-                                    Text(c.rawValue).font(.system(size: 15)).foregroundStyle(Palette.text)
+                                    Image(systemName: c.symbol).font(.seshScaled(14)).foregroundStyle(Palette.gold).frame(width: 22)
+                                    Text(c.rawValue).font(.seshScaled(15)).foregroundStyle(Palette.text)
                                     Spacer()
-                                    Text("Default").font(.system(size: 11)).foregroundStyle(Palette.textTertiary)
+                                    Text("Default").font(.seshScaled(11)).foregroundStyle(Palette.textTertiary)
                                 }
                                 .padding(.horizontal, 14).padding(.vertical, 11)
                                 .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.card))
@@ -632,7 +624,7 @@ struct ManageCategoriesView: View {
                         // Custom (editable)
                         if !session.customCategories.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("YOUR CATEGORIES").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
+                                Text("YOUR CATEGORIES").font(.seshScaled(11, weight: .bold)).foregroundStyle(Palette.textTertiary).tracking(0.5)
                                 ForEach(session.customCategories, id: \.self) { name in
                                     if renaming == name {
                                         HStack(spacing: 8) {
@@ -641,20 +633,20 @@ struct ManageCategoriesView: View {
                                                 .padding(.horizontal, 12).padding(.vertical, 10)
                                                 .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
                                             Button { commitRename(name) } label: {
-                                                Image(systemName: "checkmark.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
+                                                Image(systemName: "checkmark.circle.fill").font(.seshScaled(22)).foregroundStyle(Palette.green)
                                             }.buttonStyle(.plain)
                                         }
                                     } else {
                                         HStack(spacing: 10) {
-                                            Image(systemName: "tag.fill").font(.system(size: 14)).foregroundStyle(Palette.green).frame(width: 22)
-                                            Text(name).font(.system(size: 15)).foregroundStyle(Palette.text)
+                                            Image(systemName: "tag.fill").font(.seshScaled(14)).foregroundStyle(Palette.green).frame(width: 22)
+                                            Text(name).font(.seshScaled(15)).foregroundStyle(Palette.text)
                                             Spacer()
                                             Button { renaming = name; renameText = name } label: {
-                                                Image(systemName: "pencil").font(.system(size: 14)).foregroundStyle(Palette.textSecondary)
+                                                Image(systemName: "pencil").font(.seshScaled(14)).foregroundStyle(Palette.textSecondary)
                                                     .minimumTapTarget()
                                             }.buttonStyle(.plain)
                                             Button { deleting = name } label: {
-                                                Image(systemName: "trash").font(.system(size: 14)).foregroundStyle(Palette.moodAngry)
+                                                Image(systemName: "trash").font(.seshScaled(14)).foregroundStyle(Palette.moodAngry)
                                                     .minimumTapTarget()
                                             }.buttonStyle(.plain)
                                         }
@@ -665,7 +657,7 @@ struct ManageCategoriesView: View {
                             }
                         } else {
                             Text("Your custom categories will appear here. Add one above, then assign it when logging a sesh.")
-                                .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
+                                .font(.seshScaled(12)).foregroundStyle(Palette.textTertiary)
                         }
                     }
                     .padding(.horizontal, 18).padding(.bottom, 28)

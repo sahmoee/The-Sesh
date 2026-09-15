@@ -2,7 +2,7 @@
 
 The SESH. is a privacy-minded cannabis companion for adults. It combines session journaling, mood and strain tracking, stash awareness, personal insights, music memories, and optional social/community features in a native SwiftUI app.
 
-Current app version: **59**. The project targets **iOS/iPadOS 26** and includes the main app, a widget, Live Activities, deep links, local persistence, and optional Unified Worker services.
+Current app version: **59**. The project targets **iOS/iPadOS 26** and includes the main app, a native watchOS 26 companion, a widget, Live Activities, deep links, local persistence, and optional Unified Worker services.
 
 The app is for responsible use where cannabis is legal. It does not provide medical advice, facilitate buying or selling, or replace local law or professional guidance.
 
@@ -34,6 +34,16 @@ The app is for responsible use where cannabis is legal. It does not provide medi
 - Cyphers, rooms, realtime chat, lounge feed, posts, reactions, polls, media previews, and journey sharing
 - Blocking, reporting, audience controls, moderation categories, privacy settings, and offline outbox retry
 - Push notifications and WebSocket-based realtime updates through the Unified Worker
+
+### Apple Watch
+
+Private quick logs, session timers, thoughts, stash purchases/deductions, goals, favorites and
+Journal Studio pins are available from the wrist. A protected offline copy and persistent action
+queue distinguish queued work from iPhone-confirmed saves. Search and page through the full
+iPhone history/catalog when reachable. Phone Profile → Settings → Apple Watch controls access.
+Music, community, media import and full editing stay on iPhone. See
+[Watch companion implementation and validation](docs/WATCHOS_APP_2026_09_14.md).
+Generic builds and native fixtures pass; paired-hardware acceptance remains open.
 
 ## Application structure
 
