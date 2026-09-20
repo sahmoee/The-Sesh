@@ -30,6 +30,10 @@ final class SeshAuth {
         let stored = Self.keychainRead()
         token = stored?.token
         uid = stored?.uid
+        if let uid = stored?.uid, uid.hasPrefix("guest:") {
+            let deviceID = String(uid.dropFirst("guest:".count))
+            if !deviceID.isEmpty { lastGuestDeviceID = deviceID }
+        }
     }
     private var authenticationID = UUID()
     private(set) var accountGeneration = UUID()
@@ -41,6 +45,10 @@ final class SeshAuth {
     private(set) var token: String?
     /// Verified backend uid ("apple:…" or "guest:…").
     private(set) var uid: String?
+    /// An Apple-backed session expired and could not be refreshed silently.
+    /// The UI uses this to offer a deliberate system reauthentication action
+    /// instead of misreporting the account failure as a network outage.
+    private(set) var requiresInteractiveAppleSignIn = false
 
     /// Profile fields remembered so an expired guest session can be
     /// re-exchanged silently.
@@ -100,9 +108,24 @@ final class SeshAuth {
         }
         if let appleUserID = UserDefaults.standard.string(forKey: "sesh.apple.userID"),
            !appleUserID.isEmpty {
-            return await reexchangeApple(userID: appleUserID, expectedGeneration: expectedGeneration)
+            let refreshed = await reexchangeApple(userID: appleUserID, expectedGeneration: expectedGeneration)
+            if !refreshed { requiresInteractiveAppleSignIn = true }
+            return refreshed
         }
         return false
+    }
+
+    /// Explicit recovery for an expired Apple-backed Worker session. This is
+    /// called from the connectivity banner after the silent attempt failed.
+    @discardableResult
+    func reconnectAppleAccount() async -> Bool {
+        guard let appleUserID = UserDefaults.standard.string(forKey: "sesh.apple.userID"),
+              !appleUserID.isEmpty else { return false }
+        accountGeneration = UUID()
+        let generation = authenticationID
+        let connected = await reexchangeApple(userID: appleUserID, expectedGeneration: generation)
+        requiresInteractiveAppleSignIn = !connected
+        return connected
     }
 
     /// Re-mint a session for an existing Sign in with Apple user.
@@ -141,6 +164,7 @@ final class SeshAuth {
         OfflineOutbox.shared.cancelReplay()
         token = nil
         uid = nil
+        requiresInteractiveAppleSignIn = false
         Self.keychainDelete()
     }
 
@@ -190,6 +214,7 @@ final class SeshAuth {
             guard !decoded.token.isEmpty, !decoded.uid.isEmpty else { return false }
             token = decoded.token
             uid = decoded.uid
+            requiresInteractiveAppleSignIn = false
             Self.keychainWrite(decoded.token, uid: decoded.uid)
             return true
         } catch {

@@ -35,6 +35,25 @@ struct ConnectivityBanner: View {
                 }
                 Text("Private journal saves remain available without a connection.")
                     .font(.footnote).foregroundStyle(Palette.textSecondary)
+                if SeshAuth.shared.requiresInteractiveAppleSignIn {
+                    Button {
+                        guard !retrying else { return }
+                        retrying = true
+                        Task {
+                            let connected = await SeshAuth.shared.reconnectAppleAccount()
+                            if connected, let retry { await retry() }
+                            retrying = false
+                        }
+                    } label: {
+                        Label(retrying ? "Connecting…" : "Reconnect with Apple", systemImage: "apple.logo")
+                            .font(.seshScaled(13, weight: .semibold))
+                            .minimumTapTarget()
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Palette.green)
+                    .disabled(retrying || state == .offline)
+                    .accessibilityHint("Opens Apple's secure sign-in flow and restores the SESH connection")
+                }
                 if retry != nil || outbox.canRetry {
                     Button {
                         guard !retrying else { return }

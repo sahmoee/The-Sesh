@@ -1,3 +1,7 @@
+> **Shared rules live in the master doc:** read `/Users/key/Documents/CLAUDE_ALL_PROJECTS_HANDOFF.md` first for the
+> shared safety, QA, build-numbering, endpoint, machine, and cross-project delivery contracts.
+> This file holds only The SESH.-specific facts.
+
 # Read me first
 
 The SESH. is a privacy-minded iOS/iPadOS 26 cannabis journal and optional social app. Private sessions and journal data remain local-authoritative; network, community, push, and music failures must not block saving. Do not add commerce or medical claims.
@@ -25,6 +29,9 @@ Social sends need a verified account once; failed queueing retains the chat draf
 Auth refresh is single-flight and generation-guarded. Raw Keychain tokens remain compatible;
 an additive token-matched owner companion supports safe queue attribution. Media caches are
 pixel-size-aware, bounded and cancellation-safe; realtime reconnects cannot clean up newer sockets.
+Guest sessions restore their refresh identity from the existing Keychain owner record after relaunch.
+If an Apple-backed Worker session cannot refresh silently, the connectivity banner offers an explicit
+secure Apple reconnect action instead of leaving the account labeled as a generic server outage.
 
 The native watchOS 26 companion is implemented in `SeshWatch/`, `WatchShared/` and
 `The SESH./Watch/`; see docs/WATCHOS_APP_2026_09_14.md. It supports private logging,
