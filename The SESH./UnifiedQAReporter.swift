@@ -96,7 +96,7 @@ struct UnifiedQATicket: Codable, Identifiable {
         do {
             var components = URLComponents(url: base.appendingPathComponent("tickets/sync"), resolvingAgainstBaseURL: false)!
             components.queryItems = [URLQueryItem(name: "source", value: source), URLQueryItem(name: "limit", value: "1000")]
-            var request = URLRequest(url: components.url!); request.httpMethod = "POST"; request.setValue("Joo", forHTTPHeaderField: "X-QA-Passcode")
+            var request = URLRequest(url: components.url!); request.httpMethod = "POST"; request.setValue("6352", forHTTPHeaderField: "X-QA-Passcode")
             let (data, response) = try await URLSession.shared.data(for: request)
             guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.userAuthenticationRequired) }
             let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
