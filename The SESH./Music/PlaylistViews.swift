@@ -193,6 +193,7 @@ struct PlaylistDetailView: View {
             // Use the first track's artwork as the cover, else a gradient.
             if let art = pl.tracks.first?.artworkURL, let url = URL(string: art) {
                 AsyncImage(url: url) { i in i.resizable().scaledToFill() } placeholder: { coverGradient }
+                    .accessibilityHidden(true)
             } else {
                 coverGradient
             }
@@ -282,6 +283,7 @@ struct PlaylistDetailView: View {
         if let s = t.artworkURL, let url = URL(string: s) {
             AsyncImage(url: url) { i in i.resizable().scaledToFill() } placeholder: { trackPh }
                 .frame(width: 52, height: 52).clipShape(RoundedRectangle(cornerRadius: 8))
+                .accessibilityHidden(true)
         } else { trackPh.frame(width: 52, height: 52) }
     }
     private var trackPh: some View {
@@ -336,6 +338,7 @@ struct TrackRow: View {
         if let s = track.artworkURL, let url = URL(string: s) {
             AsyncImage(url: url) { i in i.resizable().scaledToFill() } placeholder: { ph }
                 .frame(width: 38, height: 38).clipShape(RoundedRectangle(cornerRadius: 6))
+                .accessibilityHidden(true)
         } else { ph.frame(width: 38, height: 38) }
     }
     private var ph: some View {

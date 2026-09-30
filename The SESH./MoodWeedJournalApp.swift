@@ -5,7 +5,6 @@
 
 import SwiftUI
 
-@main
 struct SeshApp: App {
     @UIApplicationDelegateAdaptor(SeshAppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase

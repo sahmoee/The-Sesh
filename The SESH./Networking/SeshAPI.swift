@@ -1,3 +1,4 @@
+import SowensKit
 //
 //  SeshAPI.swift
 //  The SESH
@@ -130,7 +131,7 @@ struct SeshAPI {
         try Task.checkCancellation()
         let owner = SeshAuth.shared.uid
         let accountGeneration = SeshAuth.shared.accountGeneration
-        let (data, resp) = try await session.data(for: req)
+        let (data, resp) = try await session.sowensData(for: req)
         try Task.checkCancellation()
         guard owner == SeshAuth.shared.uid, accountGeneration == SeshAuth.shared.accountGeneration else { throw CancellationError() }
         guard let http = resp as? HTTPURLResponse else { throw URLError(.badServerResponse) }
@@ -140,7 +141,7 @@ struct SeshAPI {
             guard owner == SeshAuth.shared.uid, accountGeneration == SeshAuth.shared.accountGeneration else { throw CancellationError() }
             var retry = req
             retry.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            let (data2, resp2) = try await session.data(for: retry)
+            let (data2, resp2) = try await session.sowensData(for: retry)
             try Task.checkCancellation()
             guard owner == SeshAuth.shared.uid, accountGeneration == SeshAuth.shared.accountGeneration else { throw CancellationError() }
             guard let http2 = resp2 as? HTTPURLResponse else { throw URLError(.badServerResponse) }

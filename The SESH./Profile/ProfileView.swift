@@ -322,6 +322,29 @@ struct ProfileSettingsView: View {
 
                         Divider().overlay(Palette.stroke).padding(.vertical, 4)
 
+                        // Legal & data: policies, business details, data deletion.
+                        LegalAndDataEntry {
+                            HStack(spacing: 12) {
+                                Image(systemName: "doc.text.fill")
+                                    .font(.system(size: 16)).foregroundStyle(Palette.greenBright).frame(width: 26)
+                                    .accessibilityHidden(true)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Legal & Data").font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
+                                    Text("Privacy, terms, business details, delete my data")
+                                        .font(.system(size: 12)).foregroundStyle(Palette.textTertiary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
+                                    .accessibilityHidden(true)
+                            }
+                            .padding(12)
+                            .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.field))
+                            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+                        }
+
+                        Divider().overlay(Palette.stroke).padding(.vertical, 4)
+
                         // Preferences: haptics + clear music history
                         VStack(alignment: .leading, spacing: 12) {
                             FieldLabel(text: "Preferences")

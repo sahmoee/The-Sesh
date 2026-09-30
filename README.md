@@ -1,3 +1,6 @@
+<!-- PROJECT-KNOWLEDGE managed; do not edit this export -->
+> Maintained in ProjectKnowledge: `projects/the-sesh/documents/README.md`. This is a generated portable read-only export. Update the central source with `project-knowledge put`; use `project-knowledge publish` to refresh exports. Relative links and code paths below refer to this original project location.
+
 # The SESH.
 
 The SESH. is a privacy-minded cannabis companion for adults. It combines session journaling, mood and strain tracking, stash awareness, personal insights, music memories, and optional social/community features in a native SwiftUI app.

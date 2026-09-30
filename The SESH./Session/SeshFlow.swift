@@ -443,6 +443,7 @@ struct AddSongScreen: View {
         if let s = track.artworkURL, let url = URL(string: s) {
             AsyncImage(url: url) { i in i.resizable().scaledToFill() } placeholder: { artPlaceholder }
                 .frame(width: 52, height: 52).clipShape(RoundedRectangle(cornerRadius: 8))
+                .accessibilityHidden(true)
         } else {
             artPlaceholder.frame(width: 52, height: 52)
         }
@@ -594,6 +595,7 @@ struct SessionSummaryView: View {
                     if let s = np.artworkURL, let url = URL(string: s) {
                         AsyncImage(url: url) { i in i.resizable().scaledToFill() } placeholder: { Color.clear }
                             .frame(width: 40, height: 40).clipShape(RoundedRectangle(cornerRadius: 6))
+                            .accessibilityHidden(true)
                     }
                     VStack(alignment: .trailing, spacing: 1) {
                         Text(np.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.text).lineLimit(1)

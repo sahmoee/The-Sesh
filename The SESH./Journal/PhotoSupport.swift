@@ -90,6 +90,7 @@ struct StoredImage: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
+                    .accessibilityLabel("Journal photo")
             } else {
                 BudThumb(size: size, seed: budSeed)
             }

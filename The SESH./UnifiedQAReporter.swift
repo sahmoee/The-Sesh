@@ -1,4 +1,5 @@
 import SwiftUI
+import SowensKit
 import UIKit
 import Combine
 
@@ -30,6 +31,11 @@ struct UnifiedQASettingsView: View {
             if unlocked && enabled {
                 Toggle("Record anonymous touch positions", isOn: $touches).font(.caption)
                 QAAIOverrideView(app: "sesh", hasActiveAI: false)
+                #if DEBUG
+                NavigationLink("Network activity") {
+                    UnifiedQAPasscodeGate { SowensNetworkConsole() }
+                }
+                #endif
             }
         }
         .onAppear { if !unlocked { enabled = false } }

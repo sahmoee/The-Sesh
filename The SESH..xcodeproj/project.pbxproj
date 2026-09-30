@@ -7,13 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		047E591A96CC9656D1861891 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7D4C6972EA9F350F121D1CD /* Foundation.framework */; };
+		180D1BDF22814B1B5FB86FC4 /* SowensKit in Frameworks */ = {isa = PBXBuildFile; productRef = BA45024C61A2176BBBB4D96D /* SowensKit */; };
+		57544348000000000000000C /* SeshWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 575443480000000000000002 /* SeshWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		7B15D1132FE86D4F00F13C0B /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B90A45F2FDFE9A80078E9C8 /* WidgetKit.framework */; };
 		7B15D1142FE86D4F00F13C0B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B90A4612FDFE9A80078E9C8 /* SwiftUI.framework */; };
 		7B15D1232FE86D5100F13C0B /* SeshWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7B15D1122FE86D4F00F13C0B /* SeshWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		57544348000000000000000C /* SeshWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 575443480000000000000002; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		93000C3F04A6A9AF55E3CD9F /* SowensKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5C5D7FF1FD609B23AC6A7931 /* SowensKit */; };
+		A2E1A775C87F3DFF74E0801F /* SharedPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 698DDB0A41DC90B0373D1893 /* SharedPresentationTests.swift */; };
+		B4E60926D80AFE7954507098 /* SowensTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 46229917F5F6852C7D922EA2 /* SowensTestSupport */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		57544348000000000000000D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7B2DD4F12FDF181D00E3B22C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 575443480000000000000001;
+			remoteInfo = SeshWatch;
+		};
 		7B15D1212FE86D5100F13C0B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7B2DD4F12FDF181D00E3B22C /* Project object */;
@@ -21,10 +33,27 @@
 			remoteGlobalIDString = 7B15D1112FE86D4F00F13C0B;
 			remoteInfo = SeshWidgetExtension;
 		};
-		57544348000000000000000D = {isa = PBXContainerItemProxy; containerPortal = 7B2DD4F12FDF181D00E3B22C; proxyType = 1; remoteGlobalIDString = 575443480000000000000001; remoteInfo = SeshWatch; };
+		E84B5771A7C0CAC9C74510E2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7B2DD4F12FDF181D00E3B22C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7B2DD4F82FDF181D00E3B22C;
+			remoteInfo = "The SESH.";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		57544348000000000000000B /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				57544348000000000000000C /* SeshWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7B90A4742FDFE9AC0078E9C8 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -36,17 +65,19 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		57544348000000000000000B /* Embed Watch Content */ = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = "$(CONTENTS_FOLDER_PATH)/Watch"; dstSubfolderSpec = 16; files = (57544348000000000000000C, ); name = "Embed Watch Content"; runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3CCBA9E470B504D47B3126F6 /* PresentationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PresentationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		575443480000000000000002 /* SeshWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeshWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		698DDB0A41DC90B0373D1893 /* SharedPresentationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharedPresentationTests.swift; sourceTree = "<group>"; };
 		7B15D1122FE86D4F00F13C0B /* SeshWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SeshWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B2DD4F92FDF181D00E3B22C /* The SESH..app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "The SESH..app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B35ED553003DF58008D5DF1 /* The SESH..xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "The SESH..xcodeproj"; sourceTree = "<group>"; };
 		7B90A45F2FDFE9A80078E9C8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		7B90A4612FDFE9A80078E9C8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		7B90A4B52FDFF7280078E9C8 /* SeshWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SeshWidgetExtension.entitlements; sourceTree = "<group>"; };
-		575443480000000000000002 /* SeshWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeshWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A7D4C6972EA9F350F121D1CD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -67,6 +98,20 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		575443480000000000000003 /* SeshWatch */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = SeshWatch;
+			sourceTree = "<group>";
+		};
+		575443480000000000000004 /* WatchShared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = WatchShared;
+			sourceTree = "<group>";
+		};
 		7B15D1152FE86D4F00F13C0B /* SeshWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -85,14 +130,21 @@
 		};
 		7B90A49F2FDFF5F70078E9C8 /* SeshWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = SeshWidget;
 			sourceTree = "<group>";
 		};
-		575443480000000000000003 /* SeshWatch */ = {isa = PBXFileSystemSynchronizedRootGroup; path = SeshWatch; sourceTree = "<group>"; };
-		575443480000000000000004 /* WatchShared */ = {isa = PBXFileSystemSynchronizedRootGroup; path = WatchShared; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		575443480000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7B15D10F2FE86D4F00F13C0B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -106,25 +158,45 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				180D1BDF22814B1B5FB86FC4 /* SowensKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		575443480000000000000006 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		EAF2A119EF234BF1FA1B1518 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				047E591A96CC9656D1861891 /* Foundation.framework in Frameworks */,
+				93000C3F04A6A9AF55E3CD9F /* SowensKit in Frameworks */,
+				B4E60926D80AFE7954507098 /* SowensTestSupport in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		05A74BED5EA19F5EC7D900D2 /* PresentationTests */ = {
+			isa = PBXGroup;
+			children = (
+				698DDB0A41DC90B0373D1893 /* SharedPresentationTests.swift */,
+			);
+			name = PresentationTests;
+			path = PresentationTests;
+			sourceTree = "<group>";
+		};
 		7B2DD4F02FDF181D00E3B22C = {
 			isa = PBXGroup;
 			children = (
 				575443480000000000000003 /* SeshWatch */,
-                575443480000000000000004 /* WatchShared */,
-                7B90A4B52FDFF7280078E9C8 /* SeshWidgetExtension.entitlements */,
+				575443480000000000000004 /* WatchShared */,
+				7B90A4B52FDFF7280078E9C8 /* SeshWidgetExtension.entitlements */,
 				7B2DD4FB2FDF181D00E3B22C /* The SESH. */,
 				7B90A49F2FDFF5F70078E9C8 /* SeshWidget */,
 				7B15D1152FE86D4F00F13C0B /* SeshWidget */,
 				7B90A45E2FDFE9A80078E9C8 /* Frameworks */,
 				7B2DD4FA2FDF181D00E3B22C /* Products */,
 				EA8F0671301FB5F000B072F7 /* Recovered References */,
+				05A74BED5EA19F5EC7D900D2 /* PresentationTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -132,14 +204,17 @@
 			isa = PBXGroup;
 			children = (
 				575443480000000000000002 /* SeshWatch.app */,
-                7B2DD4F92FDF181D00E3B22C /* The SESH..app */,
+				7B2DD4F92FDF181D00E3B22C /* The SESH..app */,
 				7B15D1122FE86D4F00F13C0B /* SeshWidgetExtension.appex */,
+				3CCBA9E470B504D47B3126F6 /* PresentationTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
 		7B35ED5A3003DF58008D5DF1 /* Products */ = {
 			isa = PBXGroup;
+			children = (
+			);
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -148,8 +223,17 @@
 			children = (
 				7B90A45F2FDFE9A80078E9C8 /* WidgetKit.framework */,
 				7B90A4612FDFE9A80078E9C8 /* SwiftUI.framework */,
+				C54AFA3F16EEE149D660CB1A /* iOS */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C54AFA3F16EEE149D660CB1A /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				A7D4C6972EA9F350F121D1CD /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 		EA8F0671301FB5F000B072F7 /* Recovered References */ = {
@@ -163,6 +247,51 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		44E18CD1784F62700A36C7DE /* PresentationTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 35D0DE601A27700E0A35470E /* Build configuration list for PBXNativeTarget "PresentationTests" */;
+			buildPhases = (
+				40B1D6785FA0A23056B4DD4C /* Sources */,
+				EAF2A119EF234BF1FA1B1518 /* Frameworks */,
+				FDCD26795DFDD587817FF679 /* Resources */,
+				D5A23C92C4A50F9529DF9838 /* Stamp QA build number */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D210220B4BC8F7C479F6AC77 /* PBXTargetDependency */,
+			);
+			name = PresentationTests;
+			packageProductDependencies = (
+				5C5D7FF1FD609B23AC6A7931 /* SowensKit */,
+				46229917F5F6852C7D922EA2 /* SowensTestSupport */,
+			);
+			productName = PresentationTests;
+			productReference = 3CCBA9E470B504D47B3126F6 /* PresentationTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		575443480000000000000001 /* SeshWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 575443480000000000000008 /* Build configuration list for PBXNativeTarget "SeshWatch" */;
+			buildPhases = (
+				575443480000000000000005 /* Sources */,
+				575443480000000000000006 /* Frameworks */,
+				575443480000000000000007 /* Resources */,
+				57544348000000000000000F /* Stamp QA build number */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				575443480000000000000003 /* SeshWatch */,
+				575443480000000000000004 /* WatchShared */,
+			);
+			name = SeshWatch;
+			productName = SeshWatch;
+			productReference = 575443480000000000000002 /* SeshWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 		7B15D1112FE86D4F00F13C0B /* SeshWidgetExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7B15D1252FE86D5100F13C0B /* Build configuration list for PBXNativeTarget "SeshWidgetExtension" */;
@@ -180,8 +309,6 @@
 				7B15D1152FE86D4F00F13C0B /* SeshWidget */,
 			);
 			name = SeshWidgetExtension;
-			packageProductDependencies = (
-			);
 			productName = SeshWidgetExtension;
 			productReference = 7B15D1122FE86D4F00F13C0B /* SeshWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -195,31 +322,26 @@
 				7B2DD4F72FDF181D00E3B22C /* Resources */,
 				7B90A4742FDFE9AC0078E9C8 /* Embed Foundation Extensions */,
 				57544348000000000000000B /* Embed Watch Content */,
-                51414255494C440000000002 /* Stamp QA build number */,
+				51414255494C440000000002 /* Stamp QA build number */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				57544348000000000000000E,
-                7B15D1222FE86D5100F13C0B /* PBXTargetDependency */,
+				57544348000000000000000E /* PBXTargetDependency */,
+				7B15D1222FE86D5100F13C0B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				7B2DD4FB2FDF181D00E3B22C /* The SESH. */,
-                575443480000000000000004 /* WatchShared */,
+				575443480000000000000004 /* WatchShared */,
 			);
 			name = "The SESH.";
 			packageProductDependencies = (
+				BA45024C61A2176BBBB4D96D /* SowensKit */,
 			);
 			productName = "The SESH.";
 			productReference = 7B2DD4F92FDF181D00E3B22C /* The SESH..app */;
 			productType = "com.apple.product-type.application";
 		};
-		575443480000000000000001 /* SeshWatch */ = {
-            isa = PBXNativeTarget; buildConfigurationList = 575443480000000000000008;
-            buildPhases = (575443480000000000000005, 575443480000000000000006, 575443480000000000000007, 57544348000000000000000F, );
-            buildRules = (); dependencies = (); fileSystemSynchronizedGroups = (575443480000000000000003, 575443480000000000000004, );
-            name = SeshWatch; productName = SeshWatch; productReference = 575443480000000000000002; productType = "com.apple.product-type.application";
-        };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -248,6 +370,9 @@
 			);
 			mainGroup = 7B2DD4F02FDF181D00E3B22C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EC9E2C458838840890C9ACBF /* XCLocalSwiftPackageReference "SowensKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7B2DD4FA2FDF181D00E3B22C /* Products */;
 			projectDirPath = "";
@@ -259,14 +384,22 @@
 			);
 			projectRoot = "";
 			targets = (
-                575443480000000000000001 /* SeshWatch */,
+				575443480000000000000001 /* SeshWatch */,
 				7B2DD4F82FDF181D00E3B22C /* The SESH. */,
 				7B15D1112FE86D4F00F13C0B /* SeshWidgetExtension */,
+				44E18CD1784F62700A36C7DE /* PresentationTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		575443480000000000000007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7B15D1102FE86D4F00F13C0B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -281,7 +414,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		575443480000000000000007 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		FDCD26795DFDD587817FF679 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -289,44 +428,99 @@
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
-			files = ();
-			inputPaths = ("$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)", "$(PROJECT_TEMP_DIR)/qa-build-number", "$(SRCROOT)/scripts/qa_build_number.py");
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+				"$(PROJECT_TEMP_DIR)/qa-build-number",
+				"$(SRCROOT)/scripts/qa_build_number.py",
+			);
 			name = "Stamp QA build number";
-			outputPaths = ();
+			outputPaths = (
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			showEnvVarsInLog = 0;
 			shellScript = "set -eu\n/usr/bin/python3 \"$SRCROOT/scripts/qa_build_number.py\" --stamp-product \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\" --reservation-dir \"$PROJECT_TEMP_DIR\"\n";
+			showEnvVarsInLog = 0;
 		};
 		51414255494C440000000002 /* Stamp QA build number */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
-			files = ();
-			inputPaths = ("$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)", "$(PROJECT_TEMP_DIR)/qa-build-number", "$(SRCROOT)/scripts/qa_build_number.py");
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+				"$(PROJECT_TEMP_DIR)/qa-build-number",
+				"$(SRCROOT)/scripts/qa_build_number.py",
+			);
 			name = "Stamp QA build number";
-			outputPaths = ();
+			outputPaths = (
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			showEnvVarsInLog = 0;
 			shellScript = "set -eu\n/usr/bin/python3 \"$SRCROOT/scripts/qa_build_number.py\" --stamp-product \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\" --reservation-dir \"$PROJECT_TEMP_DIR\"\n";
+			showEnvVarsInLog = 0;
 		};
 		57544348000000000000000F /* Stamp QA build number */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
-			files = ();
-			inputPaths = ("$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)", "$(PROJECT_TEMP_DIR)/qa-build-number", "$(SRCROOT)/scripts/qa_build_number.py");
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+				"$(PROJECT_TEMP_DIR)/qa-build-number",
+				"$(SRCROOT)/scripts/qa_build_number.py",
+			);
 			name = "Stamp QA build number";
-			outputPaths = ();
+			outputPaths = (
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
+			shellScript = "set -eu\n/usr/bin/python3 \"$SRCROOT/scripts/qa_build_number.py\" --stamp-product \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\" --reservation-dir \"$PROJECT_TEMP_DIR\"\n";
 			showEnvVarsInLog = 0;
+		};
+		D5A23C92C4A50F9529DF9838 /* Stamp QA build number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+				"$(PROJECT_TEMP_DIR)/qa-build-number",
+				"$(SRCROOT)/scripts/qa_build_number.py",
+			);
+			name = "Stamp QA build number";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
 			shellScript = "set -eu\n/usr/bin/python3 \"$SRCROOT/scripts/qa_build_number.py\" --stamp-product \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\" --reservation-dir \"$PROJECT_TEMP_DIR\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		40B1D6785FA0A23056B4DD4C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A2E1A775C87F3DFF74E0801F /* SharedPresentationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		575443480000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		7B15D10E2FE86D4F00F13C0B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -341,19 +535,96 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		575443480000000000000005 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		57544348000000000000000E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 575443480000000000000001 /* SeshWatch */;
+			targetProxy = 57544348000000000000000D /* PBXContainerItemProxy */;
+		};
 		7B15D1222FE86D5100F13C0B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 7B15D1112FE86D4F00F13C0B /* SeshWidgetExtension */;
 			targetProxy = 7B15D1212FE86D5100F13C0B /* PBXContainerItemProxy */;
 		};
-		57544348000000000000000E = {isa = PBXTargetDependency; target = 575443480000000000000001; targetProxy = 57544348000000000000000D; };
+		D210220B4BC8F7C479F6AC77 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "The SESH.";
+			target = 7B2DD4F82FDF181D00E3B22C /* The SESH. */;
+			targetProxy = E84B5771A7C0CAC9C74510E2 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		575443480000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 68;
+				DEVELOPMENT_TEAM = 5DV5N49VG8;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "The SESH.";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.sowens.The-SESH-";
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 59;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.sowens.The-SESH-.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		57544348000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 68;
+				DEVELOPMENT_TEAM = 5DV5N49VG8;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "The SESH.";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.sowens.The-SESH-";
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 59;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.sowens.The-SESH-.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
 		7B15D1262FE86D5100F13C0B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -630,35 +901,60 @@
 			};
 			name = Release;
 		};
-		575443480000000000000009 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic;
-CURRENT_PROJECT_VERSION = 68; DEVELOPMENT_TEAM = 5DV5N49VG8; ENABLE_PREVIEWS = YES;
-ENABLE_USER_SCRIPT_SANDBOXING = NO; GENERATE_INFOPLIST_FILE = YES;
-INFOPLIST_KEY_CFBundleDisplayName = "The SESH."; INFOPLIST_KEY_WKApplication = YES;
-INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.sowens.The-SESH-";
-INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
-INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", );
-MARKETING_VERSION = 59; PRODUCT_BUNDLE_IDENTIFIER = "com.sowens.The-SESH-.watchkitapp";
-PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = watchos; SKIP_INSTALL = YES;
-SUPPORTED_PLATFORMS = "watchos watchsimulator"; SWIFT_VERSION = 6.0;
-SWIFT_APPROACHABLE_CONCURRENCY = YES; SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-TARGETED_DEVICE_FAMILY = 4; WATCHOS_DEPLOYMENT_TARGET = 26.0; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
-		57544348000000000000000A = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic;
-CURRENT_PROJECT_VERSION = 68; DEVELOPMENT_TEAM = 5DV5N49VG8; ENABLE_PREVIEWS = YES;
-ENABLE_USER_SCRIPT_SANDBOXING = NO; GENERATE_INFOPLIST_FILE = YES;
-INFOPLIST_KEY_CFBundleDisplayName = "The SESH."; INFOPLIST_KEY_WKApplication = YES;
-INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.sowens.The-SESH-";
-INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
-INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", );
-MARKETING_VERSION = 59; PRODUCT_BUNDLE_IDENTIFIER = "com.sowens.The-SESH-.watchkitapp";
-PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = watchos; SKIP_INSTALL = YES;
-SUPPORTED_PLATFORMS = "watchos watchsimulator"; SWIFT_VERSION = 6.0;
-SWIFT_APPROACHABLE_CONCURRENCY = YES; SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-TARGETED_DEVICE_FAMILY = 4; WATCHOS_DEPLOYMENT_TARGET = 26.0; SWIFT_OPTIMIZATION_LEVEL = "-O"; }; name = Release; };
+		CCB29016F2FF944424AB1444 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sowens.TheSesh.PresentationTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/The SESH..app/The SESH.";
+			};
+			name = Debug;
+		};
+		D9744AAA2E44EF078873359B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sowens.TheSesh.PresentationTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/The SESH..app/The SESH.";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		35D0DE601A27700E0A35470E /* Build configuration list for PBXNativeTarget "PresentationTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D9744AAA2E44EF078873359B /* Release */,
+				CCB29016F2FF944424AB1444 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		575443480000000000000008 /* Build configuration list for PBXNativeTarget "SeshWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				575443480000000000000009 /* Debug */,
+				57544348000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		7B15D1252FE86D5100F13C0B /* Build configuration list for PBXNativeTarget "SeshWidgetExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -686,8 +982,32 @@ TARGETED_DEVICE_FAMILY = 4; WATCHOS_DEPLOYMENT_TARGET = 26.0; SWIFT_OPTIMIZATION
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		575443480000000000000008 = {isa = XCConfigurationList; buildConfigurations = (575443480000000000000009, 57544348000000000000000A, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		EC9E2C458838840890C9ACBF /* XCLocalSwiftPackageReference "SowensKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SowensKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		46229917F5F6852C7D922EA2 /* SowensTestSupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC9E2C458838840890C9ACBF /* XCLocalSwiftPackageReference "SowensKit" */;
+			productName = SowensTestSupport;
+		};
+		5C5D7FF1FD609B23AC6A7931 /* SowensKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC9E2C458838840890C9ACBF /* XCLocalSwiftPackageReference "SowensKit" */;
+			productName = SowensKit;
+		};
+		BA45024C61A2176BBBB4D96D /* SowensKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC9E2C458838840890C9ACBF /* XCLocalSwiftPackageReference "SowensKit" */;
+			productName = SowensKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7B2DD4F12FDF181D00E3B22C /* Project object */;
 }

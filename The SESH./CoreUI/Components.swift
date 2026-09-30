@@ -1,3 +1,4 @@
+import SowensKit
 //
 //  Components.swift
 //  HighThoughts
@@ -25,6 +26,7 @@ struct AppBackground: View {
                     .opacity(0.06)
                     .blendMode(.softLight)
                     .allowsHitTesting(false)
+                    .accessibilityHidden(true)
             )
             .overlay(BotanicalOverlay().ignoresSafeArea().allowsHitTesting(false))
     }
@@ -68,8 +70,7 @@ struct DarkCard<Content: View>: View {
     var body: some View {
         content
             .padding(padding)
-            .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(Palette.card))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
+            .sowensSurface(fill: Palette.card, border: Palette.stroke, radius: radius)
     }
 }
 
@@ -198,6 +199,7 @@ struct InputField: View {
                     .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
                     .contentShape(Rectangle())
                     .onTapGesture { focused = true }
+                    .accessibilityAddTraits(.isButton)
                 if showsCamera {
                     Button { onCamera?() } label: {
                         Image(systemName: "camera")
@@ -246,6 +248,7 @@ struct NotesField: View {
             .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
             .contentShape(Rectangle())
             .onTapGesture { focused = true }
+            .accessibilityAddTraits(.isButton)
         }
     }
 }

@@ -377,6 +377,7 @@ struct LoungeTextCard: View {
             if !post.media.isEmpty {
                 LoungeMediaThumb(media: post.media[0], height: 150)
                     .onTapGesture { onOpen(post) }
+                    .accessibilityAddTraits(.isButton)
             }
 
             LoungeReactionBar(post: post,
@@ -738,6 +739,7 @@ struct LoungeLiveCard: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg, style: .continuous))
         .contentShape(Rectangle())
         .onTapGesture { onOpen(post) }
+        .accessibilityAddTraits(.isButton)
     }
 
     @ViewBuilder private var still: some View {
@@ -831,5 +833,6 @@ struct LoungeCheckInCard: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { onOpen(post) }
+        .accessibilityAddTraits(.isButton)
     }
 }

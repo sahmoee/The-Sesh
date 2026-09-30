@@ -254,6 +254,7 @@ struct LoungeComposeView: View {
             .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
             .contentShape(Rectangle())
             .onTapGesture { editorFocused = true }
+            .accessibilityAddTraits(.isButton)
 
             counterRow
         }

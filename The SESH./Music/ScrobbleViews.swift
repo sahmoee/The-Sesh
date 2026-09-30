@@ -52,12 +52,14 @@ struct NowPlayingCard: View {
     @ViewBuilder private func artwork(for np: NowPlaying) -> some View {
         if np.source == .appleMusic, let img = scrobbler.appleArtwork(size: CGSize(width: 92, height: 92)) {
             Image(uiImage: img).resizable().scaledToFill()
+                .accessibilityHidden(true)
         } else if let urlStr = np.artworkURL, let url = URL(string: urlStr) {
             AsyncImage(url: url) { image in
                 image.resizable().scaledToFill()
             } placeholder: {
                 artworkPlaceholder
             }
+                .accessibilityHidden(true)
         } else {
             artworkPlaceholder
         }

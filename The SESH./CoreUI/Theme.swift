@@ -53,7 +53,7 @@ extension ThemePalette {
         field: Color(hex: "1C2117"), stroke: Color(hex: "3C442F"), strokeSoft: Color(hex: "323A27"),
         cream: Color(hex: "EBE2CE"), creamElevated: Color(hex: "F3ECDC"), creamStroke: Color(hex: "D8CDB4"),
         onCream: Color(hex: "2E3320"), onCreamSoft: Color(hex: "6E6A55"),
-        text: Color(hex: "ECE7D8"), textSecondary: Color(hex: "9AA088"), textTertiary: Color(hex: "6E7459"),
+        text: Color(hex: "ECE7D8"), textSecondary: Color(hex: "9DA38B"), textTertiary: Color(hex: "A0A28C"),
         green: Color(hex: "5C6B41"), greenBright: Color(hex: "6E8049"), greenDeep: Color(hex: "47542F"),
         onGreen: Color(hex: "F3ECDC"),
         gold: Color(hex: "C9A24B"), goldSoft: Color(hex: "D8B968"), goldDeep: Color(hex: "8A6E33"), goldRing: Color(hex: "B8924A"),
@@ -71,7 +71,7 @@ extension ThemePalette {
         // "cream" surfaces become deep elevated navy panels in this theme
         cream: Color(hex: "182134"), creamElevated: Color(hex: "1E2840"), creamStroke: Color(hex: "2C3958"),
         onCream: Color(hex: "EAEFF8"), onCreamSoft: Color(hex: "9DA9C2"),
-        text: Color(hex: "ECF0F8"), textSecondary: Color(hex: "97A2BC"), textTertiary: Color(hex: "606C86"),
+        text: Color(hex: "ECF0F8"), textSecondary: Color(hex: "97A2BC"), textTertiary: Color(hex: "8791A6"),
         green: Color(hex: "5E7148"), greenBright: Color(hex: "8BA05C"), greenDeep: Color(hex: "47562F"),
         onGreen: Color(hex: "F4F1E6"),
         gold: Color(hex: "D2A95A"), goldSoft: Color(hex: "E0BC72"), goldDeep: Color(hex: "9A7838"), goldRing: Color(hex: "C49A4E"),
@@ -90,7 +90,7 @@ extension ThemePalette {
         // "cream" surfaces become warm dark panels here
         cream: Color(hex: "211912"), creamElevated: Color(hex: "2A1F17"), creamStroke: Color(hex: "402E20"),
         onCream: Color(hex: "F5E9D0"), onCreamSoft: Color(hex: "B59B7C"),
-        text: Color(hex: "F6ECD8"), textSecondary: Color(hex: "C0A98C"), textTertiary: Color(hex: "8A7252"),
+        text: Color(hex: "F6ECD8"), textSecondary: Color(hex: "C0A98C"), textTertiary: Color(hex: "9D886A"),
         // Rasta green
         green: Color(hex: "2E8B2E"), greenBright: Color(hex: "3FB23F"), greenDeep: Color(hex: "1F6B1F"),
         onGreen: Color(hex: "FFF8E8"),
@@ -113,7 +113,7 @@ extension ThemePalette {
         // "cream" surfaces become dark elevated panels in this theme
         cream: Color(hex: "141A20"), creamElevated: Color(hex: "1A2128"), creamStroke: Color(hex: "2A323C"),
         onCream: Color(hex: "EAF2EC"), onCreamSoft: Color(hex: "9BA6AB"),
-        text: Color(hex: "ECF2EE"), textSecondary: Color(hex: "9AA6A2"), textTertiary: Color(hex: "626E6A"),
+        text: Color(hex: "ECF2EE"), textSecondary: Color(hex: "9AA6A2"), textTertiary: Color(hex: "808B87"),
         // Neon green primary
         green: Color(hex: "4ADE80"), greenBright: Color(hex: "7CE577"), greenDeep: Color(hex: "2BA85A"),
         onGreen: Color(hex: "07140C"),
@@ -136,7 +136,7 @@ extension ThemePalette {
         // warm dark panels stand in for the "cream" surface slots
         cream: Color(hex: "1E2616"), creamElevated: Color(hex: "27331D"), creamStroke: Color(hex: "3E4E2C"),
         onCream: Color(hex: "F1E4C9"), onCreamSoft: Color(hex: "B6A985"),
-        text: Color(hex: "E9D9BB"), textSecondary: Color(hex: "BFA889"), textTertiary: Color(hex: "887252"),
+        text: Color(hex: "E9D9BB"), textSecondary: Color(hex: "BFA889"), textTertiary: Color(hex: "A99576"),
         green: Color(hex: "627141"), greenBright: Color(hex: "91A45E"), greenDeep: Color(hex: "3E492B"),
         onGreen: Color(hex: "F4F1E6"),
         gold: Color(hex: "B88742"), goldSoft: Color(hex: "D3B06D"), goldDeep: Color(hex: "6B4A24"), goldRing: Color(hex: "B88742"),
@@ -159,7 +159,7 @@ extension ThemePalette {
         cream: Color(hex: "F5EFE2"), creamElevated: Color(hex: "FBF6EC"), creamStroke: Color(hex: "D3C4A8"),
         onCream: Color(hex: "2C3320"), onCreamSoft: Color(hex: "6E6A55"),
         // Dark text on the cream canvas
-        text: Color(hex: "2A3020"), textSecondary: Color(hex: "5E6450"), textTertiary: Color(hex: "8C8770"),
+        text: Color(hex: "2A3020"), textSecondary: Color(hex: "5A604C"), textTertiary: Color(hex: "5F5F4B"),
         // Greens from the swatches (sage / forest / olive)
         green: Color(hex: "5C6B3F"), greenBright: Color(hex: "7C8B52"), greenDeep: Color(hex: "2F3A20"),
         onGreen: Color(hex: "F7F2E7"),

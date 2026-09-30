@@ -377,6 +377,7 @@ private struct LogItemRow: View {
                 .listRowBackground(Color.clear)
                 .contentShape(Rectangle())
                 .onTapGesture { onEditEntry(e) }
+                .accessibilityAddTraits(.isButton)
                 .accessibilityAction(named: "Edit session") { onEditEntry(e) }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
@@ -407,6 +408,7 @@ private struct LogItemRow: View {
                 .listRowBackground(Color.clear)
                 .contentShape(Rectangle())
                 .onTapGesture { onEditThought(t) }
+                .accessibilityAddTraits(.isButton)
                 .accessibilityAction(named: "Edit thought") { onEditThought(t) }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {

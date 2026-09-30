@@ -22,9 +22,10 @@ import UserNotifications
 
 // MARK: - Privacy settings (#App16)
 
-/// What the user shares with friends. Everything defaults to ON (current
-/// behaviour) except thoughts, which were already visibility-scoped. Stores
-/// read these BEFORE broadcasting; they are enforcement, not decoration.
+/// What the user shares with friends. Everything defaults to OFF for new
+/// installs (privacy by default; cannabis use is sensitive), and the user turns
+/// on what they want. Saved choices are never overwritten. Stores read these
+/// BEFORE broadcasting; they are enforcement, not decoration.
 @MainActor
 @Observable
 final class PrivacySettings {
@@ -41,12 +42,12 @@ final class PrivacySettings {
 
     private init() {
         let d = UserDefaults.standard.dictionary(forKey: Self.key) as? [String: Bool] ?? [:]
-        shareActivity        = d["activity"] ?? true
-        shareStrainDetails   = d["strain"] ?? true
-        shareMusic           = d["music"] ?? true
-        shareSessionDuration = d["duration"] ?? true
-        shareLiveStatus      = d["live"] ?? true
-        discoverableByCode   = d["discoverable"] ?? true
+        shareActivity        = d["activity"] ?? false
+        shareStrainDetails   = d["strain"] ?? false
+        shareMusic           = d["music"] ?? false
+        shareSessionDuration = d["duration"] ?? false
+        shareLiveStatus      = d["live"] ?? false
+        discoverableByCode   = d["discoverable"] ?? false
     }
 
     private func save() {

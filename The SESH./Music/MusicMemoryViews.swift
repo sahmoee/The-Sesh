@@ -142,6 +142,7 @@ struct MusicMemoryView: View {
                 Rectangle().fill(Palette.field)
             }
             .frame(width: 44, height: 44).clipShape(RoundedRectangle(cornerRadius: 8))
+                .accessibilityHidden(true)
         } else {
             RoundedRectangle(cornerRadius: 8).fill(Palette.field)
                 .frame(width: 44, height: 44)
