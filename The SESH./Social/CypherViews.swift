@@ -409,4 +409,3 @@ struct LiveChatView: View {
 }
 
 // MARK: - Chat rooms
-
