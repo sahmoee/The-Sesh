@@ -106,7 +106,6 @@ final class SDThought {
     }
 }
 
-
 // MARK: - Keyed record store (#10)
 
 /// Generic record for collections migrating OUT of UserDefaults (purchases,

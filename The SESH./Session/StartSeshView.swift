@@ -24,7 +24,6 @@ func seshDuration(_ interval: TimeInterval) -> String {
     return String(format: "%d:%02d", m, s)
 }
 
-
 /// Formats an elapsed interval as m:ss (or h:mm:ss past an hour) for the live timer.
 struct StartSeshView: View {
     /// When set (from the "What are you doing?" chooser or a widget), the sesh

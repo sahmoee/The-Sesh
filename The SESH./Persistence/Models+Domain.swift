@@ -414,7 +414,6 @@ struct HighThought: Identifiable, Codable, Hashable {
     }
 }
 
-
 // MARK: - Strain insight (aggregated)
 
 struct StrainInsight: Identifiable {

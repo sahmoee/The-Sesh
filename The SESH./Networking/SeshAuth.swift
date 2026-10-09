@@ -295,7 +295,6 @@ final class SeshAuth {
         SecItemDelete(query() as CFDictionary)
         SecItemDelete(query(account: "session-owner-v1") as CFDictionary)
     }
-
 }
 
 // MARK: - Silent Sign in with Apple re-request

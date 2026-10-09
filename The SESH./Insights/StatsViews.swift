@@ -368,4 +368,3 @@ struct InsightsListView: View {
 }
 
 // MARK: - Strain detail
-

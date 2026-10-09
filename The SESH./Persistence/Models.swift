@@ -533,7 +533,6 @@ final class AppSession {
         }
     }
 
-
     // MARK: Resumable live sesh (#persisted sessions)
 
     private let liveSeshKey = DefaultsKey.liveSesh
@@ -1002,7 +1001,7 @@ final class AppSession {
     /// Encode failures are logged (#2) rather than silently dropped — a silent
     /// failure here is exactly what "my sessions vanished" looks like.
     private func pushToCloud() {
-        if let data = Persist.encode(entries, label: "entries")  { CloudSync.set(data, forKey: entriesKey) }
+        if let data = Persist.encode(entries, label: "entries") { CloudSync.set(data, forKey: entriesKey) }
         if let data = Persist.encode(thoughts, label: "thoughts") { CloudSync.set(data, forKey: thoughtsKey) }
         CloudSync.set(userName, forKey: nameKey)
         lastSyncedAt = Date()

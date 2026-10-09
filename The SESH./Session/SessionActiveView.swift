@@ -434,7 +434,6 @@ struct SessionActiveView: View {
     private func matchedStrain(_ live: LiveSeshState) -> StrainProfile? {
         strains.strains.first { $0.name.caseInsensitiveCompare(live.strainName) == .orderedSame }
     }
-
 }
 
 /// A lightweight song search used from the Session Active screen. Lets the user

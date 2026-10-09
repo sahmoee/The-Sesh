@@ -303,4 +303,3 @@ struct BadgeMedallion: View {
 }
 
 // MARK: - Stats screen
-
