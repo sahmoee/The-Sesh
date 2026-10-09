@@ -167,7 +167,8 @@ struct JournalEntry: Identifiable, Codable, Hashable {
     /// "2.0 g" / "3 hits" / "10 mg", if recorded. #2/#3
     var amountLine: String? {
         guard let amount, let amountUnit, !amountUnit.isEmpty else { return nil }
-        let n = amount.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(amount)) : String(format: "%.1f", amount)
+        // Int(amount) traps for values beyond Int's range; a formatter never does.
+        let n = amount.formatted(.number.precision(.fractionLength(0...1)))
         return "\(n) \(amountUnit)"
     }
 

@@ -1,0 +1,7 @@
+{
+  "project": "The-Sesh",
+  "implemented_improvements": 3,
+  "status": "work-in-progress; do not merge before outstanding validation",
+  "validation": "Narrow source diff reviewed; native build and remaining 17 improvements pending",
+  "remaining": "Review final diff, run native build and meaningful regressions, finish minimum 20 meaningful improvements, submit PR. No physical-device verification claimed."
+}
