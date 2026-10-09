@@ -8,6 +8,9 @@ nonisolated enum SeshWatchContract {
     static let methods = ["Joint", "Blunt", "Bowl", "Bong", "Vape", "Dab", "Edible", "Other"]
     static let moods = ["Couch Potato", "Energetic", "Errand Ready", "Productive", "Chill", "Other"]
     static let units = ["g", "mg", "hits", "pieces", "ml"]
+    /// Region currency for display. Amounts are entered in the user's own
+    /// currency on iPhone, so the watch must not label them as USD.
+    static var currencyCode: String { Locale.current.currency?.identifier ?? "USD" }
     static func date(_ date: Date) -> Bool { date.timeIntervalSince1970.isFinite && (-2_208_988_800...7_258_118_400).contains(date.timeIntervalSince1970) }
     static func text(_ value: String, maximum: Int, required: Bool = false) -> Bool {
         value.utf8.count <= maximum * 4 && value.count <= maximum && !value.contains("\0") && (!required || !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

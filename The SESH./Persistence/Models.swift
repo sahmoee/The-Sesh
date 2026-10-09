@@ -252,6 +252,12 @@ final class AppSession {
         purchases[i].used = min(purchases[i].amount, purchases[i].used + amount)
         savePurchases()
     }
+    /// Stored records this build could not decode (for example, written by a
+    /// newer app version). They are not shown, so a later save must not treat
+    /// their absence from the in-memory list as a deletion.
+    @ObservationIgnored private var unreadablePurchaseIDs: Set<String> = []
+    @ObservationIgnored private var unreadableSongPlayIDs: Set<String> = []
+
     private func savePurchases() {
         defer { SeshPhoneWatchBridge.shared.scheduleSnapshot() }
         // (#10) Record-level SwiftData storage; UserDefaults no longer grows
@@ -259,22 +265,30 @@ final class AppSession {
         store.syncCollection("purchases", items: purchases.compactMap { p in
             guard let data = try? Self.jsonEncoder.encode(p) else { return nil }
             return (id: p.id.uuidString, date: p.date, payload: data)
-        })
+        }, preservedIDs: unreadablePurchaseIDs)
         if let data = try? Self.jsonEncoder.encode(purchases) {
             CloudSync.set(data, forKey: purchasesKey)
         }
     }
     private func loadPurchases() {
-        let payloads = store.recordPayloads(in: "purchases")
-        if !payloads.isEmpty {
-            purchases = payloads.compactMap { try? Self.jsonDecoder.decode(Purchase.self, from: $0) }
-                .sorted { $0.date > $1.date }
+        let records = store.records(in: "purchases")
+        if !records.isEmpty {
+            var loaded: [Purchase] = []
+            var unreadable = Set<String>()
+            for record in records {
+                if let p = try? Self.jsonDecoder.decode(Purchase.self, from: record.payload) { loaded.append(p) }
+                else { unreadable.insert(record.id) }
+            }
+            unreadablePurchaseIDs = unreadable
+            purchases = loaded.sorted { $0.date > $1.date }
         } else if let data = UserDefaults.standard.data(forKey: purchasesKey),
                   let v = try? Self.jsonDecoder.decode([Purchase].self, from: data) {
-            // One-time migration out of UserDefaults (#10).
+            // One-time migration out of UserDefaults (#10). The legacy copy is
+            // only dropped once it is in a store that survives relaunch; while
+            // SwiftData runs memory-only it is the sole durable copy.
             purchases = v
             savePurchases()
-            UserDefaults.standard.removeObject(forKey: purchasesKey)
+            if store.isDurable { UserDefaults.standard.removeObject(forKey: purchasesKey) }
         }
         loadGoals()
     }
@@ -424,21 +438,27 @@ final class AppSession {
         store.syncCollection("songPlays", items: songPlays.compactMap { play in
             guard let data = try? Self.jsonEncoder.encode(play) else { return nil }
             return (id: play.id.uuidString, date: play.date, payload: data)
-        })
+        }, preservedIDs: unreadableSongPlayIDs)
         if let data = try? Self.jsonEncoder.encode(Array(songPlays.prefix(300))) {
             CloudSync.set(data, forKey: songPlaysKey)
         }
     }
     private func loadSongPlays() {
-        let payloads = store.recordPayloads(in: "songPlays")
-        if !payloads.isEmpty {
-            songPlays = payloads.compactMap { try? Self.jsonDecoder.decode(StrainSongPlay.self, from: $0) }
-                .sorted { $0.date > $1.date }
+        let records = store.records(in: "songPlays")
+        if !records.isEmpty {
+            var loaded: [StrainSongPlay] = []
+            var unreadable = Set<String>()
+            for record in records {
+                if let play = try? Self.jsonDecoder.decode(StrainSongPlay.self, from: record.payload) { loaded.append(play) }
+                else { unreadable.insert(record.id) }
+            }
+            unreadableSongPlayIDs = unreadable
+            songPlays = loaded.sorted { $0.date > $1.date }
         } else if let data = UserDefaults.standard.data(forKey: songPlaysKey),
                   let v = try? Self.jsonDecoder.decode([StrainSongPlay].self, from: data) {
             songPlays = v
             saveSongPlays()
-            UserDefaults.standard.removeObject(forKey: songPlaysKey)
+            if store.isDurable { UserDefaults.standard.removeObject(forKey: songPlaysKey) }
         }
     }
 

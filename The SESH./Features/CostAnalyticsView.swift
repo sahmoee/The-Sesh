@@ -54,8 +54,8 @@ struct CostAnalyticsView: View {
                                   text: "Log sessions with prices to see where the money goes.")
                     } else {
                         HStack(spacing: 10) {
-                            statCard("Per sesh", costPerSession.formatted(.currency(code: "USD")))
-                            statCard("Total tracked", totalSpend.formatted(.currency(code: "USD")))
+                            statCard("Per sesh", costPerSession.formatted(.currency(code: Fmt.currencyCode)))
+                            statCard("Total tracked", totalSpend.formatted(.currency(code: Fmt.currencyCode)))
                             statCard("Avg length", avgDuration > 0 ? "\(avgDuration)m" : "—")
                         }
                         section("By month", byMonth)
@@ -99,12 +99,12 @@ struct CostAnalyticsView: View {
                                 .frame(width: max(4, geo.size.width * (value / maxV)))
                         }
                         .frame(height: 10)
-                        Text(value.formatted(.currency(code: "USD").precision(.fractionLength(0))))
+                        Text(value.formatted(.currency(code: Fmt.currencyCode).precision(.fractionLength(0))))
                             .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.textSecondary)
                             .frame(width: 56, alignment: .trailing)
                     }
                     .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(name): \(value.formatted(.currency(code: "USD")))")
+                    .accessibilityLabel("\(name): \(value.formatted(.currency(code: Fmt.currencyCode)))")
                 }
             }
         }

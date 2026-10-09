@@ -142,7 +142,7 @@ struct GoalsView: View {
     private func progressBlock(_ goal: SeshGoal, target: Double, actual: Double) -> some View {
         let usage = PersonalGoalPolicy.usage(actual: actual, target: target) ?? 0
         let over = actual > target
-        let unit = goal.kind == .smokeLess ? "sessions" : "USD"
+        let unit = goal.kind == .smokeLess ? "sessions" : Fmt.currencyCode
         return VStack(alignment: .leading, spacing: 7) {
             Text("\(PersonalGoalPolicy.number(actual)) of \(PersonalGoalPolicy.number(target)) \(unit) recorded")
                 .font(.subheadline.weight(.semibold)).foregroundStyle(over ? Palette.moodAngry : Palette.greenBright)
@@ -327,8 +327,10 @@ struct CommunityPromptView: View {
             ScreenHeader(title: "Story Time", onBack: { dismiss() }) {
                 Button { shuffle() } label: {
                     Image(systemName: "shuffle").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
+                        .minimumTapTarget()
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Another prompt")
             }
             .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)
 

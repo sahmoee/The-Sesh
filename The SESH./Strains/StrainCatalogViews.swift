@@ -31,7 +31,8 @@ struct StrainCatalogDetailView: View {
                     if strains.isCustom(shown), let onEdit {
                         Button { dismiss(); onEdit(shown) } label: {
                             Image(systemName: "pencil").font(.system(size: 17)).foregroundStyle(Palette.text)
-                        }.buttonStyle(.plain)
+                                .minimumTapTarget()
+                        }.buttonStyle(.plain).accessibilityLabel("Edit \(shown.name)")
                     }
                 }
                 .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 12)

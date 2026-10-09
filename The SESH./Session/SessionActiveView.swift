@@ -129,6 +129,8 @@ struct SessionActiveView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Palette.textSecondary)
             }
+            .accessibilityLabel("Minimize session")
+            .accessibilityHint("The session keeps running.")
             Spacer()
             Menu {
                 Button("End Session", role: .destructive) { confirmEnd = true }
@@ -295,14 +297,19 @@ struct SessionActiveView: View {
         HStack(spacing: 28) {
             Button { scrobbler.skipToPrevious(); Haptics.tap() } label: {
                 Image(systemName: "backward.fill").font(.system(size: 20)).foregroundStyle(Palette.text)
+                    .minimumTapTarget()
             }
+            .accessibilityLabel("Previous track")
             Button { scrobbler.togglePlayPause(); Haptics.tap() } label: {
                 Image(systemName: scrobbler.isPlaying ? "pause.circle.fill" : "play.circle.fill")
                     .font(.system(size: 46)).foregroundStyle(Palette.greenBright)
             }
+            .accessibilityLabel(scrobbler.isPlaying ? "Pause" : "Play")
             Button { scrobbler.skipToNext(); Haptics.tap() } label: {
                 Image(systemName: "forward.fill").font(.system(size: 20)).foregroundStyle(Palette.text)
+                    .minimumTapTarget()
             }
+            .accessibilityLabel("Next track")
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)

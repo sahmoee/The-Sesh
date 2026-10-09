@@ -21,7 +21,7 @@ struct SeshWatchHome: View {
             Section("Your week") {
                 if let snapshot = store.state.snapshot, snapshot.enabled {
                     LabeledContent("Sessions", value: String(snapshot.weeklySessions))
-                    LabeledContent("Stash spend", value: snapshot.weeklySpend.formatted(.currency(code: "USD")))
+                    LabeledContent("Stash spend", value: snapshot.weeklySpend.formatted(.currency(code: SeshWatchContract.currencyCode)))
                     if let started = snapshot.phoneSessionStarted {
                         VStack(alignment: .leading) { Text("iPhone session active").font(.headline); Text(snapshot.phoneSessionStrain ?? "Session"); Text(started, style: .timer); Text("Finish it on iPhone to avoid a second log.").font(.footnote).foregroundStyle(.secondary) }
                     }
@@ -225,7 +225,7 @@ struct WatchStashDetail: View {
         List {
             stashLabel(row)
             LabeledContent("Bought", value: "\(row.amount.formatted()) \(row.unit)")
-            LabeledContent("Cost", value: row.cost.formatted(.currency(code: "USD")))
+            LabeledContent("Cost", value: row.cost.formatted(.currency(code: SeshWatchContract.currencyCode)))
             Text(row.date, style: .date)
             if SeshWatchContract.units.contains(row.unit), row.remaining > 0 {
                 NavigationLink("Log from this stash") { WatchLogForm(purchase: row) }
@@ -244,7 +244,7 @@ struct WatchStashForm: View {
         Form {
             TextField("Strain", text: $name); TextField("Amount bought", text: $amount)
             Picker("Unit", selection: $unit) { ForEach(SeshWatchContract.units, id: \.self) { Text($0) } }
-            TextField("Cost (USD)", text: $cost)
+            TextField("Cost (\(SeshWatchContract.currencyCode))", text: $cost)
             Button("Save stash") {
                 guard let quantity = SeshWatchContract.decimal(amount), let price = SeshWatchContract.decimal(cost) else { store.error = "Enter complete amount and cost values."; return }
                 if store.saveStash(SeshWatchStash(id: UUID(), strain: name, amount: quantity, used: 0, unit: unit, cost: price, date: Date())) { dismiss() }
@@ -300,7 +300,7 @@ struct WatchGoalDetail: View {
         List {
             Text(row.title).font(.headline); Text(row.kind); Text(row.active ? "Active" : "Paused").foregroundStyle(seshGreen)
             if let actual = row.actual, let target = row.target {
-                Text("This week: \(actual.formatted()) of \(target.formatted()) \(row.kind == "Spend less" ? "USD" : "sessions")")
+                Text("This week: \(actual.formatted()) of \(target.formatted()) \(row.kind == "Spend less" ? SeshWatchContract.currencyCode : "sessions")")
                 ProgressView(value: target == 0 ? (actual == 0 ? 0 : 1) : min(1, actual / target)).accessibilityLabel("Recorded usage against personal weekly limit")
                 Text(actual > target ? "Above your chosen weekly limit." : "Within your chosen weekly limit.").font(.footnote)
             }
@@ -322,7 +322,7 @@ struct WatchGoalForm: View {
         Form {
             TextField("Goal name", text: $title)
             Picker("Kind", selection: $kind) { ForEach(["Custom", "Smoke less", "Spend less", "Tolerance break", "Sleep better", "Be more present"], id: \.self) { Text($0) } }
-            if kind == "Smoke less" || kind == "Spend less" { TextField(kind == "Smoke less" ? "Sessions per week" : "USD per week", text: $target) }
+            if kind == "Smoke less" || kind == "Spend less" { TextField(kind == "Smoke less" ? "Sessions per week" : "\(SeshWatchContract.currencyCode) per week", text: $target) }
             TextField("Personal note", text: $note, axis: .vertical)
             Button("Save goal") {
                 let number = kind == "Smoke less" || kind == "Spend less" ? SeshWatchContract.decimal(target) : nil
@@ -376,7 +376,7 @@ struct WatchQueue: View {
                     if let log = row.command.log { Text(log.strain); Text("\(log.method) · \(log.rating.formatted())/10"); if let amount = log.amount { Text("\(amount.formatted()) \(log.unit)") }; if log.purchaseID != nil { Text("Includes stash deduction").font(.caption) }; if !log.notes.isEmpty { Text(store.state.hidePrivateText ? "Private notes hidden" : log.notes).privacySensitive() } }
                     if let text = row.command.text { Text(store.state.hidePrivateText ? "Private thought hidden" : text).privacySensitive() }
                     if let goal = row.command.goal { Text(goal.title); Text(goal.kind); if let target = goal.target { Text("Target: \(target.formatted())") }; if !goal.note.isEmpty { Text(store.state.hidePrivateText ? "Private note hidden" : goal.note) } }
-                    if let stash = row.command.stash { Text(stash.strain); Text("\(stash.amount.formatted()) \(stash.unit) · \(stash.cost.formatted(.currency(code: "USD")))") }
+                    if let stash = row.command.stash { Text(stash.strain); Text("\(stash.amount.formatted()) \(stash.unit) · \(stash.cost.formatted(.currency(code: SeshWatchContract.currencyCode)))") }
                     Button("Remove from queue", role: .destructive) { removeID = row.id }
                     Text(row.message ?? "Waiting for iPhone acknowledgement").font(.footnote).foregroundStyle(row.message == nil ? Color.secondary : Color.orange)
                 }

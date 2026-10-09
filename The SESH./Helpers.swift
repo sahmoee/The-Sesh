@@ -74,6 +74,10 @@ enum Fmt {
         let f = RelativeDateTimeFormatter(); f.unitsStyle = .abbreviated; return f
     }()
 
+    /// ISO 4217 code for the user's region. FormatStyle-based currency text
+    /// uses this so amounts match `currency(_:)` instead of always saying USD.
+    static var currencyCode: String { Locale.current.currency?.identifier ?? "USD" }
+
     static func currency(_ value: Double) -> String {
         let whole = value.truncatingRemainder(dividingBy: 1) == 0
         let f = whole ? currencyWhole : currencyFull
@@ -221,5 +225,20 @@ struct Sparkline: View {
                          with: .color(lineColor))
         }
         .frame(height: height)
+        // A Canvas is invisible to VoiceOver; describe the trend instead.
+        .accessibilityElement()
+        .accessibilityLabel("Rating trend")
+        .accessibilityValue(Self.accessibilitySummary(values))
+    }
+
+    /// Spoken summary: sample count, latest, and range, e.g.
+    /// "5 ratings. Latest 7.5. Range 4 to 9." Internal for tests.
+    static func accessibilitySummary(_ values: [Double]) -> String {
+        let finite = values.filter(\.isFinite)
+        guard let latest = finite.last, let low = finite.min(), let high = finite.max() else { return "No ratings yet" }
+        func text(_ v: Double) -> String { v.formatted(.number.precision(.fractionLength(0...1))) }
+        let count = finite.count == 1 ? "1 rating" : "\(finite.count) ratings"
+        if finite.count == 1 { return "\(count). \(text(latest))." }
+        return "\(count). Latest \(text(latest)). Range \(text(low)) to \(text(high))."
     }
 }

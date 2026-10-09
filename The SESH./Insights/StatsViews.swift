@@ -111,7 +111,7 @@ struct StatsView: View {
                         Spacer()
                         Image(systemName: "chevron.down").font(.system(size: 12)).foregroundStyle(Palette.textSecondary)
                     }
-                    Text(String(format: "$%.2f", session.thisMonthSpent))
+                    Text(Fmt.currency(session.thisMonthSpent))
                         .font(.system(size: 34, weight: .bold))
                         .foregroundStyle(Palette.text)
                     Text("Total Spent").font(.system(size: 13)).foregroundStyle(Palette.textSecondary)
@@ -158,7 +158,7 @@ struct StatsView: View {
                 statBox("\(session.currentStreak)", "Day Streak")
             }
             HStack(spacing: 12) {
-                statBox(String(format: "$%.0f", session.totalSpent), "Total Spent")
+                statBox(Fmt.currency0(session.totalSpent), "Total Spent")
                 statBox("\(session.thoughts.count)", "Thoughts")
             }
             HStack(spacing: 12) {
@@ -294,7 +294,7 @@ struct SpendBarChart: View {
                 // y-axis labels
                 VStack(alignment: .trailing, spacing: 0) {
                     ForEach(axisValues, id: \.self) { v in
-                        Text("$\(v)").font(.system(size: 10)).foregroundStyle(Palette.textTertiary)
+                        Text(Fmt.currency0(Double(v))).font(.system(size: 10)).foregroundStyle(Palette.textTertiary)
                         if v != 0 { Spacer() }
                     }
                 }

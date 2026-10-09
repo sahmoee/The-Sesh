@@ -39,9 +39,20 @@ enum SeshDeepLink {
         case "log":     self = .logSesh
         case "thought": self = .quickThought
         case "friend":
-            if let arg, !arg.isEmpty { self = .addFriend(arg.uppercased()) } else { return nil }
+            // Any web page or app can open a sesh:// URL, so only a well-formed
+            // friend code is accepted (RootView still asks before adding).
+            if let arg, Self.isWellFormedFriendCode(arg) { self = .addFriend(arg.uppercased()) } else { return nil }
         default:        return nil
         }
+    }
+
+    /// Friend codes look like "SESH-7K9F": short, ASCII letters, digits and
+    /// hyphens only. Anything else in a deep link is rejected before it can
+    /// reach the network or the UI.
+    static func isWellFormedFriendCode(_ raw: String) -> Bool {
+        let allowed = Set("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-")
+        let code = raw.uppercased()
+        return (4...32).contains(code.count) && code.allSatisfy { allowed.contains($0) }
     }
 
     /// Build the URL for a given link (used by the widget).

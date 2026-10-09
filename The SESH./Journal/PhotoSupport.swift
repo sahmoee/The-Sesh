@@ -30,6 +30,16 @@ enum PhotoStore {
 
     nonisolated static func url(for name: String) -> URL { folder.appendingPathComponent(name) }
 
+    /// Photo names arrive on synced/imported records, so they are untrusted. Only
+    /// a plain file name may resolve inside the photo folder: anything with a
+    /// path separator or a dot-dot component ("../Library/...") could otherwise
+    /// read or delete files elsewhere in the app container.
+    nonisolated static func isSafeName(_ name: String) -> Bool {
+        !name.isEmpty && name.count <= 255 && name != "." && name != ".."
+            && !name.contains("/") && !name.contains("\\") && !name.contains("\0")
+            && !name.hasPrefix(".")
+    }
+
     /// Downscales to a sane max dimension and saves as JPEG. Returns the filename.
     @discardableResult
     nonisolated static func save(_ image: UIImage, maxDimension: CGFloat = 1600, quality: CGFloat = 0.8) -> String? {
@@ -45,12 +55,12 @@ enum PhotoStore {
     }
 
     nonisolated static func load(_ name: String?) -> UIImage? {
-        guard let name, !name.isEmpty else { return nil }
+        guard let name, isSafeName(name) else { return nil }
         return UIImage(contentsOfFile: url(for: name).path)
     }
 
     nonisolated static func delete(_ name: String?) {
-        guard let name, !name.isEmpty else { return }
+        guard let name, isSafeName(name) else { return }
         try? FileManager.default.removeItem(at: url(for: name))
     }
 }
@@ -188,6 +198,8 @@ struct PhotoField: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(photoName?.isEmpty == false ? "Change photo" : "Add photo")
+        .accessibilityHint("Take a photo or choose one from your library.")
         .confirmationDialog("Photo", isPresented: $showDialog, titleVisibility: .hidden) {
             Button("Take Photo") { showCamera = true }
             PhotosPicker("Choose from Library", selection: $pickerItem, matching: .images)
@@ -272,6 +284,8 @@ struct StrainPhotoButton: View {
                 }
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Photo of \(strain.name)")
+            .accessibilityHint("Take a photo or choose one from your library.")
 
             if let credit = strainImages.attribution(strainID: strain.id) {
                 Text(credit)

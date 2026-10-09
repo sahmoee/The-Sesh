@@ -397,7 +397,7 @@ struct BudgetView: View {
         .background(AppBackground().ignoresSafeArea())
         .navigationTitle("Monthly Budget")
         .navigationBarTitleDisplayMode(.inline)
-        .task { if session.hasBudget { budgetText = String(Int(session.monthlyBudget)) } }
+        .task { if session.hasBudget { budgetText = Self.editableText(session.monthlyBudget) } }
         .toast($toast)
     }
 
@@ -436,7 +436,8 @@ struct BudgetView: View {
                 Text(Locale.current.currencySymbol ?? "$")
                     .font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.textSecondary)
                 TextField("0", text: $budgetText)
-                    .keyboardType(.numberPad)
+                    .keyboardType(.decimalPad)
+                    .accessibilityLabel("Monthly budget amount")
                     .font(.system(size: 18))
             }
             .padding(12)
@@ -455,11 +456,29 @@ struct BudgetView: View {
         .overlay(RoundedRectangle(cornerRadius: Radius.lg).stroke(Palette.stroke, lineWidth: 1))
     }
 
+    /// Largest budget accepted. Keeps pasted values like "1e30" or "inf" out of
+    /// storage — they used to save and then crash this screen on reopen.
+    static let maximumBudget = 1_000_000.0
+
+    /// Parses typed or pasted budget text; nil when it isn't a usable amount.
+    static func parseBudget(_ text: String) -> Double? {
+        let normalized = text.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces)
+        guard let value = Double(normalized), value.isFinite, value > 0, value <= maximumBudget else { return nil }
+        return value
+    }
+
+    /// Text shown when reopening the editor. Keeps cents (12.50 used to come
+    /// back as "12" and be re-saved without them) and never traps on large or
+    /// non-finite stored values the way Int(_:) did.
+    static func editableText(_ budget: Double) -> String {
+        guard budget.isFinite, budget > 0 else { return "" }
+        return budget.formatted(.number.grouping(.never).precision(.fractionLength(0...2)))
+    }
+
     /// Validate the typed amount instead of silently zeroing the budget on bad
     /// input, and confirm the outcome either way.
     private func saveBudget() {
-        let normalized = budgetText.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces)
-        guard let value = Double(normalized), value > 0 else {
+        guard let value = Self.parseBudget(budgetText) else {
             Haptics.warning()
             toast = "Enter a valid amount"
             return

@@ -35,6 +35,8 @@ final class SpotifyAuth: NSObject {
     private var identity: SeshIdentity?
     private var session: ASWebAuthenticationSession?
     private var pkceVerifier: String = ""
+    /// OAuth `state` for the in-flight authorization; the callback must echo it.
+    private var oauthState: String = ""
 
     // --- These come from your Spotify Developer app (see setup guide) ---
     // The client ID is NOT a secret and is safe to ship.
@@ -53,9 +55,15 @@ final class SpotifyAuth: NSObject {
             lastError = "Spotify isn't configured yet."
             return
         }
-        // PKCE: make a verifier + its SHA256 challenge.
-        pkceVerifier = Self.randomURLSafe(64)
-        let challenge = Self.codeChallenge(for: pkceVerifier)
+        // PKCE: make a verifier + its SHA256 challenge, plus an OAuth `state`
+        // value so a callback this app didn't start is rejected (RFC 6749 10.12).
+        guard let verifier = Self.randomURLSafe(64), let state = Self.randomURLSafe(32) else {
+            lastError = "Couldn't start Spotify sign-in securely. Try again."
+            return
+        }
+        pkceVerifier = verifier
+        oauthState = state
+        let challenge = Self.codeChallenge(for: verifier)
 
         var comps = URLComponents(string: "https://accounts.spotify.com/authorize")!
         comps.queryItems = [
@@ -65,6 +73,7 @@ final class SpotifyAuth: NSObject {
             .init(name: "scope", value: Self.scopes),
             .init(name: "code_challenge_method", value: "S256"),
             .init(name: "code_challenge", value: challenge),
+            .init(name: "state", value: state),
         ]
         guard let url = comps.url else { return }
 
@@ -78,9 +87,15 @@ final class SpotifyAuth: NSObject {
                 }
                 return
             }
-            guard let callback,
-                  let code = URLComponents(url: callback, resolvingAgainstBaseURL: false)?
-                    .queryItems?.first(where: { $0.name == "code" })?.value else {
+            let items = callback.flatMap {
+                URLComponents(url: $0, resolvingAgainstBaseURL: false)?.queryItems
+            } ?? []
+            guard state == self.oauthState,
+                  items.first(where: { $0.name == "state" })?.value == state else {
+                self.lastError = "Spotify sign-in couldn't be verified. Try again."
+                return
+            }
+            guard let code = items.first(where: { $0.name == "code" })?.value else {
                 self.lastError = "No authorization code returned."
                 return
             }
@@ -111,9 +126,11 @@ final class SpotifyAuth: NSObject {
 
     // MARK: PKCE helpers
 
-    private static func randomURLSafe(_ count: Int) -> String {
+    /// Cryptographically random URL-safe string, or nil if the system RNG
+    /// fails — previously a failure silently produced an all-zero verifier.
+    private static func randomURLSafe(_ count: Int) -> String? {
         var bytes = [UInt8](repeating: 0, count: count)
-        _ = SecRandomCopyBytes(kSecRandomDefault, count, &bytes)
+        guard SecRandomCopyBytes(kSecRandomDefault, count, &bytes) == errSecSuccess else { return nil }
         return Data(bytes).base64URLEncoded()
     }
     private static func codeChallenge(for verifier: String) -> String {

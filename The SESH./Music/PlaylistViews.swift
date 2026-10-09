@@ -173,6 +173,7 @@ struct PlaylistDetailView: View {
                     .minimumTapTarget()
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Back")
             Spacer()
             Menu {
                 Button { showSearch = true } label: { Label("Add songs", systemImage: "plus") }
@@ -183,7 +184,9 @@ struct PlaylistDetailView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis").font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
+                    .minimumTapTarget()
             }
+            .accessibilityLabel("Playlist options")
         }
         .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 8)
     }
@@ -272,7 +275,9 @@ struct PlaylistDetailView: View {
                     } label: {
                         Image(systemName: "ellipsis").font(.system(size: 16)).foregroundStyle(Palette.textSecondary)
                             .frame(width: 30, height: 30)
+                            .minimumTapTarget()
                     }
+                    .accessibilityLabel("Options for \(t.title)")
                 }
                 .padding(.vertical, 8)
             }

@@ -59,7 +59,9 @@ struct SeshLiveActivity: Widget {
             DynamicIsland {
                 // Expanded
                 DynamicIslandExpandedRegion(.leading) {
+                    // Decorative: the center region already speaks the stage.
                     Text(W.stageEmoji(context.state.stageRaw)).font(.title2)
+                        .accessibilityHidden(true)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Text(timerInterval: context.state.startedAt...Date.distantFuture,
@@ -93,13 +95,16 @@ struct SeshLiveActivity: Widget {
                                 if thoughts > 0 {
                                     Label("\(thoughts) thought\(thoughts == 1 ? "" : "s")", systemImage: "quote.bubble.fill")
                                         .font(.system(size: 11)).foregroundStyle(W.gold)
+                                        .accessibilityLabel("\(thoughts) thought\(thoughts == 1 ? "" : "s") captured")
                                 }
                             }
                         }
                     }
                 }
             } compactLeading: {
+                // The emoji alone is the only content here; speak the stage name.
                 Text(W.stageEmoji(context.state.stageRaw))
+                    .accessibilityLabel(context.state.stageLabel)
             } compactTrailing: {
                 Text(timerInterval: context.state.startedAt...Date.distantFuture,
                      countsDown: false)
@@ -108,6 +113,7 @@ struct SeshLiveActivity: Widget {
                     .foregroundStyle(W.gold)
             } minimal: {
                 Text(W.stageEmoji(context.state.stageRaw))
+                    .accessibilityLabel("Sesh: \(context.state.stageLabel)")
             }
             .keylineTint(W.green)
         }
@@ -120,6 +126,7 @@ struct SeshLiveActivity: Widget {
         let thoughts = context.state.thoughtCount ?? 0
         return HStack(spacing: 14) {
             Text(W.stageEmoji(context.state.stageRaw)).font(.system(size: 30))
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(strain)
                     .font(.system(size: 16, weight: .bold)).foregroundStyle(W.text).lineLimit(1)
@@ -131,10 +138,12 @@ struct SeshLiveActivity: Widget {
                         if companions > 0 {
                             Label("\(companions)", systemImage: "person.2.fill")
                                 .font(.system(size: 10)).foregroundStyle(W.green)
+                                .accessibilityLabel("\(companions) with you")
                         }
                         if thoughts > 0 {
                             Label("\(thoughts)", systemImage: "quote.bubble.fill")
                                 .font(.system(size: 10)).foregroundStyle(W.gold)
+                                .accessibilityLabel("\(thoughts) thought\(thoughts == 1 ? "" : "s") captured")
                         }
                     }
                 }
@@ -148,6 +157,7 @@ struct SeshLiveActivity: Widget {
                     .frame(maxWidth: 90, alignment: .trailing)
                 Text("this sesh").font(.system(size: 10)).foregroundStyle(W.subtle)
             }
+            .accessibilityElement(children: .combine)
         }
         .padding(16)
     }
@@ -200,7 +210,9 @@ struct SeshStatusWidgetView: View {
     var entry: SeshStatusEntry
 
     private var statusAccessibilityLabel: String {
-        var parts = ["\(entry.streak) day streak", "Last sesh: \(entry.lastStrain)"]
+        // "—" is the visual placeholder for "nothing logged"; don't read it aloud.
+        let last = entry.lastStrain == "—" || entry.lastStrain.isEmpty ? "No sesh logged yet" : "Last sesh: \(entry.lastStrain)"
+        var parts = ["\(entry.streak) day streak", last]
         if entry.stashCount > 0 { parts.append("\(entry.stashCount) in stash") }
         return parts.joined(separator: ". ")
     }

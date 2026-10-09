@@ -109,7 +109,9 @@ struct UnifiedQATicket: Codable, Identifiable {
             let values = try JSONSerialization.data(withJSONObject: object?["tickets"] as? [[String: Any]] ?? [])
             let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
             let remote = try decoder.decode([UnifiedQATicket].self, from: values)
-            var byNumber = Dictionary(uniqueKeysWithValues: tickets.map { ($0.number, $0) })
+            // Local numbers can repeat (the per-build counter lives in UserDefaults
+            // and restarts after a reset), so keep the newest instead of trapping.
+            var byNumber = Dictionary(tickets.map { ($0.number, $0) }, uniquingKeysWith: { $0.updatedAt >= $1.updatedAt ? $0 : $1 })
             for ticket in remote where ticket.updatedAt >= (byNumber[ticket.number]?.updatedAt ?? .distantPast) { byNumber[ticket.number] = ticket }
             tickets = byNumber.values.sorted { $0.updatedAt > $1.updatedAt }
             for ticket in remote { persist(ticket: ticket, screenshot: nil) }

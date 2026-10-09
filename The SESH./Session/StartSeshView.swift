@@ -12,8 +12,11 @@
 import SwiftUI
 
 /// Formats an elapsed interval as m:ss (or h:mm:ss past an hour) for the live timer.
+/// Negative intervals (device clock moved backwards after a sesh started) read
+/// as 0:00, and non-finite or absurd values are clamped so Int(_:) can't trap.
 func seshDuration(_ interval: TimeInterval) -> String {
-    let total = Int(interval)
+    let safe = interval.isFinite ? min(max(0, interval), 999 * 3600) : 0
+    let total = Int(safe)
     let h = total / 3600
     let m = (total % 3600) / 60
     let s = total % 60
@@ -538,7 +541,9 @@ struct StartSeshView: View {
                         Spacer()
                         Button { capturedThoughts.remove(at: idx); persistLive(); Haptics.selection() } label: {
                             Image(systemName: "xmark.circle.fill").font(.system(size: 15)).foregroundStyle(Palette.textTertiary)
+                                .minimumTapTarget()
                         }.buttonStyle(.plain)
+                        .accessibilityLabel("Remove thought")
                     }
                     .padding(.horizontal, 12).padding(.vertical, 9)
                     .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
@@ -556,6 +561,7 @@ struct StartSeshView: View {
                         Image(systemName: "arrow.up.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Add thought")
                     .disabled(attachedThought.trimmingCharacters(in: .whitespaces).isEmpty)
                     .opacity(attachedThought.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
                 }
