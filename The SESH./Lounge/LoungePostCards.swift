@@ -595,6 +595,9 @@ struct LoungePlayerCard: View {
     }
 
     static func timestamp(_ seconds: Double) -> String {
+        // Durations come from the server; an out-of-range or non-finite value
+        // must render as a placeholder rather than trap in Int(_:).
+        guard seconds.isFinite, seconds >= 0, seconds < 100 * 3600 else { return "--:--" }
         let total = Int(seconds)
         return String(format: "%d:%02d", total / 60, total % 60)
     }

@@ -106,7 +106,6 @@ final class SDThought {
     }
 }
 
-
 // MARK: - Keyed record store (#10)
 
 /// Generic record for collections migrating OUT of UserDefaults (purchases,
@@ -171,6 +170,9 @@ final class SeshDataStore {
     /// True when the durable store opened at the secondary location because the
     /// primary one refused to open. Data IS saved; it just lives elsewhere.
     private(set) var isUsingFallbackLocation = false
+    /// True when writes land in a file that survives relaunch. Legacy copies
+    /// (UserDefaults) must only be dropped after migrating into such a store.
+    var isDurable: Bool { container != nil && !isEphemeral && !isUnavailable }
     /// Last container-open failure, kept for diagnostics.
     var lastFailure: String? { Self.lastFailureDescription }
     private static var lastFailureDescription: String?
@@ -394,10 +396,29 @@ final class SeshDataStore {
         return ((try? context?.fetch(d)) ?? []).map(\.payload)
     }
 
+    /// All records in a collection, newest first, with the item id recovered
+    /// from the "<collection>/<item-id>" key so callers can track records they
+    /// failed to decode.
+    func records(in collection: String) -> [(id: String, payload: Data)] {
+        let d = FetchDescriptor<SDRecord>(
+            predicate: #Predicate { $0.collection == collection },
+            sortBy: [SortDescriptor(\.date, order: .reverse)])
+        let prefix = collection + "/"
+        return ((try? context?.fetch(d)) ?? []).map { record in
+            let id = record.key.hasPrefix(prefix) ? String(record.key.dropFirst(prefix.count)) : record.key
+            return (id: id, payload: record.payload)
+        }
+    }
+
     /// Record-level sync of a whole collection: upsert present items, delete
-    /// removed ones. Items are (id, date, payload) triples.
-    func syncCollection(_ collection: String, items: [(id: String, date: Date, payload: Data)]) {
+    /// removed ones. Items are (id, date, payload) triples. Records whose ids
+    /// are in `preservedIDs` are never deleted even though they are absent from
+    /// `items` — used for stored records this build could not decode, which the
+    /// user never saw and so cannot have removed.
+    func syncCollection(_ collection: String, items: [(id: String, date: Date, payload: Data)],
+                        preservedIDs: Set<String> = []) {
         guard let context else { return }
+        let preservedKeys = Set(preservedIDs.map { "\(collection)/\($0)" })
         let d = FetchDescriptor<SDRecord>(predicate: #Predicate { $0.collection == collection })
         let existing = (try? context.fetch(d)) ?? []
         var byKey = Dictionary(existing.map { ($0.key, $0) }, uniquingKeysWith: { a, _ in a })
@@ -413,7 +434,7 @@ final class SeshDataStore {
                                         date: item.date, payload: item.payload))
             }
         }
-        for (key, rec) in byKey where !wanted.contains(key) {
+        for (key, rec) in byKey where !wanted.contains(key) && !preservedKeys.contains(key) {
             context.delete(rec)
         }
         byKey.removeAll()

@@ -72,7 +72,7 @@ struct UnifiedQAPasscodeGate<Content: View>: View {
                     if row == [0] {
                         Button { if !code.isEmpty { code.removeLast() } } label: {
                             Image(systemName: "delete.left").font(.system(size: 20)).frame(width: 72, height: 72)
-                        }.buttonStyle(.plain)
+                        }.buttonStyle(.plain).accessibilityLabel("Delete digit")
                     }
                 }
             }

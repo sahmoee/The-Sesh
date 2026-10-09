@@ -199,7 +199,6 @@ struct InputField: View {
                     .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
                     .contentShape(Rectangle())
                     .onTapGesture { focused = true }
-                    .accessibilityAddTraits(.isButton)
                 if showsCamera {
                     Button { onCamera?() } label: {
                         Image(systemName: "camera")
@@ -248,7 +247,6 @@ struct NotesField: View {
             .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).stroke(Palette.stroke, lineWidth: 1))
             .contentShape(Rectangle())
             .onTapGesture { focused = true }
-            .accessibilityAddTraits(.isButton)
         }
     }
 }
@@ -605,14 +603,15 @@ struct FlowLayout: Layout {
 /// poll cards. Previously lived in Social/LoungeView.swift, which is retired.
 struct GeometryFreeBar: View {
     let fraction: Double
+    private var clamped: Double { fraction.isFinite ? max(0, min(1, fraction)) : 0 }
     var body: some View {
         ZStack(alignment: .leading) {
             Capsule().fill(Palette.field).frame(height: 8)
             Capsule().fill(Palette.green).frame(height: 8)
                 .frame(maxWidth: .infinity)
-                .scaleEffect(x: max(0, min(1, fraction)), anchor: .leading)
+                .scaleEffect(x: clamped, anchor: .leading)
         }
         .accessibilityElement()
-        .accessibilityValue("\(Int(max(0, min(1, fraction)) * 100)) percent")
+        .accessibilityValue("\(Int((clamped * 100).rounded())) percent")
     }
 }

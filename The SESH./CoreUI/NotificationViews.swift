@@ -142,7 +142,8 @@ struct NotificationInboxView: View {
         HStack(spacing: 12) {
             Button { dismiss() } label: {
                 Image(systemName: "chevron.left").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.text)
-            }.buttonStyle(.plain)
+                    .minimumTapTarget()
+            }.buttonStyle(.plain).accessibilityLabel("Back")
             Text("Notifications")
                 .font(.system(size: 20, weight: .bold, design: .serif)).foregroundStyle(Palette.text)
             Spacer()

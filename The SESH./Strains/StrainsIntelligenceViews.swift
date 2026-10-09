@@ -263,8 +263,10 @@ struct CompareStrainsView: View {
                             Button { history.remove(rec); Haptics.warning() } label: {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 15)).foregroundStyle(Palette.textTertiary)
+                                    .minimumTapTarget()
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Remove from history")
                         }
                     }
                 }
@@ -599,7 +601,9 @@ struct WishlistView: View {
                                         Spacer()
                                         Button { wishlist.remove(item); Haptics.warning() } label: {
                                             Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.textTertiary)
+                                                .minimumTapTarget()
                                         }.buttonStyle(.plain)
+                                        .accessibilityLabel("Remove \(item.strainName) from wishlist")
                                     }
                                 }
                             }

@@ -421,7 +421,9 @@ final class SocialStore {
 
     private func apply(_ s: SeshSnapshot, notify: Bool = true) {
         // Capture prior unread-per-room to detect new incoming chat messages.
-        let priorUnread = Dictionary(uniqueKeysWithValues: rooms.map { ($0.id, $0.unread) })
+        // `rooms` came from the previous server snapshot; a duplicated room id
+        // there must not trap (uniqueKeysWithValues does). Keep the larger count.
+        let priorUnread = Dictionary(rooms.map { ($0.id, $0.unread) }, uniquingKeysWith: { max($0, $1) })
 
         let now = clock.now
         friends = s.friends.map { friend in

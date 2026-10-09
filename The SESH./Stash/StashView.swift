@@ -92,7 +92,7 @@ struct StashView: View {
             HStack {
                 Text(p.strain).font(.system(size: 15, weight: .semibold)).foregroundStyle(Palette.text)
                 Spacer()
-                Text(p.cost, format: .currency(code: "USD")).font(.seshScaled(14, weight: .medium)).foregroundStyle(Palette.gold)
+                Text(p.cost, format: .currency(code: Fmt.currencyCode)).font(.seshScaled(14, weight: .medium)).foregroundStyle(Palette.gold)
             }
             HStack {
                 Text(p.amountLine).font(.system(size: 12)).foregroundStyle(Palette.textSecondary)

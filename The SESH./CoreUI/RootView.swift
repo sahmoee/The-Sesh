@@ -112,9 +112,13 @@ struct RootView: View {
     @State private var thoughtCountBefore = 0
     /// (#App18) 21+ / responsible-use gate, shown once on first launch.
     @State private var showAgeGate = !AgeGate.isConfirmed
+    /// Friend code from a sesh://friend link, awaiting the user's confirmation.
+    @State private var pendingFriendCode: String?
 
     /// Routes a sesh:// deep link (from the Home Screen widget) to the right action.
     private func handleDeepLink(_ url: URL) {
+        // Nothing behind the 21+ gate opens from a link until it is confirmed.
+        guard !showAgeGate, AgeGate.isConfirmed else { return }
         guard let link = SeshDeepLink(url: url) else { return }
         switch link {
         case .startSesh(let act):
@@ -131,11 +135,9 @@ struct RootView: View {
         case .quickThought:
             showQuickThought = true
         case .addFriend(let code):
-            // (Feature 8) Scanned a QR friend card.
-            Task {
-                let message = await social.addFriend(code: code)
-                toastMessage = message
-            }
+            // (Feature 8) Scanned a QR friend card. Links can come from any
+            // page or app, so the user confirms before a request is sent.
+            pendingFriendCode = code
         }
     }
 
@@ -193,6 +195,24 @@ struct RootView: View {
             ComposeThoughtView(initialTag: quickThoughtTag).environment(session)
                 .presentationDetents([.medium, .large])
                 .onAppear { thoughtCountBefore = session.thoughts.count }
+        }
+        .confirmationDialog(
+            "Add friend \(pendingFriendCode ?? "")?",
+            isPresented: Binding(get: { pendingFriendCode != nil },
+                                 set: { if !$0 { pendingFriendCode = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Add Friend") {
+                guard let code = pendingFriendCode else { return }
+                pendingFriendCode = nil
+                Task {
+                    let message = await social.addFriend(code: code)
+                    toastMessage = message
+                }
+            }
+            Button("Cancel", role: .cancel) { pendingFriendCode = nil }
+        } message: {
+            Text("This link asks to add someone to your friends. Only continue if you scanned their friend card.")
         }
         .confirmationDialog("High Thoughts", isPresented: $showHighThoughtChooser, titleVisibility: .visible) {
             Button("Log a Thought") { quickThoughtTag = nil; showQuickThought = true }

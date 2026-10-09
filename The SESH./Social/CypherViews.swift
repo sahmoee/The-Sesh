@@ -230,7 +230,8 @@ struct CypherRoomView: View {
         HStack(spacing: 12) {
             Button { dismiss(); dismissParent?() } label: {
                 Image(systemName: "chevron.down").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.text)
-            }.buttonStyle(.plain)
+                    .minimumTapTarget()
+            }.buttonStyle(.plain).accessibilityLabel("Close cypher")
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 6) {
                     Text(cypher?.title ?? "Cypher").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.text)
@@ -300,6 +301,7 @@ struct CypherRoomView: View {
             Button { sendMessage() } label: {
                 Image(systemName: "arrow.up.circle.fill").font(.system(size: 30)).foregroundStyle(Palette.green)
             }.buttonStyle(.plain).disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty)
+            .accessibilityLabel("Send message")
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
         .background(Palette.tabBar.overlay(Rectangle().fill(Palette.stroke).frame(height: 0.5), alignment: .top))
@@ -347,7 +349,7 @@ struct LiveChatView: View {
             Button { dismiss() } label: {
                 Image(systemName: "chevron.left").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.text)
                     .frame(width: 38, height: 38).background(Circle().fill(Palette.cream)).overlay(Circle().stroke(Palette.creamStroke, lineWidth: 1))
-            }.buttonStyle(.plain)
+            }.buttonStyle(.plain).accessibilityLabel("Back")
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 6) {
                     Text("Live Chat").font(.system(size: 18, weight: .bold, design: .serif)).foregroundStyle(Palette.text)
@@ -392,6 +394,7 @@ struct LiveChatView: View {
             Button { send() } label: {
                 Image(systemName: "arrow.up.circle.fill").font(.system(size: 30)).foregroundStyle(Palette.green)
             }.buttonStyle(.plain).disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty)
+            .accessibilityLabel("Send message")
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
         .background(Palette.tabBar.overlay(Rectangle().fill(Palette.stroke).frame(height: 0.5), alignment: .top))
@@ -405,6 +408,4 @@ struct LiveChatView: View {
     }
 }
 
-
 // MARK: - Chat rooms
-

@@ -114,7 +114,7 @@ struct RecapCardsView: View {
                     recapLine("crown.fill", "Top strain: \(top)")
                 }
                 if showSpend, spend > 0 {
-                    recapLine("dollarsign.circle.fill", "Spend: \(spend.formatted(.currency(code: "USD")))")
+                    recapLine("dollarsign.circle.fill", "Spend: \(spend.formatted(.currency(code: Fmt.currencyCode)))")
                 }
                 if showThoughts, thoughtCount > 0 {
                     recapLine("bubble.left.fill", "\(thoughtCount) high thought\(thoughtCount == 1 ? "" : "s")")

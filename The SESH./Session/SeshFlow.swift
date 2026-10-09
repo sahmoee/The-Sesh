@@ -98,6 +98,7 @@ struct StartSessionView: View {
                 Image(systemName: "xmark").font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.textSecondary)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Close")
         }
         .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 4)
     }
@@ -337,6 +338,7 @@ struct AddSongScreen: View {
                     Image(systemName: "xmark").font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.textSecondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Close")
             }
         }
         .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 10)
@@ -397,8 +399,10 @@ struct AddSongScreen: View {
                     Spacer()
                     Button { recentSearches.removeAll { $0 == item } } label: {
                         Image(systemName: "xmark").font(.system(size: 13)).foregroundStyle(Palette.textTertiary)
+                            .minimumTapTarget()
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Remove recent search")
                 }
             }
         }
@@ -537,6 +541,8 @@ struct SessionSummaryView: View {
                     Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Back")
+                .accessibilityHint("Asks before discarding this sesh.")
                 Spacer()
                 Button { save() } label: {
                     Text("Save").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.text)
@@ -760,6 +766,7 @@ struct StrainSoundtrackView: View {
                 Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold)).foregroundStyle(Palette.text)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Back")
             Spacer()
             HStack(spacing: 18) {
                 Image(systemName: "heart").font(.system(size: 18)).foregroundStyle(Palette.text)

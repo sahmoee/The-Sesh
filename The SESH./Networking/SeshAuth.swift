@@ -260,15 +260,26 @@ final class SeshAuth {
         return StoredSession(token: token, uid: nil)
     }
 
+    /// Session tokens stay on this device: excluded from backups restored onto
+    /// other hardware, and readable after first unlock so background refresh
+    /// still works. Lookups don't filter on this attribute, so items written by
+    /// earlier builds are still found and are moved to this class on update.
+    private static var accessibility: CFString { kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly }
+
     @discardableResult
     private static func saveKeychain(_ data: Data, account: String) -> Bool {
         var q = query(account: account)
         let status = SecItemCopyMatching(q as CFDictionary, nil)
         if status == errSecSuccess {
+            let attributes: [String: Any] = [kSecValueData as String: data,
+                                             kSecAttrAccessible as String: accessibility]
+            if SecItemUpdate(q as CFDictionary, attributes as CFDictionary) == errSecSuccess { return true }
+            // Never lose a working token over the attribute change alone.
             return SecItemUpdate(q as CFDictionary, [kSecValueData as String: data] as CFDictionary) == errSecSuccess
         }
         guard status == errSecItemNotFound else { return false }
         q[kSecValueData as String] = data
+        q[kSecAttrAccessible as String] = accessibility
         return SecItemAdd(q as CFDictionary, nil) == errSecSuccess
     }
 
@@ -284,7 +295,6 @@ final class SeshAuth {
         SecItemDelete(query() as CFDictionary)
         SecItemDelete(query(account: "session-owner-v1") as CFDictionary)
     }
-
 }
 
 // MARK: - Silent Sign in with Apple re-request

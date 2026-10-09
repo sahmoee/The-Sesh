@@ -1,0 +1,36 @@
+{
+  "project": "The-Sesh",
+  "branch": "claude/serene-wright-6wfqzt",
+  "implemented_improvements": 22,
+  "status": "work-in-progress; do not merge before native build and test run",
+  "improvements": [
+    "1. CoreUI/Components.swift: removed misleading .isButton trait from InputField/NotesField text fields (VoiceOver announced fields as buttons) [existing]",
+    "2. CoreUI/Components.swift: GeometryFreeBar clamps NaN/inf fractions and rounds the spoken percentage [existing]",
+    "3. Persistence/Models+Domain.swift: JournalEntry.amountLine no longer traps in Int(_:) for out-of-range amounts [existing]",
+    "4. Persistence/Models+Domain.swift: Purchase.amountLine (stash) uses a number formatter instead of trapping Int(_:) on huge/non-finite amounts",
+    "5. Session/StartSeshView.swift: seshDuration clamps negative (clock moved back), NaN/inf and absurd intervals instead of trapping/showing negative timers",
+    "6. Lounge/LoungePostCards.swift: track timestamp shows --:-- for non-finite or out-of-range server durations instead of trapping in Int(_:)",
+    "7. Session/SeshExtrasViews.swift: monthly budget rejects inf/1e30 (used to save, then crash BudgetView on reopen), keeps cents on reopen, decimal keypad, labeled field",
+    "8. Persistence/Models.swift + Persistence.swift: legacy UserDefaults purchases/song plays are only deleted after migrating into a durable (non-memory-only) SwiftData store",
+    "9. Persistence/Persistence.swift + Models.swift: stash/song records this build cannot decode are preserved by syncCollection instead of being deleted on the next save",
+    "10. Social/SocialStore.swift: duplicate room ids from a server snapshot no longer trap Dictionary(uniqueKeysWithValues:) on the next refresh",
+    "11. UnifiedQAReporter.swift: duplicate local QA ticket numbers (counter reset) no longer trap during ticket sync; newest copy wins",
+    "12. Journal/PhotoSupport.swift: PhotoStore rejects path-traversal / separator photo names from synced records before load or delete",
+    "13. Session/SeshFlowViews.swift + CoreUI/RootView.swift: sesh://friend links accept only well-formed codes and require user confirmation before sending a friend request",
+    "14. CoreUI/RootView.swift: deep links are ignored until the 21+ age gate is confirmed",
+    "15. Networking/SeshAuth.swift: session-token keychain items use AfterFirstUnlockThisDeviceOnly (not restorable to other devices); existing items migrate on update without risking the token",
+    "16. Music/SpotifyAuth.swift: OAuth state parameter generated and verified on callback; SecRandomCopyBytes failure no longer yields an all-zero PKCE verifier",
+    "17. Helpers.swift, Insights/StatsViews.swift, Insights/InsightsScreens.swift, Stash/StashView.swift, Stash/GoalsAndExtras.swift, Features/CostAnalyticsView.swift, Features/RecapCardsView.swift: currency uses the user's locale instead of hard-coded $/USD",
+    "18. WatchShared/SeshWatchContract.swift + SeshWatch/SeshWatchViews.swift: watch spend, stash cost, goal and field labels use the locale currency instead of USD",
+    "19. Session/SessionActiveView.swift, Social/CypherViews.swift, Session/StartSeshView.swift: VoiceOver labels for music transport, minimize/close/back and send buttons; 44pt targets",
+    "20. Session/LogSeshView.swift, Journal/JournalView.swift, Journal/PhotoSupport.swift, Session/SeshFlow.swift, CoreUI/NotificationViews.swift, Music/PlaylistViews.swift, Strains/*, Stash/GoalsAndExtras.swift, UnifiedQAPasscode.swift: labels for icon-only add/remove/rename/delete/back/options/photo buttons",
+    "21. Helpers.swift: Sparkline (Canvas) exposes a VoiceOver label and spoken summary (count, latest, range)",
+    "22. SeshWidget/SeshWidgetBundle.swift: Live Activity/Dynamic Island speaks the stage instead of emoji, labels companion/thought counts, status widget no longer reads the dash placeholder"
+  ],
+  "validation": [
+    "Not compiled; native build pending (no Swift toolchain or Xcode in the Linux container).",
+    "Each edit re-read for Swift syntax/type correctness; python brace/paren/bracket balance check passed on every changed file; grep confirmed no remaining hard-coded USD/$ formats outside Fmt fallbacks and no remaining unlabeled icon-only buttons found by a scripted scan.",
+    "Added SeshTests/SeshHardeningTests.swift (Swift Testing, matching existing SeshTests style) covering duration/timestamp clamping, budget parsing, photo-name safety, friend deep-link validation, stash amount line and sparkline summary. Not run. Note: SeshTests is not attached to any target in the .xcodeproj (only PresentationTests is), so these tests need a test target before they execute."
+  ],
+  "remaining": "Native: xcodebuild for app, widget and watch targets; wire SeshTests into a unit-test target and run it; VoiceOver pass on Live Activity, session screen, chat and journal category editor; verify keychain accessibility migration on an upgraded install; verify Spotify sign-in round-trip with state; check currency display in a non-US locale on iPhone and Apple Watch. No physical-device verification claimed."
+}

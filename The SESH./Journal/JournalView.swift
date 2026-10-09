@@ -603,6 +603,7 @@ struct ManageCategoriesView: View {
                                     Image(systemName: "plus.circle.fill").font(.seshScaled(24)).foregroundStyle(Palette.green)
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel("Add category")
                                 .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
                                 .opacity(newName.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
                             }
@@ -631,12 +632,14 @@ struct ManageCategoriesView: View {
                                     if renaming == name {
                                         HStack(spacing: 8) {
                                             TextField("", text: $renameText).foregroundStyle(Palette.text).submitLabel(.done)
+                                                .accessibilityLabel("New name for \(name)")
                                                 .onSubmit { commitRename(name) }
                                                 .padding(.horizontal, 12).padding(.vertical, 10)
                                                 .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
                                             Button { commitRename(name) } label: {
                                                 Image(systemName: "checkmark.circle.fill").font(.seshScaled(22)).foregroundStyle(Palette.green)
                                             }.buttonStyle(.plain)
+                                            .accessibilityLabel("Save new name for \(name)")
                                         }
                                     } else {
                                         HStack(spacing: 10) {
@@ -647,10 +650,12 @@ struct ManageCategoriesView: View {
                                                 Image(systemName: "pencil").font(.seshScaled(14)).foregroundStyle(Palette.textSecondary)
                                                     .minimumTapTarget()
                                             }.buttonStyle(.plain)
+                                            .accessibilityLabel("Rename \(name)")
                                             Button { deleting = name } label: {
                                                 Image(systemName: "trash").font(.seshScaled(14)).foregroundStyle(Palette.moodAngry)
                                                     .minimumTapTarget()
                                             }.buttonStyle(.plain)
+                                            .accessibilityLabel("Delete \(name)")
                                         }
                                         .padding(.horizontal, 14).padding(.vertical, 11)
                                         .background(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).fill(Palette.card))

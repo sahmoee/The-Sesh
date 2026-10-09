@@ -237,7 +237,9 @@ struct LogSeshView: View {
                             extraStrains.remove(at: idx); Haptics.selection()
                         } label: {
                             Image(systemName: "xmark.circle.fill").font(.system(size: 15)).foregroundStyle(Palette.textTertiary)
+                                .minimumTapTarget()
                         }.buttonStyle(.plain)
+                        .accessibilityLabel("Remove \(name)")
                     }
                     .padding(.horizontal, 12).padding(.vertical, 9)
                     .background(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).fill(Palette.field))
@@ -259,6 +261,7 @@ struct LogSeshView: View {
                 Image(systemName: "plus.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Add strain")
             .disabled(newStrainEntry.trimmingCharacters(in: .whitespaces).isEmpty)
             .opacity(newStrainEntry.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
         }
@@ -371,6 +374,7 @@ struct LogSeshView: View {
                     Image(systemName: "checkmark.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Save category")
                 .disabled(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty)
                 .opacity(newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
             }
@@ -466,6 +470,7 @@ struct LogSeshView: View {
                 Button { commitCustomEffect() } label: {
                     Image(systemName: "checkmark.circle.fill").font(.system(size: 22)).foregroundStyle(Palette.green)
                 }.buttonStyle(.plain)
+                .accessibilityLabel("Add feeling")
                 .disabled(customEffect.trimmingCharacters(in: .whitespaces).isEmpty)
                 .opacity(customEffect.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
             }
